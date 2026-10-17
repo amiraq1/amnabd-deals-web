@@ -1,0 +1,45 @@
+name: Assemble package-lock.json
+
+on:
+  push:
+    branches: [lockfile-assembly]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Skip if a full lockfile already exists on main
+        id: check
+        run: |
+          if [ -f package-lock.json ] && [ "$(wc -c < package-lock.json)" -gt 100000 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate package-lock.json
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          rm -f package-lock.json
+          npm install --package-lock-only
+
+      - name: Commit to main
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "Add package-lock.json for npm ci and node cache"
+          git push origin main
