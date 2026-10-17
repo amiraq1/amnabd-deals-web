@@ -3,6 +3,7 @@ import { Search, X, SlidersHorizontal, Inbox, ShieldAlert } from 'lucide-react';
 import type { Deal, SiteConfig } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { matchesQuery } from '@/lib/normalize';
+import { reviewDateLabel } from '@/lib/format';
 import { tristateLabel } from '@/lib/tristate';
 import { getDealDisplayName } from '@/lib/dealMetadata';
 import DealCard from '@/components/DealCard';
@@ -256,11 +257,8 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
           </p>
           <div className="mt-4 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
             <p>
-              {lang === 'ar' ? 'موعد التسجيل' : 'Registration deadline'}:{' '}
-              <span className="text-slate-300">
-                {overview.last_reviewed_label ?? ''}
-              </span>{' '}
-              <bdi>{config.last_reviewed}</bdi>
+              {lang === 'ar' ? 'آخر مراجعة للمصادر' : 'Last reviewed'}:{' '}
+              <bdi>{reviewDateLabel(config.last_reviewed, lang)}</bdi>
             </p>
             <p>
               {lang === 'ar' ? 'التصنيفات' : 'Labels'}:{' '}

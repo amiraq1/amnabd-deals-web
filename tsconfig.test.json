@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "rootDir": "."
+  },
+  "include": ["src/lib/format.ts", "src/lib/validate.ts"]
+}

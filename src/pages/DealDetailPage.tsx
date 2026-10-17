@@ -6,6 +6,7 @@ import {
   durationLabel,
   frequencyLabel,
   benefitTypeLabel,
+  reviewDateLabel,
 } from '@/lib/format';
 import { tristateLabel } from '@/lib/tristate';
 import { safeUrl, resolveDealOfficialUrl } from '@/lib/safeUrl';
@@ -229,7 +230,7 @@ export default function DealDetailPage({
           ))}
         </div>
         <p className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-500">
-          {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}: <bdi>{deal.review.reviewed_on}</bdi>
+          {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}: <bdi>{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
           {' · '}
           {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
           <span className="text-slate-300">

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Deal, SiteConfig, UsageGuide } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { validateConfig, validateDeals, validateGuides } from '@/lib/validate';
+import ContentErrorBoundary from '@/components/ContentErrorBoundary';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import Navbar, { type Route } from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -18,24 +20,6 @@ function parseHash(): Route {
   return { name: 'notfound' };
 }
 
-interface DealRow {
-  id: string;
-  slug: string;
-  name_ar: string;
-  name_en: string;
-  icon_url?: string;
-  description_ar: string;
-  description_en: string;
-  category: unknown;
-  benefits: unknown;
-  eligibility: unknown;
-  pricing: unknown;
-  registration: unknown;
-  official_sources: unknown;
-  get_offer: unknown;
-  review: unknown;
-}
-
 function AppInner() {
   const { lang } = useLanguage();
   const [route, setRoute] = useState<Route>(() => parseHash());
@@ -43,6 +27,8 @@ function AppInner() {
   const [guides, setGuides] = useState<UsageGuide[]>([]);
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const [omittedRows, setOmittedRows] = useState(0);
+  const [invalidDeals, setInvalidDeals] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -76,6 +62,8 @@ function AppInner() {
     async function load() {
       setLoading(true);
       setError(null);
+      setOmittedRows(0);
+      setInvalidDeals(false);
       try {
         const [dealsRes, guidesRes, configRes] = await Promise.all([
           supabase.from('deals').select('*').order('id'),
@@ -87,9 +75,24 @@ function AppInner() {
         if (guidesRes.error) throw guidesRes.error;
         if (configRes.error) throw configRes.error;
 
-        setDeals((dealsRes.data ?? []) as unknown as Deal[]);
-        setGuides((guidesRes.data ?? []) as unknown as UsageGuide[]);
-        setConfig((configRes.data ?? null) as unknown as SiteConfig | null);
+        const checkedDeals = validateDeals(dealsRes.data);
+        const checkedGuides = validateGuides(guidesRes.data);
+        const checkedConfig = validateConfig(configRes.data);
+        if (checkedDeals.invalidCollection || (checkedDeals.rejectedRows > 0 && checkedDeals.values.length === 0)) {
+          setDeals([]);
+          setInvalidDeals(true);
+          console.warn('[data] invalid_deals_collection', { rejectedRows: checkedDeals.rejectedRows });
+          throw new Error('Invalid deals collection');
+        }
+        setDeals(checkedDeals.values);
+        setGuides(checkedGuides.values);
+        setConfig(checkedConfig.value);
+        const rejectedRows = checkedDeals.rejectedRows + checkedGuides.rejectedRows + checkedConfig.rejectedRows;
+        setOmittedRows(rejectedRows);
+        const normalizedFields = checkedDeals.normalizedFields + checkedGuides.normalizedFields + checkedConfig.normalizedFields;
+        if (rejectedRows || normalizedFields) {
+          console.warn('[data] validation_summary', { rejectedRows, normalizedFields });
+        }
       } catch {
         if (!cancelled) {
           setError(
@@ -114,13 +117,19 @@ function AppInner() {
 
   const sectionLabels = config?.section_labels?.[lang] ?? {};
 
-  const guideNames: Record<string, { ar: string; en: string }> = {};
+  const guideNames: Record<string, { ar: string; en: string }> = Object.create(null);
   for (const d of deals) {
     guideNames[d.slug] = { ar: d.name_ar, en: d.name_en };
   }
 
   let content: JSX.Element;
-  if (route.name === 'guide') {
+  if (invalidDeals && !loading) {
+    content = (
+      <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6" role="alert">
+        {lang === 'ar' ? 'تعذر عرض بيانات العروض لأنها غير صالحة. يرجى المحاولة لاحقًا.' : 'Offer data could not be displayed because it is invalid. Please try again later.'}
+      </main>
+    );
+  } else if (route.name === 'guide') {
     content = (
       <UsageGuidePage
         guides={guides}
@@ -165,7 +174,18 @@ function AppInner() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar route={route} navigate={navigate} />
-      <div className="flex-1">{content}</div>
+      <div className="flex-1">
+        {omittedRows > 0 && !loading && (
+          <p className="mx-auto max-w-6xl px-4 pt-4 text-sm text-amber-200" role="status">
+            {lang === 'ar'
+              ? 'تم استبعاد بعض السجلات غير الصالحة. قد تكون القائمة أو الأدلة غير مكتملة.'
+              : 'Some invalid records were omitted. The list or guides may be incomplete.'}
+          </p>
+        )}
+        <ContentErrorBoundary resetKey={`${route.name}:${route.slug ?? ''}:${lang}`} lang={lang}>
+          {content}
+        </ContentErrorBoundary>
+      </div>
       <Footer />
     </div>
   );
@@ -178,5 +198,3 @@ export default function App() {
     </LanguageProvider>
   );
 }
-
-export type { DealRow };
