@@ -36,6 +36,8 @@ for (const invalid of [
   {},
   deal({ id: '' }),
   deal({ slug: null }),
+  deal({ slug: 'bad/slug' }),
+  deal({ slug: 'bad slug' }),
   deal({ name_ar: null, name_en: {} }),
 ]) {
   test(`invalid identity is quarantined: ${JSON.stringify(invalid)}`, () => {

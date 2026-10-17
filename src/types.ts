@@ -1,6 +1,11 @@
 export type Lang = 'ar' | 'en';
 
-export type TriState = 'yes' | 'no' | 'unknown' | 'required' | 'not_required';
+export type TruthState = 'yes' | 'no' | 'unknown';
+export type RequirementState = 'required' | 'not_required' | 'unknown';
+// Compatibility for generic labels; requirement fields use the canonical type below.
+export type TriState = TruthState | RequirementState;
+export type ApplicantType =
+  'any' | 'student' | 'startup' | 'organization' | 'individual' | 'multiple' | 'unknown';
 
 export interface Localized {
   ar: string;
@@ -37,11 +42,12 @@ export interface CountriesInfo {
 export interface Eligibility {
   countries: CountriesInfo;
   conditions: Localized;
-  new_account: TriState;
-  card_required: TriState;
-  applicant_type: TriState | string;
-  phone_required: TriState;
-  student_status: TriState;
+  new_account: RequirementState;
+  card_required: RequirementState;
+  applicant_type: ApplicantType;
+  open_to_all?: TruthState;
+  phone_required: RequirementState;
+  student_status: RequirementState;
 }
 
 export interface Pricing {
@@ -116,11 +122,7 @@ export interface GuideSection {
   sources: string[];
 }
 
-export type GuideSectionKey =
-  | 'eligibility'
-  | 'registration'
-  | 'limitations'
-  | 'after_expiry';
+export type GuideSectionKey = 'eligibility' | 'registration' | 'limitations' | 'after_expiry';
 
 export interface UsageGuide {
   slug: string;

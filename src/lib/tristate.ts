@@ -1,3 +1,4 @@
+import { requirementState } from './eligibility.js';
 import type { Lang, TriState } from '@/types';
 
 export function tristateLabel(state: TriState | string, lang: Lang): string {
@@ -16,15 +17,20 @@ export function tristateLabel(state: TriState | string, lang: Lang): string {
 }
 
 export function isAffirmativeTriState(value: TriState | string | undefined): boolean {
-  return value === 'yes' || value === 'required';
+  return requirementState(value) === 'required';
 }
 
 export function isNegativeTriState(value: TriState | string | undefined): boolean {
-  return value === 'no' || value === 'not_required';
+  return requirementState(value) === 'not_required';
 }
 
 export function tristateTone(state: TriState | string): 'good' | 'bad' | 'neutral' {
   if (state === 'yes' || state === 'required') return 'neutral';
   if (state === 'no' || state === 'not_required') return 'good';
   return 'neutral';
+}
+
+// For requirement facts, yes/no are legacy aliases, not different facts.
+export function requirementLabel(value: unknown, lang: Lang): string {
+  return tristateLabel(requirementState(value), lang);
 }

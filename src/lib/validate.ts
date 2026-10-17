@@ -1,3 +1,5 @@
+import { isValidSlug } from './routes.js';
+import { applicantType, requirementState, truthState } from './eligibility.js';
 import type {
   Benefit,
   Claim,
@@ -6,7 +8,6 @@ import type {
   Localized,
   OfficialSource,
   SiteConfig,
-  TriState,
   UsageGuide,
 } from '@/types';
 
@@ -24,7 +25,6 @@ interface Context {
   normalized: number;
 }
 const UNKNOWN: Localized = { ar: 'غير معلوم', en: 'Unknown' };
-const TRI_STATES = new Set(['yes', 'no', 'required', 'not_required', 'unknown']);
 const RESERVED_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
 function object(value: unknown): JsonObject | null {
@@ -79,12 +79,6 @@ function localized(value: unknown, ctx: Context): Localized {
     ar: text(get(obj, 'ar'), ctx, UNKNOWN.ar),
     en: text(get(obj, 'en'), ctx, UNKNOWN.en),
   };
-}
-
-function tristate(value: unknown, ctx: Context): TriState {
-  if (typeof value === 'string' && TRI_STATES.has(value)) return value as TriState;
-  changed(ctx);
-  return 'unknown';
 }
 
 function dateOnly(value: unknown, ctx: Context): string | null {
@@ -190,7 +184,7 @@ function parseDeal(input: unknown, ctx: Context): Deal | null {
   const ar = requiredText(get(row, 'name_ar'));
   const en = requiredText(get(row, 'name_en'));
   // Never manufacture identity from an array index, random ID, or slug.
-  if (!row || !id || !slug || (!ar && !en)) return null;
+  if (!row || !id || !slug || !isValidSlug(slug) || (!ar && !en)) return null;
   const category = object(get(row, 'category'));
   const eligibility = object(get(row, 'eligibility'));
   const countries = object(get(eligibility, 'countries'));
@@ -221,11 +215,12 @@ function parseDeal(input: unknown, ctx: Context): Deal | null {
         values: strings(get(countries, 'values'), ctx),
       },
       conditions: localized(get(eligibility, 'conditions'), ctx),
-      new_account: tristate(get(eligibility, 'new_account'), ctx),
-      card_required: tristate(get(eligibility, 'card_required'), ctx),
-      applicant_type: text(get(eligibility, 'applicant_type'), ctx, 'unknown'),
-      phone_required: tristate(get(eligibility, 'phone_required'), ctx),
-      student_status: tristate(get(eligibility, 'student_status'), ctx),
+      new_account: requirementState(get(eligibility, 'new_account')),
+      card_required: requirementState(get(eligibility, 'card_required')),
+      applicant_type: applicantType(get(eligibility, 'applicant_type')),
+      open_to_all: truthState(get(eligibility, 'open_to_all')),
+      phone_required: requirementState(get(eligibility, 'phone_required')),
+      student_status: requirementState(get(eligibility, 'student_status')),
     },
     pricing: {
       currency: requiredText(get(pricing, 'currency')),
@@ -264,7 +259,7 @@ function parseDeal(input: unknown, ctx: Context): Deal | null {
 function parseGuide(input: unknown, ctx: Context): UsageGuide | null {
   const row = object(input);
   const slug = requiredText(get(row, 'slug'));
-  if (!row || !slug) return null;
+  if (!row || !slug || !isValidSlug(slug)) return null;
   const sections = object(get(row, 'sections'));
   const section = (key: string): GuideSection => {
     const item = object(get(sections, key));

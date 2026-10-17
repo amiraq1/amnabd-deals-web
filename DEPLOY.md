@@ -33,3 +33,13 @@
    - Build output directory: `dist`
 3. أضف المتغيرين `VITE_SUPABASE_URL` و `VITE_SUPABASE_ANON_KEY` في إعدادات Environment variables.
 4. Cloudflare سينشر الموقع على نطاق مجاني مثل `amnabd-deals.pages.dev` مع دعم HTTPS تلقائيًا.
+
+## حواجز البناء العام
+
+يُرفض build إذا غاب URL أو المفتاح العام أو كان الشكل غير صالح، أو استُخدم مفتاح
+خاص بدلاً من anon/publishable. لا تُطبع قيم المفاتيح. `npm run test:build-env`
+يفحص ذلك محلياً ببيانات صناعية دون نشر أو تعديل سياسات قاعدة البيانات.
+
+موقع الدليل يستعمل PostgREST للقراءة العامة فقط؛ استبدل عميل Supabase الشامل
+بعميل PostgREST الذي كان ضمن شجرته، لتجنب اعتماد Auth على localStorage عند الاستيراد.
+سياسات RLS والمنح الفعلية هي حد الصلاحيات، وليس كون الواجهة تستعمل SELECT فقط.

@@ -1,16 +1,14 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Search, X, SlidersHorizontal, Inbox, ShieldAlert } from 'lucide-react';
 import type { Deal, SiteConfig } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { matchesQuery } from '@/lib/normalize';
+import { matchesEligibility, type ApplicantFilter, type CardFilter } from '@/lib/eligibility';
 import { reviewDateLabel } from '@/lib/format';
 import { tristateLabel } from '@/lib/tristate';
 import { getDealDisplayName } from '@/lib/dealMetadata';
 import DealCard from '@/components/DealCard';
 import InfoBanner from '@/components/InfoBanner';
-
-type ApplicantFilter = 'all' | 'student' | 'any';
-type CardFilter = 'all' | 'not_required';
 
 interface HomePageProps {
   deals: Deal[];
@@ -31,9 +29,7 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
 
   const filtered = useMemo(() => {
     return deals.filter((deal) => {
-      if (applicant === 'student' && deal.eligibility.student_status !== 'required') return false;
-      if (cardFilter === 'not_required' && deal.eligibility.card_required !== 'not_required')
-        return false;
+      if (!matchesEligibility(deal.eligibility, applicant, cardFilter)) return false;
       if (query.trim()) {
         const officialName = getDealDisplayName(deal);
         const nameAr = deal.name_ar;
@@ -50,10 +46,6 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
   }, [deals, query, applicant, cardFilter, lang]);
 
   const hasActiveFilters = applicant !== 'all' || cardFilter !== 'all' || query.trim() !== '';
-
-  useEffect(() => {
-    if (query.trim() || hasActiveFilters) return;
-  }, [query, hasActiveFilters]);
 
   if (loading) {
     return (
@@ -90,7 +82,10 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
           />
           <div className="relative max-w-2xl">
             <h1 className="font-heading text-3xl font-extrabold leading-tight text-white sm:text-4xl">
-              {overview.title ?? (lang === 'ar' ? 'دليل التسجيل وفهم قيود العروض' : 'Offer registration and limitations guide')}
+              {overview.title ??
+                (lang === 'ar'
+                  ? 'دليل التسجيل وفهم قيود العروض'
+                  : 'Offer registration and limitations guide')}
             </h1>
             <p className="mt-3 text-base leading-relaxed text-slate-300">
               {overview.description ??
@@ -219,6 +214,14 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
         )}
       </section>
 
+      {applicant === 'any' && (
+        <p className="mt-3 text-xs text-slate-400">
+          {lang === 'ar'
+            ? 'تظهر هنا فقط الأهلية العامة المثبتة صراحةً؛ غياب شرط الطالب لا يكفي، والمجهول لا يُعد متاحًا للجميع.'
+            : 'Only explicitly established general eligibility is included; no student requirement alone is insufficient, and unknown is not open to all.'}
+        </p>
+      )}
+
       <section className="mt-6">
         <p className="text-sm text-slate-500">
           {lang === 'ar'
@@ -263,7 +266,8 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
             <p>
               {lang === 'ar' ? 'التصنيفات' : 'Labels'}:{' '}
               <span className="text-slate-300">
-                {tristateLabel('unknown', lang)} = {lang === 'ar' ? 'غير مثبت بالأدلة' : 'not established by evidence'}
+                {tristateLabel('unknown', lang)} ={' '}
+                {lang === 'ar' ? 'غير مثبت بالأدلة' : 'not established by evidence'}
               </span>
             </p>
           </div>

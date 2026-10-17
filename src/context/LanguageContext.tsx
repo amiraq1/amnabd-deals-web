@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Lang, Localized } from '@/types';
+import { readLanguage, saveLanguage } from '@/lib/languageStorage';
 
 interface LanguageContextValue {
   lang: Lang;
@@ -12,17 +13,14 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>(() => {
-    const stored = localStorage.getItem('amnabd-lang');
-    return stored === 'en' ? 'en' : 'ar';
-  });
+  const [lang, setLang] = useState<Lang>(() => readLanguage());
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = dir;
-    localStorage.setItem('amnabd-lang', lang);
+    saveLanguage(lang);
   }, [lang, dir]);
 
   const value: LanguageContextValue = {

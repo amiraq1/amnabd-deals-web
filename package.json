@@ -9,13 +9,14 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "test": "node scripts/test.mjs"
+    "test": "node scripts/test.mjs",
+    "test:build-env": "node scripts/check-build-env.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
     "lucide-react": "^0.446.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "@supabase/postgrest-js": "2.109.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

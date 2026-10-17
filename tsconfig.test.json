@@ -5,5 +5,15 @@
     "allowImportingTsExtensions": false,
     "rootDir": "."
   },
-  "include": ["src/lib/format.ts", "src/lib/validate.ts"]
+  "include": [
+    "src/lib/format.ts",
+    "src/lib/validate.ts",
+    "src/lib/eligibility.ts",
+    "src/lib/tristate.ts",
+    "src/lib/routes.ts",
+    "src/lib/environment.ts",
+    "src/lib/resource.ts",
+    "src/lib/languageStorage.ts",
+    "src/lib/evidence.ts"
+  ]
 }
