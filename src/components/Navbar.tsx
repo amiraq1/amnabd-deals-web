@@ -29,7 +29,7 @@ export default function Navbar({ route, navigate }: NavbarProps) {
             <Sparkles className="h-5 w-5 text-white" />
           </span>
           <span className="font-heading text-lg font-bold tracking-tight text-white">
-            {lang === 'ar' ? 'عروض أمناب' : 'AMNABD Deals'}
+            {lang === 'ar' ? 'نبض' : 'AMNABD Deals'}
           </span>
         </button>
 

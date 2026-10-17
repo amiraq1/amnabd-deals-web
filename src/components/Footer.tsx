@@ -21,7 +21,7 @@ export default function Footer() {
           </div>
           <div className="text-sm text-slate-500">
             <p className="font-heading font-semibold text-slate-300">
-              {lang === 'ar' ? 'عروض أمناب' : 'AMNABD Deals'}
+              {lang === 'ar' ? 'نبض' : 'AMNABD Deals'}
             </p>
             <p className="mt-1">
               {lang === 'ar'
