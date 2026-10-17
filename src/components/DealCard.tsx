@@ -3,6 +3,8 @@ import type { Deal } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { benefitAmount, durationLabel, frequencyLabel, benefitTypeLabel } from '@/lib/format';
 import { resolveDealOfficialUrl } from '@/lib/safeUrl';
+import { getDealDisplayName } from '@/lib/dealMetadata';
+import DealIcon from '@/components/DealIcon';
 
 interface DealCardProps {
   deal: Deal;
@@ -12,7 +14,7 @@ interface DealCardProps {
 
 export default function DealCard({ deal, onOpen, index }: DealCardProps) {
   const { lang, dir } = useLanguage();
-  const name = lang === 'ar' ? deal.name_ar : deal.name_en;
+  const displayName = getDealDisplayName(deal);
   const description = lang === 'ar' ? deal.description_ar : deal.description_en;
   const firstBenefit = deal.benefits[0];
   const offerUrl = resolveDealOfficialUrl(deal);
@@ -26,9 +28,12 @@ export default function DealCard({ deal, onOpen, index }: DealCardProps) {
     >
       <button onClick={() => onOpen(deal.slug)} className="text-start focus:outline-none">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-heading text-lg font-bold text-white transition-colors group-hover:text-emerald-300">
-            {name}
-          </h3>
+          <div className="flex items-center gap-3">
+            <DealIcon deal={deal} size="md" />
+            <h3 className="font-heading text-lg font-bold text-white transition-colors group-hover:text-emerald-300">
+              {displayName}
+            </h3>
+          </div>
           {deal.review.verification_status === 'supported' && (
             <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
               <BadgeCheck className="h-3.5 w-3.5" />
@@ -36,7 +41,7 @@ export default function DealCard({ deal, onOpen, index }: DealCardProps) {
             </span>
           )}
         </div>
-        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-400">{description}</p>
+        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-400">{description}</p>
       </button>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">

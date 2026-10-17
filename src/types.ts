@@ -96,6 +96,7 @@ export interface Deal {
   slug: string;
   name_ar: string;
   name_en: string;
+  icon_url?: string;
   description_ar: string;
   description_en: string;
   category: Category;

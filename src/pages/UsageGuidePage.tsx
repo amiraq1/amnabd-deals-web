@@ -2,6 +2,7 @@ import { CalendarDays, ExternalLink } from 'lucide-react';
 import type { GuideSectionKey, SiteConfig, UsageGuide } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { safeUrl } from '@/lib/safeUrl';
+import { OFFICIAL_TOOL_NAMES } from '@/lib/dealMetadata';
 
 interface UsageGuidePageProps {
   guides: UsageGuide[];
@@ -11,7 +12,7 @@ interface UsageGuidePageProps {
 }
 
 export default function UsageGuidePage({ guides, config, guideNames, loading }: UsageGuidePageProps) {
-  const { lang, pick } = useLanguage();
+  const { lang } = useLanguage();
   const overview = config?.overview?.[lang] ?? {};
   const labels = config?.section_labels?.[lang] ?? {};
 
@@ -48,13 +49,19 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
       <div className="mt-10 space-y-8">
         {guides.map((guide) => {
           const names = guideNames[guide.slug];
-          const title = names ? pick(names) : guide.slug;
+          const officialName = names?.en || OFFICIAL_TOOL_NAMES[guide.slug] || guide.slug;
+          const arabicName = names?.ar;
           return (
             <section
               key={guide.slug}
               className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8"
             >
-              <h2 className="font-heading text-2xl font-bold text-emerald-400">{title}</h2>
+              <div className="flex flex-wrap items-baseline gap-2.5">
+                <h2 className="font-heading text-2xl font-bold text-emerald-400">{officialName}</h2>
+                {lang === 'ar' && arabicName && arabicName !== officialName && (
+                  <span className="text-sm font-medium text-slate-400">({arabicName})</span>
+                )}
+              </div>
 
               {(
                 [

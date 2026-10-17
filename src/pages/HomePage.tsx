@@ -4,6 +4,7 @@ import type { Deal, SiteConfig } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { matchesQuery } from '@/lib/normalize';
 import { tristateLabel } from '@/lib/tristate';
+import { getDealDisplayName } from '@/lib/dealMetadata';
 import DealCard from '@/components/DealCard';
 import InfoBanner from '@/components/InfoBanner';
 
@@ -33,13 +34,13 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
       if (cardFilter === 'not_required' && deal.eligibility.card_required !== 'not_required')
         return false;
       if (query.trim()) {
-        const name = lang === 'ar' ? deal.name_ar : deal.name_en;
+        const officialName = getDealDisplayName(deal);
+        const nameAr = deal.name_ar;
         const desc = lang === 'ar' ? deal.description_ar : deal.description_en;
-        const otherName = lang === 'ar' ? deal.name_en : deal.name_ar;
         if (
-          !matchesQuery(name, query) &&
-          !matchesQuery(desc, query) &&
-          !matchesQuery(otherName, query)
+          !matchesQuery(officialName, query) &&
+          !matchesQuery(nameAr, query) &&
+          !matchesQuery(desc, query)
         )
           return false;
       }

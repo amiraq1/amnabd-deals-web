@@ -10,6 +10,8 @@ import {
 import { tristateLabel } from '@/lib/tristate';
 import { safeUrl, resolveDealOfficialUrl } from '@/lib/safeUrl';
 import InfoBanner from '@/components/InfoBanner';
+import { getDealDisplayName } from '@/lib/dealMetadata';
+import DealIcon from '@/components/DealIcon';
 
 interface DealDetailPageProps {
   deal: Deal;
@@ -25,7 +27,7 @@ export default function DealDetailPage({
   onBack,
 }: DealDetailPageProps) {
   const { lang, dir } = useLanguage();
-  const name = lang === 'ar' ? deal.name_ar : deal.name_en;
+  const displayName = getDealDisplayName(deal);
   const description = lang === 'ar' ? deal.description_ar : deal.description_en;
   const offerUrl = resolveDealOfficialUrl(deal);
 
@@ -44,8 +46,16 @@ export default function DealDetailPage({
       </button>
 
       <header className="animate-fade-up mt-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="font-heading text-3xl font-extrabold text-white">{name}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <DealIcon deal={deal} size="lg" />
+            <div>
+              <h1 className="font-heading text-3xl font-extrabold text-white">{displayName}</h1>
+              {lang === 'ar' && deal.name_ar && deal.name_ar !== displayName && (
+                <p className="mt-0.5 text-sm font-medium text-slate-400">{deal.name_ar}</p>
+              )}
+            </div>
+          </div>
           {deal.review.verification_status === 'supported' ? (
             <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
               <BadgeCheck className="h-4 w-4" />
@@ -58,7 +68,7 @@ export default function DealDetailPage({
             </span>
           )}
         </div>
-        <p className="mt-3 text-base leading-relaxed text-slate-300">{description}</p>
+        <p className="mt-4 text-base leading-relaxed text-slate-300">{description}</p>
         {offerUrl && (
           <a
             href={offerUrl}
