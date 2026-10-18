@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, X, SlidersHorizontal, Inbox, ShieldAlert, Share2, Check } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Inbox, Share2, Check, Bookmark } from 'lucide-react';
 import type { Deal, FilterState, SiteConfig, SortOption } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { buildDealCorpus, categoryOptions, matchesCategory, matchesCorpus } from '@/lib/discovery';
-import { matchesEligibility, type ApplicantFilter, type CardFilter } from '@/lib/eligibility';
+import { matchesEligibility } from '@/lib/eligibility';
 import { compileQuery } from '@/lib/normalize';
 import { reviewDateLabel } from '@/lib/format';
 import { tristateLabel } from '@/lib/tristate';
@@ -12,6 +12,8 @@ import { copyLink } from '@/lib/share';
 import { DEFAULT_FILTER_STATE } from '@/lib/filterState';
 import DealCard from '@/components/DealCard';
 import InfoBanner from '@/components/InfoBanner';
+import ScrollToTop from '@/components/ScrollToTop';
+import { useSavedDeals } from '@/hooks/useSavedDeals';
 
 interface HomePageProps {
   deals: Deal[];
@@ -37,11 +39,14 @@ export default function HomePage({
   onResetFilters = () => undefined,
 }: HomePageProps) {
   const { lang, pick } = useLanguage();
+  const { savedSet, toggle } = useSavedDeals();
+  const [savedOnly, setSavedOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'success' | 'manual'>('idle');
   const [manualLink, setManualLink] = useState('');
   const generation = useRef(0);
   const busy = useRef(false);
+
   useEffect(() => {
     generation.current += 1;
     busy.current = false;
@@ -58,11 +63,13 @@ export default function HomePage({
     filterState.card,
     filterState.sort,
   ]);
+
   useEffect(() => {
     if (copyStatus !== 'success') return;
     const timeout = window.setTimeout(() => setCopyStatus('idle'), 4000);
     return () => window.clearTimeout(timeout);
   }, [copyStatus]);
+
   const [referenceNow, setReferenceNow] = useState(() => new Date());
   useEffect(() => {
     const refresh = () => setReferenceNow(new Date());
@@ -73,8 +80,19 @@ export default function HomePage({
       document.removeEventListener('visibilitychange', refresh);
     };
   }, []);
+
   const queryGroups = useMemo(() => compileQuery(filterState.q), [filterState.q]);
   const categories = useMemo(() => categoryOptions(deals, lang), [deals, lang]);
+
+  // Precompute available deals slugs and valid saved count
+  const availableSlugs = useMemo(() => new Set(deals.map((d) => d.slug)), [deals]);
+  const validSavedCount = useMemo(() => {
+    let count = 0;
+    for (const slug of savedSet) {
+      if (availableSlugs.has(slug)) count++;
+    }
+    return count;
+  }, [savedSet, availableSlugs]);
 
   // Precompute searchable corpora once per deals load
   const corpora = useMemo(() => {
@@ -90,6 +108,7 @@ export default function HomePage({
   const filtered = useMemo(() => {
     return deals.filter((deal) => {
       if (filterState.categoryValidation === 'pending') return false;
+      if (savedOnly && !savedSet.has(deal.slug)) return false;
       if (filterState.uncategorized && !matchesCategory(deal.category.value, '')) return false;
       if (
         filterState.category !== null &&
@@ -108,13 +127,14 @@ export default function HomePage({
       }
       return true;
     });
-  }, [deals, corpora, filterState, queryGroups]);
+  }, [deals, corpora, filterState, queryGroups, savedOnly, savedSet]);
 
   const sorted = useMemo(() => {
     return sortDeals(filtered, filterState.sort, referenceNow);
   }, [filtered, filterState.sort, referenceNow]);
 
   const hasActiveFilters =
+    savedOnly ||
     filterState.applicant !== 'all' ||
     filterState.card !== 'all' ||
     filterState.category !== null ||
@@ -122,6 +142,11 @@ export default function HomePage({
     Boolean(filterState.filterError) ||
     filterState.sort !== 'default' ||
     filterState.q.trim() !== '';
+
+  const handleResetAll = () => {
+    setSavedOnly(false);
+    onResetFilters();
+  };
 
   async function handleCopySearchLink() {
     if (busy.current) return;
@@ -178,25 +203,29 @@ export default function HomePage({
           />
           <div className="relative max-w-2xl">
             <h1 className="font-heading text-3xl font-extrabold leading-tight text-white sm:text-4xl">
-              {overview.title ??
-                (lang === 'ar'
-                  ? 'دليل التسجيل وفهم قيود العروض'
-                  : 'Offer registration and limitations guide')}
+              {pick({
+                ar: overview.title ?? 'عروض أدوات الذكاء الاصطناعي',
+                en: config?.overview?.en?.title ?? 'AI Tool Deals & Benefits',
+              })}
             </h1>
-            <p className="mt-3 text-base leading-relaxed text-slate-300">
-              {overview.description ??
-                (lang === 'ar'
-                  ? 'دليل عربي لمراجعة الأهلية والتسجيل والقيود والرسوم وما يحدث عند انتهاء المنفعة، وفق الأدلة المتاحة والمصادر الرسمية.'
-                  : 'A bilingual guide to eligibility, registration, limits and fees, and what is known after a benefit ends.')}
+            <p className="mt-4 text-base leading-relaxed text-slate-300">
+              {pick({
+                ar:
+                  overview.subtitle ??
+                  'دليل موثّق يربطك بالمصادر الرسمية لمنافع وحزم أدوات الذكاء الاصطناعي مع توثيق شروط الأهلية والأدلة.',
+                en:
+                  config?.overview?.en?.subtitle ??
+                  'A documented directory linking you to official sources of AI benefits with verified eligibility and evidence.',
+              })}
             </p>
-            <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-gold/30 bg-gold/5 p-4">
-              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
-              <p className="text-sm leading-relaxed text-amber-100">
-                {overview.unknown_note ??
-                  (lang === 'ar'
-                    ? 'لا تستنتج توفرًا في بلد بعينه، أو شرط بطاقة/هاتف، أو خصمًا أو رسومًا محددة، أو استمرار عرض من معلومة غير مذكورة. تحقق من الشروط الحالية لدى الجهة الرسمية.'
-                    : 'Do not infer availability in a particular country, card or phone requirements, a discount or specific fee, or that an offer is ongoing from unstated information. Check current terms with the official provider.')}
-              </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+              <span className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                {lang === 'ar' ? 'بيانات مبنية على أدلة رسمية' : 'Evidence-based records'}
+              </span>
+              <span className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1.5">
+                {lang === 'ar' ? 'تحديث ومراجعة دورية' : 'Periodically reviewed'}
+              </span>
             </div>
           </div>
         </div>
@@ -333,9 +362,9 @@ export default function HomePage({
           <button
             type="button"
             onClick={() => onFilterChange({ category: null, uncategorized: false }, 'push')}
-            aria-pressed={filterState.category === null && !filterState.uncategorized}
+            aria-pressed={filterState.category === null && !filterState.uncategorized && !savedOnly}
             className={`min-h-11 max-w-full break-words rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-              filterState.category === null && !filterState.uncategorized
+              filterState.category === null && !filterState.uncategorized && !savedOnly
                 ? 'bg-emerald-500 text-slate-950 font-semibold'
                 : 'border border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
             }`}
@@ -345,6 +374,28 @@ export default function HomePage({
               ({deals.length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setSavedOnly((s) => !s)}
+            aria-pressed={savedOnly}
+            className={`min-h-11 max-w-full break-words rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ${
+              savedOnly
+                ? 'bg-emerald-500 text-slate-950 font-semibold shadow-md shadow-emerald-950/30'
+                : 'border border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+            }`}
+          >
+            <Bookmark
+              className={`h-3.5 w-3.5 ${
+                savedOnly ? 'fill-slate-950 text-slate-950' : 'text-slate-400'
+              }`}
+            />
+            <span>{lang === 'ar' ? 'المحفوظة' : 'Saved'}</span>
+            <span className="text-[11px] opacity-75">
+              ({validSavedCount.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
+            </span>
+          </button>
+
           {categories.map((opt) => (
             <button
               key={`category:${opt.key}`}
@@ -374,69 +425,58 @@ export default function HomePage({
             id="home-filter-panel"
             className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-slate-800 bg-slate-900/60 p-4"
           >
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                {lang === 'ar' ? 'نوع المستفيد' : 'Applicant type'}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {(
-                  [
-                    ['all', lang === 'ar' ? 'الكل' : 'All'],
-                    ['student', lang === 'ar' ? 'الطلاب' : 'Students'],
-                    ['any', lang === 'ar' ? 'مفتوحة للجميع' : 'Open to all'],
-                  ] as [ApplicantFilter, string][]
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => onFilterChange({ applicant: value }, 'push')}
-                    aria-pressed={filterState.applicant === value}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                      filterState.applicant === value
-                        ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40'
-                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                {lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {(
-                  [
-                    ['all', lang === 'ar' ? 'الكل' : 'All'],
-                    ['not_required', lang === 'ar' ? 'بدون بطاقة' : 'No card needed'],
-                  ] as [CardFilter, string][]
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => onFilterChange({ card: value }, 'push')}
-                    aria-pressed={filterState.card === value}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                      filterState.card === value
-                        ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40'
-                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="sort-select"
-                className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+            <div className="flex items-center gap-2">
+              <label htmlFor="applicant-select" className="text-xs text-slate-400">
+                {lang === 'ar' ? 'فئة المتقدم:' : 'Applicant:'}
+              </label>
+              <select
+                id="applicant-select"
+                value={filterState.applicant}
+                onChange={(e) =>
+                  onFilterChange(
+                    {
+                      applicant: e.target.value as 'all' | 'student' | 'any',
+                    },
+                    'push'
+                  )
+                }
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               >
-                {lang === 'ar' ? 'الترتيب' : 'Sort by'}
+                <option value="all">{lang === 'ar' ? 'الكل' : 'All'}</option>
+                <option value="student">{lang === 'ar' ? 'للطلاب' : 'Students'}</option>
+                <option value="any">
+                  {lang === 'ar' ? 'متاح للجميع (مثبت)' : 'Open to all (verified)'}
+                </option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="card-select" className="text-xs text-slate-400">
+                {lang === 'ar' ? 'البطاقة:' : 'Card:'}
+              </label>
+              <select
+                id="card-select"
+                value={filterState.card}
+                onChange={(e) =>
+                  onFilterChange(
+                    {
+                      card: e.target.value as 'all' | 'not_required',
+                    },
+                    'push'
+                  )
+                }
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+              >
+                <option value="all">{lang === 'ar' ? 'الكل' : 'All'}</option>
+                <option value="not_required">
+                  {lang === 'ar' ? 'بدون بطاقة ائتمان' : 'No credit card'}
+                </option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="sort-select" className="text-xs text-slate-400">
+                {lang === 'ar' ? 'الترتيب:' : 'Sort:'}
               </label>
               <select
                 id="sort-select"
@@ -457,7 +497,7 @@ export default function HomePage({
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={onResetFilters}
+                onClick={handleResetAll}
                 className="ms-auto text-xs font-medium text-slate-400 underline-offset-4 transition-colors hover:text-white hover:underline"
               >
                 {lang === 'ar' ? 'مسح الكل' : 'Clear all'}
@@ -492,19 +532,53 @@ export default function HomePage({
         {sorted.length === 0 ? (
           <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 py-16 text-center">
             <Inbox className="h-10 w-10 text-slate-600" />
-            <p className="text-slate-400">
-              {lang === 'ar'
-                ? 'لا توجد عروض مطابقة. جرّب تعديل البحث أو التصفية.'
-                : 'No matching offers. Try adjusting your search or filters.'}
-            </p>
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={onResetFilters}
-                className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
-              >
-                {lang === 'ar' ? 'مسح الفلاتر والبحث' : 'Clear filters and search'}
-              </button>
+            {savedOnly && validSavedCount === 0 ? (
+              <>
+                <p className="max-w-md text-sm text-slate-300">
+                  {lang === 'ar'
+                    ? 'لم تقم بحفظ أي عروض بعد. اضغط على أيقونة الإشارة المرجعية في بطاقة أي عرض لحفظه هنا والرجوع إليه بسرعة.'
+                    : 'No saved deals yet. Click the bookmark icon on any deal card to save it here for quick access.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSavedOnly(false)}
+                  className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
+                >
+                  {lang === 'ar' ? 'استكشاف كل العروض' : 'Explore all deals'}
+                </button>
+              </>
+            ) : savedOnly && validSavedCount > 0 ? (
+              <>
+                <p className="max-w-md text-sm text-slate-300">
+                  {lang === 'ar'
+                    ? 'لا توجد عروض محفوظة تطابق الفلاتر المحددة حالياً.'
+                    : 'No saved deals match your current filters.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={onResetFilters}
+                  className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
+                >
+                  {lang === 'ar' ? 'مسح الفلاتر والبحث' : 'Clear filters and search'}
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-slate-400">
+                  {lang === 'ar'
+                    ? 'لا توجد عروض مطابقة. جرّب تعديل البحث أو التصفية.'
+                    : 'No matching offers. Try adjusting your search or filters.'}
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={handleResetAll}
+                    className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
+                  >
+                    {lang === 'ar' ? 'مسح الفلاتر والبحث' : 'Clear filters and search'}
+                  </button>
+                )}
+              </>
             )}
           </div>
         ) : (
@@ -541,10 +615,22 @@ export default function HomePage({
                       <p className="text-xs text-slate-300">
                         {deadlineTierLabel(deal.registration.deadline, lang, referenceNow)}
                       </p>
-                      <DealCard deal={deal} onOpen={onOpenDeal} index={i} />
+                      <DealCard
+                        deal={deal}
+                        onOpen={onOpenDeal}
+                        index={i}
+                        isSaved={savedSet.has(deal.slug)}
+                        onToggleSave={toggle}
+                      />
                     </div>
                   ) : (
-                    <DealCard deal={deal} onOpen={onOpenDeal} index={i} />
+                    <DealCard
+                      deal={deal}
+                      onOpen={onOpenDeal}
+                      index={i}
+                      isSaved={savedSet.has(deal.slug)}
+                      onToggleSave={toggle}
+                    />
                   )}
                 </div>
               );
@@ -579,6 +665,8 @@ export default function HomePage({
           </div>
         </section>
       )}
+
+      <ScrollToTop />
     </main>
   );
 }

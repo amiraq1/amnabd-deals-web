@@ -1,7 +1,7 @@
 import CopyDealLink from '@/components/CopyDealLink';
 import EvidenceBadge from '@/components/EvidenceBadge';
 import { offerStatusLabel } from '@/lib/evidence';
-import { ExternalLink, FileText, ShieldCheck } from 'lucide-react';
+import { ExternalLink, FileText, ShieldCheck, Bookmark, CircleAlert } from 'lucide-react';
 import type { Deal, UsageGuide } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -16,6 +16,8 @@ import { safeUrl, resolveDealOfficialUrl } from '@/lib/safeUrl';
 import InfoBanner from '@/components/InfoBanner';
 import { getDealDisplayName } from '@/lib/dealMetadata';
 import DealIcon from '@/components/DealIcon';
+import ScrollToTop from '@/components/ScrollToTop';
+import { useSavedDeals } from '@/hooks/useSavedDeals';
 
 interface DealDetailPageProps {
   deal: Deal;
@@ -31,239 +33,348 @@ export default function DealDetailPage({
   onBack,
 }: DealDetailPageProps) {
   const { lang, dir } = useLanguage();
+  const { isSaved, toggle } = useSavedDeals();
+  const saved = isSaved(deal.slug);
+
   const displayName = getDealDisplayName(deal);
   const description = lang === 'ar' ? deal.description_ar : deal.description_en;
   const offerUrl = resolveDealOfficialUrl(deal);
+  const firstBenefit = deal.benefits[0];
 
   const e = deal.eligibility;
-
   const unknownCount = deal.review.unknown_fields.length;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 pb-8 pt-8 sm:px-6">
-      <button
-        onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-white"
-      >
-        {dir === 'rtl' ? <ArrowRTL /> : <ArrowLTR />}
-        {lang === 'ar' ? 'كل العروض' : 'All deals'}
-      </button>
+    <>
+      <main className="mx-auto max-w-4xl px-4 pb-28 pt-8 sm:px-6 sm:pb-8">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-white"
+        >
+          {dir === 'rtl' ? <ArrowRTL /> : <ArrowLTR />}
+          {lang === 'ar' ? 'كل العروض' : 'All deals'}
+        </button>
 
-      <header className="animate-fade-up mt-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <DealIcon deal={deal} size="lg" />
-            <div>
-              <h1 className="font-heading text-3xl font-extrabold text-white">{displayName}</h1>
-              {lang === 'ar' && deal.name_ar && deal.name_ar !== displayName && (
-                <p className="mt-0.5 text-sm font-medium text-slate-400">{deal.name_ar}</p>
+        <header className="animate-fade-up mt-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <DealIcon deal={deal} size="lg" />
+              <div>
+                <h1 className="font-heading text-3xl font-extrabold text-white">{displayName}</h1>
+                {lang === 'ar' && deal.name_ar && deal.name_ar !== displayName && (
+                  <p className="mt-0.5 text-sm font-medium text-slate-400">{deal.name_ar}</p>
+                )}
+              </div>
+            </div>
+            <EvidenceBadge
+              status={deal.review.verification_status}
+              reviewedOn={deal.review.reviewed_on}
+              lang={lang}
+            />
+          </div>
+
+          <p className="mt-4 text-base leading-relaxed text-slate-300">{description}</p>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            {offerUrl && (
+              <a
+                href={offerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-950/40 transition-all hover:bg-emerald-400"
+              >
+                <bdi>{lang === 'ar' ? 'المصدر الرسمي' : 'Official Source'}</bdi>
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+
+            <button
+              type="button"
+              onClick={() => toggle(deal.slug)}
+              aria-pressed={saved}
+              aria-label={
+                lang === 'ar'
+                  ? saved
+                    ? `إزالة ${displayName} من المحفوظات`
+                    : `حفظ ${displayName} في المفضلة`
+                  : saved
+                    ? `Remove ${displayName} from saved`
+                    : `Save ${displayName}`
+              }
+              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
+                saved
+                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                  : 'border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-600 hover:text-white'
+              }`}
+            >
+              <Bookmark className={`h-4 w-4 ${saved ? 'fill-emerald-400 text-emerald-400' : ''}`} />
+              <span>
+                {saved
+                  ? lang === 'ar'
+                    ? 'محفوظ في المفضلة'
+                    : 'Saved'
+                  : lang === 'ar'
+                    ? 'حفظ في المفضلة'
+                    : 'Save deal'}
+              </span>
+            </button>
+
+            <CopyDealLink key={deal.slug} slug={deal.slug} />
+          </div>
+        </header>
+
+        {guide && (
+          <section className="mt-10">
+            <h2 className="font-heading text-xl font-bold text-white">
+              {sectionLabels.eligibility ?? (lang === 'ar' ? 'الأهلية' : 'Eligibility')}
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              {guide.sections.eligibility[lang]}
+            </p>
+
+            <h2 className="font-heading mt-8 text-xl font-bold text-white">
+              {sectionLabels.registration ??
+                (lang === 'ar' ? 'التسجيل والموعد النهائي' : 'Registration and deadline')}
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              {guide.sections.registration[lang]}
+            </p>
+
+            <h2 className="font-heading mt-8 text-xl font-bold text-white">
+              {sectionLabels.limitations ?? (lang === 'ar' ? 'القيود والرسوم' : 'Limits and fees')}
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              {guide.sections.limitations[lang]}
+            </p>
+
+            <h2 className="font-heading mt-8 text-xl font-bold text-white">
+              {sectionLabels.after_expiry ??
+                (lang === 'ar' ? 'بعد انتهاء المنفعة' : 'After the benefit ends')}
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              {guide.sections.after_expiry[lang]}
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {Array.from(
+                new Set(
+                  Object.values(guide.sections).flatMap((s) =>
+                    s.sources.map((u) => safeUrl(u)).filter((u): u is string => !!u)
+                  )
+                )
+              ).map((url) => (
+                <a
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 text-xs text-emerald-300 transition-colors hover:bg-slate-700"
+                >
+                  <bdi className="truncate">{url}</bdi>
+                  <ExternalLink className="h-3 w-3 shrink-0" />
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="mt-10 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
+              {lang === 'ar' ? 'شروط الأهلية' : 'Eligibility facts'}
+            </h3>
+            <dl className="mt-4 space-y-2.5 text-sm">
+              <FactRow
+                label={lang === 'ar' ? 'حالة الطالب' : 'Student status'}
+                value={requirementLabel(e.student_status, lang)}
+              />
+              <FactRow
+                label={lang === 'ar' ? 'حساب جديد' : 'New account'}
+                value={requirementLabel(e.new_account, lang)}
+              />
+              <FactRow
+                label={lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
+                value={requirementLabel(e.card_required, lang)}
+              />
+              <FactRow
+                label={lang === 'ar' ? 'هاتف' : 'Phone'}
+                value={requirementLabel(e.phone_required, lang)}
+              />
+            </dl>
+            <p className="mt-4 text-xs leading-relaxed text-slate-500">{e.conditions[lang]}</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
+              {lang === 'ar' ? 'المنافع' : 'Benefits'}
+            </h3>
+            <ul className="mt-4 space-y-4">
+              {deal.benefits.map((b, i) => (
+                <li key={i} className="text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                      <bdi>{benefitTypeLabel(b.type, lang)}</bdi>
+                    </span>
+                    <span className="font-semibold text-white">
+                      <bdi>{benefitAmount(b.amount, lang)}</bdi>
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      <bdi>{durationLabel(b.duration, lang)}</bdi>
+                    </span>
+                    {frequencyLabel(b.frequency, lang) && (
+                      <span className="rounded-md bg-gold/10 px-2 py-0.5 text-xs text-gold">
+                        <bdi>{frequencyLabel(b.frequency, lang)}</bdi>
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1.5 leading-relaxed text-slate-300">{b.description[lang]}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {unknownCount > 0 && (
+          <section className="mt-8">
+            <InfoBanner
+              kind="info"
+              text={
+                lang === 'ar'
+                  ? `حقول غير مثبتة بالأدلة (${unknownCount.toLocaleString('ar-EG')}): ${deal.review.unknown_fields.join('، ')}. تعني «غير معلوم» أن المصادر المتاحة لا تؤكد القيمة أو القاعدة.`
+                  : `Fields not established by evidence (${unknownCount}): ${deal.review.unknown_fields.join(', ')}. “Unknown” means the available sources do not confirm the value or rule.`
+              }
+            />
+          </section>
+        )}
+
+        <p className="mt-6 text-xs text-slate-400">
+          {lang === 'ar'
+            ? `حقول مسجلة غير مثبتة: ${unknownCount.toLocaleString('ar-EG')}. عددها لا يثبت اكتمال المعلومات، ودعم المصدر لا يضمن استمرار العرض أو الأهلية.`
+            : `Recorded unestablished fields: ${unknownCount}. This count does not prove completeness; source support does not guarantee availability or eligibility.`}
+        </p>
+
+        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+          <h3 className="font-heading flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+            <ShieldCheck className="h-4 w-4" />
+            {lang === 'ar' ? 'المصادر الرسمية والأدلة' : 'Official sources and evidence'}
+          </h3>
+          <div className="mt-4 space-y-5">
+            {deal.official_sources.map((src, i) => (
+              <div key={i}>
+                <a
+                  href={safeUrl(src.url) ?? '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(ev) => {
+                    if (!safeUrl(src.url)) ev.preventDefault();
+                  }}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300"
+                >
+                  <bdi>{src.title}</bdi>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+                {src.context && (
+                  <p className="mt-1 text-xs italic leading-relaxed text-slate-500">{src.context}</p>
+                )}
+                <ul className="mt-2 space-y-1.5">
+                  {src.claims.map((claim, j) => (
+                    <li
+                      key={j}
+                      className="flex items-start gap-2 text-xs leading-relaxed text-slate-400"
+                    >
+                      <FileText className="mt-0.5 h-3 w-3 shrink-0 text-slate-600" />
+                      <span>{claim.evidence}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-500">
+            {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}:{' '}
+            <bdi>{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
+            {' · '}
+            {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
+            <span className="text-slate-300">{offerStatusLabel(deal.review.offer_status, lang)}</span>
+          </p>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+          <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
+            {lang === 'ar' ? 'ملاحظات المراجعة' : 'Review notes'}
+          </h3>
+          <p className="mt-3 text-sm leading-relaxed text-slate-300">{deal.review.notes[lang]}</p>
+        </section>
+      </main>
+
+      {/* Sticky Mobile Action Bar */}
+      <aside
+        aria-label={lang === 'ar' ? 'إجراءات العرض السريعة' : 'Quick deal actions'}
+        className="sm:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl backdrop-blur-md"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-sm font-bold text-white">{displayName}</h2>
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              {firstBenefit ? (
+                <span className="truncate text-emerald-400 font-medium">
+                  <bdi>{benefitTypeLabel(firstBenefit.type, lang)}</bdi>
+                  {' · '}
+                  <bdi>{benefitAmount(firstBenefit.amount, lang)}</bdi>
+                </span>
+              ) : (
+                <span className="truncate text-slate-400">
+                  {lang === 'ar' ? 'عرض موثق' : 'Verified offer'}
+                </span>
               )}
             </div>
           </div>
-          <EvidenceBadge
-            status={deal.review.verification_status}
-            reviewedOn={deal.review.reviewed_on}
-            lang={lang}
-          />
-        </div>
-        <p className="mt-4 text-base leading-relaxed text-slate-300">{description}</p>
-        {offerUrl && (
-          <a
-            href={offerUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-950/40 transition-all hover:bg-emerald-400"
-          >
-            <bdi>{lang === 'ar' ? 'المصدر الرسمي' : 'Official Source'}</bdi>
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        )}
-        <CopyDealLink key={deal.slug} slug={deal.slug} />
-      </header>
 
-      {guide && (
-        <section className="mt-10">
-          <h2 className="font-heading text-xl font-bold text-white">
-            {sectionLabels.eligibility ?? (lang === 'ar' ? 'الأهلية' : 'Eligibility')}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">
-            {guide.sections.eligibility[lang]}
-          </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => toggle(deal.slug)}
+              aria-pressed={saved}
+              aria-label={
+                lang === 'ar'
+                  ? saved
+                    ? `إزالة ${displayName} من المحفوظات`
+                    : `حفظ ${displayName} في المفضلة`
+                  : saved
+                    ? `Remove ${displayName} from saved`
+                    : `Save ${displayName}`
+              }
+              className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-colors ${
+                saved
+                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
+                  : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
+              }`}
+            >
+              <Bookmark className={`h-4 w-4 ${saved ? 'fill-emerald-400 text-emerald-400' : ''}`} />
+            </button>
 
-          <h2 className="font-heading mt-8 text-xl font-bold text-white">
-            {sectionLabels.registration ??
-              (lang === 'ar' ? 'التسجيل والموعد النهائي' : 'Registration and deadline')}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">
-            {guide.sections.registration[lang]}
-          </p>
-
-          <h2 className="font-heading mt-8 text-xl font-bold text-white">
-            {sectionLabels.limitations ?? (lang === 'ar' ? 'القيود والرسوم' : 'Limits and fees')}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">
-            {guide.sections.limitations[lang]}
-          </p>
-
-          <h2 className="font-heading mt-8 text-xl font-bold text-white">
-            {sectionLabels.after_expiry ??
-              (lang === 'ar' ? 'بعد انتهاء المنفعة' : 'After the benefit ends')}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">
-            {guide.sections.after_expiry[lang]}
-          </p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {Array.from(
-              new Set(
-                Object.values(guide.sections).flatMap((s) =>
-                  s.sources.map((u) => safeUrl(u)).filter((u): u is string => !!u)
-                )
-              )
-            ).map((url) => (
+            {offerUrl ? (
               <a
-                key={url}
-                href={url}
+                href={offerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 text-xs text-emerald-300 transition-colors hover:bg-slate-700"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-bold text-slate-950 shadow-md transition-all hover:bg-emerald-400 active:scale-95"
               >
-                <bdi className="truncate">{url}</bdi>
-                <ExternalLink className="h-3 w-3 shrink-0" />
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="mt-10 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
-            {lang === 'ar' ? 'شروط الأهلية' : 'Eligibility facts'}
-          </h3>
-          <dl className="mt-4 space-y-2.5 text-sm">
-            <FactRow
-              label={lang === 'ar' ? 'حالة الطالب' : 'Student status'}
-              value={requirementLabel(e.student_status, lang)}
-            />
-            <FactRow
-              label={lang === 'ar' ? 'حساب جديد' : 'New account'}
-              value={requirementLabel(e.new_account, lang)}
-            />
-            <FactRow
-              label={lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
-              value={requirementLabel(e.card_required, lang)}
-            />
-            <FactRow
-              label={lang === 'ar' ? 'هاتف' : 'Phone'}
-              value={requirementLabel(e.phone_required, lang)}
-            />
-          </dl>
-          <p className="mt-4 text-xs leading-relaxed text-slate-500">{e.conditions[lang]}</p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
-            {lang === 'ar' ? 'المنافع' : 'Benefits'}
-          </h3>
-          <ul className="mt-4 space-y-4">
-            {deal.benefits.map((b, i) => (
-              <li key={i} className="text-sm">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
-                    <bdi>{benefitTypeLabel(b.type, lang)}</bdi>
-                  </span>
-                  <span className="font-semibold text-white">
-                    <bdi>{benefitAmount(b.amount, lang)}</bdi>
-                  </span>
-                  <span className="text-xs text-slate-400">
-                    <bdi>{durationLabel(b.duration, lang)}</bdi>
-                  </span>
-                  {frequencyLabel(b.frequency, lang) && (
-                    <span className="rounded-md bg-gold/10 px-2 py-0.5 text-xs text-gold">
-                      <bdi>{frequencyLabel(b.frequency, lang)}</bdi>
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1.5 leading-relaxed text-slate-300">{b.description[lang]}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {unknownCount > 0 && (
-        <section className="mt-8">
-          <InfoBanner
-            kind="info"
-            text={
-              lang === 'ar'
-                ? `حقول غير مثبتة بالأدلة (${unknownCount.toLocaleString('ar-EG')}): ${deal.review.unknown_fields.join('، ')}. تعني «غير معلوم» أن المصادر المتاحة لا تؤكد القيمة أو القاعدة.`
-                : `Fields not established by evidence (${unknownCount}): ${deal.review.unknown_fields.join(', ')}. “Unknown” means the available sources do not confirm the value or rule.`
-            }
-          />
-        </section>
-      )}
-
-      <p className="mt-6 text-xs text-slate-400">
-        {lang === 'ar'
-          ? `حقول مسجلة غير مثبتة: ${unknownCount.toLocaleString('ar-EG')}. عددها لا يثبت اكتمال المعلومات، ودعم المصدر لا يضمن استمرار العرض أو الأهلية.`
-          : `Recorded unestablished fields: ${unknownCount}. This count does not prove completeness; source support does not guarantee availability or eligibility.`}
-      </p>
-
-      <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-        <h3 className="font-heading flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
-          <ShieldCheck className="h-4 w-4" />
-          {lang === 'ar' ? 'المصادر الرسمية والأدلة' : 'Official sources and evidence'}
-        </h3>
-        <div className="mt-4 space-y-5">
-          {deal.official_sources.map((src, i) => (
-            <div key={i}>
-              <a
-                href={safeUrl(src.url) ?? '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(ev) => {
-                  if (!safeUrl(src.url)) ev.preventDefault();
-                }}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300"
-              >
-                <bdi>{src.title}</bdi>
+                <bdi>{lang === 'ar' ? 'المصدر الرسمي' : 'Official Source'}</bdi>
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
-              {src.context && (
-                <p className="mt-1 text-xs italic leading-relaxed text-slate-500">{src.context}</p>
-              )}
-              <ul className="mt-2 space-y-1.5">
-                {src.claims.map((claim, j) => (
-                  <li
-                    key={j}
-                    className="flex items-start gap-2 text-xs leading-relaxed text-slate-400"
-                  >
-                    <FileText className="mt-0.5 h-3 w-3 shrink-0 text-slate-600" />
-                    <span>{claim.evidence}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-500">
+                <CircleAlert className="h-3 w-3" />
+                {lang === 'ar' ? 'غير متاح' : 'Unavailable'}
+              </span>
+            )}
+          </div>
         </div>
-        <p className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-500">
-          {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}:{' '}
-          <bdi>{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
-          {' · '}
-          {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
-          <span className="text-slate-300">{offerStatusLabel(deal.review.offer_status, lang)}</span>
-        </p>
-      </section>
+      </aside>
 
-      <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-        <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
-          {lang === 'ar' ? 'ملاحظات المراجعة' : 'Review notes'}
-        </h3>
-        <p className="mt-3 text-sm leading-relaxed text-slate-300">{deal.review.notes[lang]}</p>
-      </section>
-    </main>
+      <ScrollToTop hasBottomBar />
+    </>
   );
 }
 

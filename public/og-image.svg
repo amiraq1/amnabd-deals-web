@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020617" />
+      <stop offset="50%" stop-color="#0b1329" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <radialGradient id="glow" cx="80%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glow2" cx="20%" cy="80%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+  <rect width="1200" height="630" fill="url(#glow2)" />
+  <rect x="40" y="40" width="1120" height="550" rx="32" fill="none" stroke="#1e293b" stroke-width="2" />
+
+  <!-- Logo Icon -->
+  <g transform="translate(100, 110)">
+    <rect width="84" height="84" rx="22" fill="url(#brandGrad)" />
+    <g transform="translate(14, 14) scale(2.3)" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+      <path d="M5 3v4" />
+      <path d="M19 17v4" />
+      <path d="M3 5h4" />
+      <path d="M17 19h4" />
+    </g>
+  </g>
+
+  <!-- Brand Badge -->
+  <g transform="translate(210, 132)">
+    <rect width="150" height="40" rx="20" fill="#0f172a" stroke="#334155" stroke-width="1.5" />
+    <circle cx="24" cy="20" r="5" fill="#10b981" />
+    <text x="40" y="25" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600">amnabd.com</text>
+  </g>
+
+  <!-- Title & Subtitle -->
+  <text x="100" y="280" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="800" letter-spacing="-1">AMNABD Deals</text>
+  <text x="100" y="360" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="700">عروض ومنافع أدوات الذكاء الاصطناعي الموثقة</text>
+  <text x="100" y="420" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="400">Verified AI Tools, Cloud Credits &amp; Developer Benefits</text>
+
+  <!-- Bottom Pills -->
+  <g transform="translate(100, 480)">
+    <rect width="210" height="42" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
+    <text x="24" y="27" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">✓ مصادر وأدلة رسمية</text>
+  </g>
+  <g transform="translate(330, 480)">
+    <rect width="200" height="42" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
+    <text x="24" y="27" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">✓ شروط أهلية موثقة</text>
+  </g>
+  <g transform="translate(550, 480)">
+    <rect width="180" height="42" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
+    <text x="24" y="27" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">✓ تحديث دوري مستمر</text>
+  </g>
+</svg>
