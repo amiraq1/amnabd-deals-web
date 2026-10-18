@@ -1,182 +1,178 @@
 export const SAVED_DEALS_STORAGE_KEY = 'amnabd_saved_deals_v1';
 export const SAVED_DEALS_EVENT = 'amnabd:saved-deals-changed';
+export const MAX_SAVED_DEALS = 500;
 
-// In-memory fallback set for private browsing, quota errors, or non-browser environments
+// A storage failure selects memory for reads. A later explicit write retries
+// persistence and recovers only on success; reads never overwrite unsaved edits.
 let memoryFallback = new Set<string>();
 let storageDisabled = false;
 
-/**
- * Resolves localStorage safely without throwing if cookies/storage are disabled
- */
 function resolveStorage(override?: Storage | null): Storage | null {
-  if (storageDisabled) return null;
-  if (override !== undefined) return override;
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage;
-    }
+    const storage =
+      override !== undefined
+        ? override
+        : typeof window === 'undefined'
+          ? null
+          : window.localStorage;
+    if (!storage) storageDisabled = true;
+    return storage;
   } catch {
-    // Storage access may throw SecurityError in strict private browsing
     storageDisabled = true;
+    return null;
   }
-  return null;
 }
 
-/**
- * Sanitizes and deduplicates a raw array of items into valid string slugs
- */
-function sanitizeSlugs(items: unknown): string[] {
+export function sanitizeSavedDealKeys(items: unknown): string[] {
   if (!Array.isArray(items)) return [];
-  const result: string[] = [];
-  const seen = new Set<string>();
+  const keys = new Set<string>();
   for (const item of items) {
-    if (typeof item === 'string') {
-      const trimmed = item.trim();
-      if (trimmed.length > 0 && !seen.has(trimmed)) {
-        seen.add(trimmed);
-        result.push(trimmed);
-      }
-    }
+    if (typeof item === 'string' && item.trim()) keys.add(item.trim());
+    if (keys.size >= MAX_SAVED_DEALS) break;
   }
-  return result;
+  return [...keys];
 }
 
-/**
- * Dispatches cross-component update notification
- */
+export function countValidSavedDeals(
+  savedKeys: readonly string[],
+  availableKeys: readonly string[]
+): number {
+  const available = new Set(availableKeys);
+  return sanitizeSavedDealKeys(savedKeys).filter((key) => available.has(key)).length;
+}
+
+export interface SavedDealsSnapshot {
+  readonly keys: readonly string[];
+  readonly degraded: boolean;
+}
+const EMPTY_KEYS: readonly string[] = Object.freeze([]);
+export const EMPTY_SAVED_SNAPSHOT: SavedDealsSnapshot = Object.freeze({
+  keys: EMPTY_KEYS,
+  degraded: false,
+});
+let cachedSnapshot = EMPTY_SAVED_SNAPSHOT;
+
+export function getSavedDealsSnapshot(): SavedDealsSnapshot {
+  const keys = getSavedDeals();
+  // Element comparison avoids signature collisions for IDs containing NUL.
+  if (
+    cachedSnapshot.degraded !== storageDisabled ||
+    keys.length !== cachedSnapshot.keys.length ||
+    keys.some((key, i) => key !== cachedSnapshot.keys[i])
+  ) {
+    cachedSnapshot = Object.freeze({ keys: Object.freeze(keys), degraded: storageDisabled });
+  }
+  return cachedSnapshot;
+}
+
 export function notifySavedDealsChanged(): void {
-  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(new CustomEvent(SAVED_DEALS_EVENT));
+  } catch {
+    /* Optional notification must not break saving. */
+  }
+}
+
+export function isSavedDealsSessionOnly(): boolean {
+  return storageDisabled;
+}
+
+export function getSavedDeals(storageOverride?: Storage | null): string[] {
+  if (storageDisabled) return [...memoryFallback];
+  const storage = resolveStorage(storageOverride);
+  if (!storage) return [...memoryFallback];
+  let raw: string | null;
+  try {
+    raw = storage.getItem(SAVED_DEALS_STORAGE_KEY);
+  } catch {
+    storageDisabled = true;
+    return [...memoryFallback];
+  }
+  // Missing key and corrupt JSON mean empty, not an old cached selection. This
+  // matters after removeItem/clear in another tab, including subsequent failures.
+  let parsed: unknown = [];
+  if (raw !== null) {
     try {
-      window.dispatchEvent(new CustomEvent(SAVED_DEALS_EVENT));
+      parsed = JSON.parse(raw);
     } catch {
-      // Ignore if event dispatch fails in restricted environments
+      parsed = [];
     }
   }
+  const slugs = sanitizeSavedDealKeys(parsed);
+  memoryFallback = new Set(slugs);
+  return slugs;
 }
 
-/**
- * Returns the list of currently saved deal slugs
- */
-export function getSavedDeals(storageOverride?: Storage | null): string[] {
-  const storage = resolveStorage(storageOverride);
-  if (!storage) {
-    return Array.from(memoryFallback);
-  }
-
-  try {
-    const raw = storage.getItem(SAVED_DEALS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    const sanitized = sanitizeSlugs(parsed);
-    // Keep memory fallback in sync with storage
-    memoryFallback = new Set(sanitized);
-    return sanitized;
-  } catch {
-    // On JSON parse error or getItem failure, fall back to memory without crashing
-    return Array.from(memoryFallback);
-  }
-}
-
-/**
- * Checks whether a given slug is saved
- */
 export function isDealSaved(slug: string, storageOverride?: Storage | null): boolean {
-  if (!slug || typeof slug !== 'string') return false;
-  const trimmed = slug.trim();
-  const list = getSavedDeals(storageOverride);
-  return list.includes(trimmed);
+  return (
+    typeof slug === 'string' &&
+    !!slug.trim() &&
+    getSavedDeals(storageOverride).includes(slug.trim())
+  );
 }
 
-/**
- * Internal persistence helper
- */
 function persistSlugs(slugs: string[], storageOverride?: Storage | null): void {
-  const sanitized = sanitizeSlugs(slugs);
+  const sanitized = sanitizeSavedDealKeys(slugs);
   memoryFallback = new Set(sanitized);
-
   const storage = resolveStorage(storageOverride);
   if (storage) {
     try {
       storage.setItem(SAVED_DEALS_STORAGE_KEY, JSON.stringify(sanitized));
+      storageDisabled = false;
     } catch {
-      // QuotaExceededError or SecurityError: disable storage for this session and keep in memoryFallback
       storageDisabled = true;
     }
   }
-
   notifySavedDealsChanged();
 }
 
-/**
- * Adds a deal slug to saved deals
- */
 export function saveDeal(slug: string, storageOverride?: Storage | null): boolean {
-  if (!slug || typeof slug !== 'string') return false;
-  const trimmed = slug.trim();
-  if (trimmed.length === 0) return false;
-
-  const current = getSavedDeals(storageOverride);
-  if (current.includes(trimmed)) return false;
-
-  persistSlugs([...current, trimmed], storageOverride);
+  if (typeof slug !== 'string' || !slug.trim()) return false;
+  const key = slug.trim(),
+    current = getSavedDeals(storageOverride);
+  if (current.includes(key) || current.length >= MAX_SAVED_DEALS) return false;
+  persistSlugs([...current, key], storageOverride);
   return true;
 }
 
-/**
- * Removes a deal slug from saved deals
- */
 export function removeSavedDeal(slug: string, storageOverride?: Storage | null): boolean {
-  if (!slug || typeof slug !== 'string') return false;
-  const trimmed = slug.trim();
-
-  const current = getSavedDeals(storageOverride);
-  if (!current.includes(trimmed)) return false;
-
+  if (typeof slug !== 'string' || !slug.trim()) return false;
+  const key = slug.trim(),
+    current = getSavedDeals(storageOverride);
+  if (!current.includes(key)) return false;
   persistSlugs(
-    current.filter((s) => s !== trimmed),
+    current.filter((item) => item !== key),
     storageOverride
   );
   return true;
 }
 
-/**
- * Toggles saved status for a deal slug.
- * Returns true if the deal is now saved, false if it was removed.
- */
 export function toggleSavedDeal(slug: string, storageOverride?: Storage | null): boolean {
-  if (!slug || typeof slug !== 'string') return false;
-  const trimmed = slug.trim();
-  if (trimmed.length === 0) return false;
-
-  const current = getSavedDeals(storageOverride);
-  const exists = current.includes(trimmed);
-
-  if (exists) {
-    removeSavedDeal(trimmed, storageOverride);
-    return false;
-  } else {
-    saveDeal(trimmed, storageOverride);
-    return true;
-  }
+  if (typeof slug !== 'string' || !slug.trim()) return false;
+  const key = slug.trim(),
+    current = getSavedDeals(storageOverride);
+  const saved = !current.includes(key);
+  if (saved && current.length >= MAX_SAVED_DEALS) return false;
+  persistSlugs(saved ? [...current, key] : current.filter((item) => item !== key), storageOverride);
+  return saved;
 }
 
-/**
- * Clears all saved deals
- */
 export function clearSavedDeals(storageOverride?: Storage | null): void {
   persistSlugs([], storageOverride);
 }
 
-/**
- * Subscribes to saved deals changes across tabs and components
- */
 export function subscribeSavedDeals(callback: () => void): () => void {
   if (typeof window === 'undefined') return () => {};
   const handler = () => callback();
-  const storageHandler = (e: StorageEvent) => {
-    if (!e.key || e.key === SAVED_DEALS_STORAGE_KEY) {
-      callback();
+  const storageHandler = (event: StorageEvent) => {
+    if (storageDisabled || (event.key !== null && event.key !== SAVED_DEALS_STORAGE_KEY)) return;
+    try {
+      if (event.storageArea && event.storageArea !== window.localStorage) return;
+    } catch {
+      storageDisabled = true;
     }
+    callback();
   };
   window.addEventListener(SAVED_DEALS_EVENT, handler);
   window.addEventListener('storage', storageHandler);
@@ -186,10 +182,9 @@ export function subscribeSavedDeals(callback: () => void): () => void {
   };
 }
 
-/**
- * Resets in-memory fallback state and storage flags (intended for isolated testing)
- */
+// Isolated unit tests only; never clears real browser storage.
 export function _resetMemoryFallback(): void {
   memoryFallback = new Set<string>();
   storageDisabled = false;
+  cachedSnapshot = EMPTY_SAVED_SNAPSHOT;
 }

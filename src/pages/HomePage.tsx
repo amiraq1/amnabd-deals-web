@@ -14,6 +14,7 @@ import DealCard from '@/components/DealCard';
 import InfoBanner from '@/components/InfoBanner';
 import ScrollToTop from '@/components/ScrollToTop';
 import { useSavedDeals } from '@/hooks/useSavedDeals';
+import { countValidSavedDeals } from '@/lib/savedDeals';
 
 interface HomePageProps {
   deals: Deal[];
@@ -39,8 +40,17 @@ export default function HomePage({
   onResetFilters = () => undefined,
 }: HomePageProps) {
   const { lang, pick } = useLanguage();
-  const { savedSet, toggle } = useSavedDeals();
+  const { savedList, savedSet, toggle, degraded, atLimit } = useSavedDeals();
   const [savedOnly, setSavedOnly] = useState(false);
+  useEffect(() => {
+    const resetLocalFilter = () => setSavedOnly(false);
+    window.addEventListener('popstate', resetLocalFilter);
+    window.addEventListener('hashchange', resetLocalFilter);
+    return () => {
+      window.removeEventListener('popstate', resetLocalFilter);
+      window.removeEventListener('hashchange', resetLocalFilter);
+    };
+  }, []);
   const [showFilters, setShowFilters] = useState(false);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'success' | 'manual'>('idle');
   const [manualLink, setManualLink] = useState('');
@@ -84,15 +94,14 @@ export default function HomePage({
   const queryGroups = useMemo(() => compileQuery(filterState.q), [filterState.q]);
   const categories = useMemo(() => categoryOptions(deals, lang), [deals, lang]);
 
-  // Precompute available deals slugs and valid saved count
-  const availableSlugs = useMemo(() => new Set(deals.map((d) => d.slug)), [deals]);
-  const validSavedCount = useMemo(() => {
-    let count = 0;
-    for (const slug of savedSet) {
-      if (availableSlugs.has(slug)) count++;
-    }
-    return count;
-  }, [savedSet, availableSlugs]);
+  const validSavedCount = useMemo(
+    () =>
+      countValidSavedDeals(
+        savedList,
+        deals.map((deal) => deal.slug)
+      ),
+    [savedList, deals]
+  );
 
   // Precompute searchable corpora once per deals load
   const corpora = useMemo(() => {
@@ -247,7 +256,7 @@ export default function HomePage({
           </p>
           <button
             type="button"
-            onClick={onResetFilters}
+            onClick={handleResetAll}
             className="rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-100 hover:bg-amber-500/30"
           >
             {lang === 'ar' ? 'مسح الفئة' : 'Clear category'}
@@ -362,9 +371,9 @@ export default function HomePage({
           <button
             type="button"
             onClick={() => onFilterChange({ category: null, uncategorized: false }, 'push')}
-            aria-pressed={filterState.category === null && !filterState.uncategorized && !savedOnly}
+            aria-pressed={filterState.category === null && !filterState.uncategorized}
             className={`min-h-11 max-w-full break-words rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-              filterState.category === null && !filterState.uncategorized && !savedOnly
+              filterState.category === null && !filterState.uncategorized
                 ? 'bg-emerald-500 text-slate-950 font-semibold'
                 : 'border border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
             }`}
@@ -378,6 +387,7 @@ export default function HomePage({
           <button
             type="button"
             onClick={() => setSavedOnly((s) => !s)}
+            aria-describedby="saved-deals-scope"
             aria-pressed={savedOnly}
             className={`min-h-11 max-w-full break-words rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5 ${
               savedOnly
@@ -419,6 +429,26 @@ export default function HomePage({
             </button>
           ))}
         </div>
+
+        <p className="mt-3 text-sm text-slate-400" id="saved-deals-scope">
+          {lang === 'ar'
+            ? 'المحفوظات تخص هذا المتصفح ولا تنتقل مع رابط البحث. فلتر المحفوظة يعمل مع بقية الفلاتر.'
+            : 'Saved deals belong to this browser and are not included in shared search links. Saved-only combines with other filters.'}
+        </p>
+        {atLimit && (
+          <p role="status" className="mt-2 text-sm text-amber-200">
+            {lang === 'ar'
+              ? 'بلغت حد 500 عرض محفوظ؛ أزل عرضاً لحفظ آخر.'
+              : '500-save limit reached. Remove a saved deal before adding another.'}
+          </p>
+        )}
+        {degraded && (
+          <p role="status" className="mt-2 text-sm text-amber-200">
+            {lang === 'ar'
+              ? 'التخزين المحلي غير متاح؛ الحفظ مؤقت في هذا التبويب ما لم تنجح محاولة كتابة لاحقة؛ قد يُفقد عند إعادة التحميل أو الإغلاق.'
+              : 'Local storage is unavailable. Saves are temporary in this tab until a later write succeeds; they may be lost on reload or close.'}
+          </p>
+        )}
 
         {showFilters && (
           <div
@@ -541,7 +571,7 @@ export default function HomePage({
                 </p>
                 <button
                   type="button"
-                  onClick={() => setSavedOnly(false)}
+                  onClick={handleResetAll}
                   className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
                 >
                   {lang === 'ar' ? 'استكشاف كل العروض' : 'Explore all deals'}
@@ -556,7 +586,7 @@ export default function HomePage({
                 </p>
                 <button
                   type="button"
-                  onClick={onResetFilters}
+                  onClick={handleResetAll}
                   className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
                 >
                   {lang === 'ar' ? 'مسح الفلاتر والبحث' : 'Clear filters and search'}

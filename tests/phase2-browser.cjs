@@ -194,7 +194,7 @@ const rows = [
       await cloud(p).click();
       await count(p, 2);
       await filter(p).click();
-      await p.getByRole('combobox').selectOption('reviewed');
+      await p.locator('#sort-select').selectOption('reviewed');
       assert.equal(await p.evaluate(() => history.length), length + 2);
       await p.goBack();
       await p.waitForFunction(() => !location.hash.includes('sort='));
@@ -211,7 +211,7 @@ const rows = [
       {},
       async (p) => {
         await search(p).fill('acoustic');
-        await p.getByRole('button', { name: 'التفاصيل', exact: true }).click();
+        await p.getByRole('link', { name: 'التفاصيل', exact: true }).click();
         await p.waitForFunction(() => location.hash.startsWith('#/deal/'));
         await p.waitForTimeout(400);
         assert.equal(await hash(p), '#/deal/alpha');
@@ -254,7 +254,7 @@ const rows = [
         await p.goto(copied);
         await search(p).waitFor();
         await count(p, 1);
-        await p.getByRole('button', { name: 'التفاصيل', exact: true }).click();
+        await p.getByRole('link', { name: 'التفاصيل', exact: true }).click();
         await p.getByRole('button', { name: 'نسخ رابط العرض', exact: true }).click();
         await p.getByRole('status').filter({ hasText: 'تم نسخ رابط العرض.' }).waitFor();
         assert.equal(await p.evaluate(() => window.__copied.at(-1)), base + '/#/deal/alpha');
@@ -281,7 +281,7 @@ const rows = [
       await cloud(p).click();
       await search(p).fill('gpt4');
       await filter(p).click();
-      await p.getByRole('combobox').selectOption('deadline');
+      await p.locator('#sort-select').selectOption('deadline');
       await p.getByRole('button', { name: 'Switch to English' }).click();
       await p.waitForTimeout(450);
       assert.deepEqual(calls, before);
@@ -294,7 +294,7 @@ const rows = [
         async (p) => {
           await p.getByRole('button', { name: english ? 'Filters' : 'تصفية', exact: true }).click();
           assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-          await p.getByRole('combobox').focus();
+          await p.locator('#sort-select').focus();
           await p.keyboard.press('ArrowDown');
           await p.keyboard.press('Enter');
         }
@@ -344,7 +344,7 @@ const rows = [
             await p.getByRole('heading', { name, exact: true }).waitFor();
           await p.getByText('UTC reference.', { exact: false }).waitFor();
           await p.getByRole('button', { name: 'Filters', exact: true }).click();
-          await p.getByRole('combobox').selectOption('reviewed');
+          await p.locator('#sort-select').selectOption('reviewed');
           await p.waitForFunction(
             () => document.querySelector('article h3')?.textContent === 'past-exact'
           );
