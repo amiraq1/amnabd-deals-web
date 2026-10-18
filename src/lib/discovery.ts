@@ -1,6 +1,6 @@
 import type { Deal, Lang } from '@/types';
-import { benefitTypeLabel, frequencyLabel } from './format.js';
-import { expandTextWithVariants, extractTokens, tokenVariants } from './normalize.js';
+import { benefitAmount, benefitTypeLabel, durationLabel, frequencyLabel } from './format.js';
+import { compileQuery, expandTextWithVariants } from './normalize.js';
 
 // Categories come only from category.value, never inferred from marketing text.
 // Case/spacing variants share a key; unrelated categories are not merged.
@@ -46,11 +46,13 @@ export function buildDealCorpus(deal: Deal): string {
   if (deal.description_ar) parts.push(deal.description_ar);
   if (deal.description_en) parts.push(deal.description_en);
 
-  const catVal = deal.category?.value;
+  const catVal = deal.category?.value ?? '';
   if (catVal && categoryKey(catVal)) {
     parts.push(catVal);
     parts.push(categoryLabel(catVal, 'ar'));
     parts.push(categoryLabel(catVal, 'en'));
+  } else {
+    parts.push(categoryLabel('', 'ar'), categoryLabel('', 'en'));
   }
 
   if (Array.isArray(deal.benefits)) {
@@ -62,6 +64,12 @@ export function buildDealCorpus(deal: Deal): string {
         const enType = benefitTypeLabel(b.type, 'en');
         if (arType && arType !== 'غير معلوم') parts.push(arType);
         if (enType && enType !== 'Unknown') parts.push(enType);
+      }
+      for (const lang of ['ar', 'en'] as const) {
+        const amount = benefitAmount(b.amount, lang);
+        const duration = durationLabel(b.duration, lang);
+        if (amount !== 'Unknown' && amount !== 'غير معلوم') parts.push(amount);
+        if (duration !== 'Unknown' && duration !== 'غير معلوم') parts.push(duration);
       }
       if (b.amount?.unit && b.amount.unit !== 'unknown') parts.push(b.amount.unit);
       if (b.amount?.currency) parts.push(b.amount.currency);
@@ -80,12 +88,10 @@ export function buildDealCorpus(deal: Deal): string {
 
 // Matches a query against a pre-built corpus with token-level AND semantics
 // and variant-level OR semantics.
-export function matchesCorpus(corpus: string, query: string): boolean {
-  if (!query || !query.trim()) return true;
-  const tokens = extractTokens(query);
-  if (tokens.length === 0) return true;
-  return tokens.every((tok) => {
-    const variants = tokenVariants(tok);
-    return variants.some((v) => corpus.includes(v));
-  });
+export function matchesCorpus(
+  corpus: string,
+  query: string | readonly (readonly string[])[]
+): boolean {
+  const groups = typeof query === 'string' ? compileQuery(query) : query;
+  return groups.every((variants) => variants.some((value) => corpus.includes(value)));
 }
