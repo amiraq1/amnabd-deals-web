@@ -173,3 +173,231 @@ test('UX clipboard permission timeout offers manual recovery and observes late r
   fail(Error('late rejection'));
   await new Promise((resolve) => setTimeout(resolve, 5));
 });
+
+// Phase 2: Expanded Search, URL State, and Safe Sorting Tests
+const { normalizeArabic, matchesQuery, extractTokens, tokenVariants, expandTextWithVariants } =
+  await load('normalize');
+const { buildDealCorpus, matchesCorpus } = await load('discovery');
+const { parseFilterState, serializeFilterState, buildDiscoveryHash, DEFAULT_FILTER_STATE } =
+  await load('filterState');
+const { sortDeals, classifyDeadline, deadlineTierLabel } = await load('dealSort');
+const { parseHash, extractHashSearch } = await load('routes');
+
+test('UX Phase 2: Arabic normalization handles digits, tatweel, hamzas and diacritics', () => {
+  assert.equal(normalizeArabic('ذَكاءٌ اصْطِنَاعِيّ'), 'ذكاء اصطناعي');
+  assert.equal(normalizeArabic('إنسان وأحمد وآلة واكتب'), 'انسان واحمد واله واكتب');
+  assert.equal(normalizeArabic('مدرّسة ومستشفى'), 'مدرسه ومستشفي');
+  assert.equal(normalizeArabic('سنة ٢٠٢٦ م'), 'سنه 2026 م');
+  assert.equal(normalizeArabic('نــــبــــض'), 'نبض');
+});
+
+test('UX Phase 2: Technical normalization preserves c++, c#, .net and generates compact variants', () => {
+  assert.deepEqual(extractTokens('C++ and C# with .NET'), ['c++', 'and', 'c#', 'with', '.net']);
+  assert.deepEqual(tokenVariants('c++'), ['c++']);
+  assert.deepEqual(tokenVariants('c#'), ['c#']);
+  assert.deepEqual(tokenVariants('.net'), ['.net']);
+  assert.deepEqual(tokenVariants('gpt-4'), ['gpt-4', 'gpt4']);
+  assert.deepEqual(tokenVariants('node.js'), ['node.js', 'nodejs']);
+
+  // Symmetric matching
+  assert.equal(matchesQuery('Supported on GPT-4 platform', 'gpt4'), true);
+  assert.equal(matchesQuery('Supported on GPT-4 platform', 'gpt-4'), true);
+  assert.equal(matchesQuery('Supports gpt4 models', 'GPT-4'), true);
+  assert.equal(matchesQuery('Supports Node.js runtime', 'nodejs'), true);
+  assert.equal(matchesQuery('C++ SDK available', 'c++'), true);
+  assert.equal(matchesQuery('C++ SDK available', 'c#'), false);
+  assert.equal(matchesQuery('C# client library', 'c++'), false);
+  assert.equal(matchesQuery('.NET Core framework', '.net'), true);
+});
+
+test('UX Phase 2: Search corpus includes benefits, units, and matches across fields with AND semantics', () => {
+  const dummyDeal = {
+    id: 'test-deal-1',
+    slug: 'test-deal',
+    name_ar: 'نبض كلاود',
+    name_en: 'Nabd Cloud',
+    description_ar: 'منصة حوسبة سحابية متقدمة',
+    description_en: 'Advanced cloud computing platform with python sdk',
+    category: { value: 'Cloud' },
+    benefits: [
+      {
+        type: 'usage_credits',
+        amount: { unit: 'tokens', value: 1000000, currency: 'USD' },
+        frequency: 'monthly',
+        description: { ar: 'مليون رمز مجاني شهرياً', en: 'One million free tokens per month' },
+      },
+    ],
+  };
+
+  const corpus = buildDealCorpus(dummyDeal);
+  assert.ok(corpus.includes('tokens'));
+  assert.ok(corpus.includes('cloud'));
+
+  // Matches benefit text
+  assert.equal(matchesCorpus(corpus, 'tokens'), true);
+  assert.equal(matchesCorpus(corpus, 'مليون'), true);
+  // Cross-field AND query
+  assert.equal(matchesCorpus(corpus, 'Nabd python tokens'), true);
+  // Missing token in AND query fails
+  assert.equal(matchesCorpus(corpus, 'Nabd rust'), false);
+  // Empty query returns true
+  assert.equal(matchesCorpus(corpus, ''), true);
+  assert.equal(matchesCorpus(corpus, '   '), true);
+});
+
+test('UX Phase 2: URL FilterState parse -> serialize -> parse is idempotent and safe', () => {
+  const state = {
+    q: 'gpt-4 developer',
+    category: 'cloud',
+    applicant: 'student',
+    card: 'not_required',
+    sort: 'deadline',
+  };
+  const qs = serializeFilterState(state);
+  const parsed = parseFilterState(qs, new Set(['cloud']));
+  assert.deepEqual(parsed, state);
+  assert.equal(serializeFilterState(parsed), qs);
+
+  // Default values are stripped
+  const defaultQs = serializeFilterState(DEFAULT_FILTER_STATE);
+  assert.equal(defaultQs, '');
+});
+
+test('UX Phase 2: URL FilterState handles single %, 50%, truncation, duplicate and unknown params', () => {
+  // Single % or 50% does not throw URIError
+  assert.doesNotThrow(() => parseFilterState('?q=50%'));
+  assert.doesNotThrow(() => parseFilterState('?q=%'));
+  const p1 = parseFilterState('?q=50%');
+  assert.equal(p1.q, '50%');
+
+  // Truncation at 120 chars
+  const longQ = 'a'.repeat(200);
+  const p2 = parseFilterState(`?q=${longQ}`);
+  assert.equal(p2.q.length, 120);
+
+  // Duplicate params take the first valid value
+  const p3 = parseFilterState('?sort=reviewed&sort=deadline');
+  assert.equal(p3.sort, 'reviewed');
+
+  // Unknown params are ignored
+  const p4 = parseFilterState('?foo=bar&utm_source=twitter&sort=deadline');
+  assert.equal(p4.sort, 'deadline');
+  assert.equal(serializeFilterState(p4), 'sort=deadline');
+});
+
+test('UX Phase 2: Invalid category in URL is captured and not re-serialized', () => {
+  const validKeys = new Set(['cloud', 'ai models']);
+  const parsed = parseFilterState('?category=unsupported-category&sort=reviewed', validKeys);
+  assert.equal(parsed.category, 'all');
+  assert.equal(parsed.invalidCategory, 'unsupported-category');
+  assert.equal(parsed.sort, 'reviewed');
+
+  // Serialization does not output invalidCategory
+  const reserialized = serializeFilterState(parsed);
+  assert.equal(reserialized, 'sort=reviewed');
+  assert.doesNotMatch(reserialized, /unsupported-category/);
+});
+
+test('UX Phase 2: Routes separates path from search query and parses #?q= and #/?q= as home', () => {
+  assert.deepEqual(parseHash(''), { name: 'home' });
+  assert.deepEqual(parseHash('#'), { name: 'home' });
+  assert.deepEqual(parseHash('#/'), { name: 'home' });
+  assert.deepEqual(parseHash('#?q=test'), { name: 'home' });
+  assert.deepEqual(parseHash('#/?q=test'), { name: 'home' });
+  assert.deepEqual(parseHash('#/guide?ref=nav'), { name: 'guide' });
+  assert.deepEqual(parseHash('#/deal/nabd-tool?search=true'), { name: 'deal', slug: 'nabd-tool' });
+  assert.deepEqual(parseHash('#/deal/%'), { name: 'notfound' });
+
+  assert.equal(extractHashSearch('#/?q=gpt&sort=deadline'), 'q=gpt&sort=deadline');
+  assert.equal(extractHashSearch('#/'), '');
+});
+
+test('UX Phase 2: Safe sorting is pure, stable, and strictly orders the 4 deadline tiers', () => {
+  const refNow = new Date('2026-10-18T12:00:00Z');
+
+  const deals = [
+    {
+      id: 'd-tier4-bad',
+      slug: 'd4-bad',
+      registration: { deadline: { status: 'known', date: '2026-02-30' } }, // impossible leap date -> tier 4
+      review: { reviewed_on: '2026-10-01' },
+    },
+    {
+      id: 'd-tier2-later',
+      slug: 'd2-later',
+      registration: { deadline: { status: 'known', date: '2026-10-25' } }, // future calendar -> tier 2
+      review: { reviewed_on: '2026-10-10' },
+    },
+    {
+      id: 'd-tier1-exact-soon',
+      slug: 'd1-soon',
+      registration: { deadline: { status: 'known', date: '2026-10-18T18:00:00Z' } }, // future exact -> tier 1
+      review: { reviewed_on: '2026-10-15' },
+    },
+    {
+      id: 'd-tier3-expired-exact',
+      slug: 'd3-exact',
+      registration: { deadline: { status: 'known', date: '2026-10-17T15:00:00Z' } }, // expired exact -> tier 3
+      review: { reviewed_on: '2026-09-20' },
+    },
+    {
+      id: 'd-tier1-exact-later',
+      slug: 'd1-later',
+      registration: { deadline: { status: 'known', date: '2026-10-20T10:00:00Z' } }, // future exact later -> tier 1
+      review: { reviewed_on: '2026-10-16' },
+    },
+    {
+      id: 'd-tier2-today',
+      slug: 'd2-today',
+      registration: { deadline: { status: 'known', date: '2026-10-18' } }, // today calendar -> tier 2
+      review: { reviewed_on: '2026-10-17' },
+    },
+    {
+      id: 'd-tier4-unknown',
+      slug: 'd4-unk',
+      registration: { deadline: { status: 'unknown', date: null } }, // unknown -> tier 4
+      review: { reviewed_on: '' },
+    },
+    {
+      id: 'd-tier3-expired-calendar',
+      slug: 'd3-cal',
+      registration: { deadline: { status: 'known', date: '2026-10-10' } }, // expired calendar -> tier 3
+      review: { reviewed_on: '2026-08-01' },
+    },
+  ];
+
+  // Immutability check
+  Object.freeze(deals);
+  const sortedDeadline = sortDeals(deals, 'deadline', refNow);
+  assert.equal(sortedDeadline.length, deals.length);
+
+  // Tier 1 items come first: d1-soon (18:00) then d1-later (Oct 20)
+  assert.equal(sortedDeadline[0].id, 'd-tier1-exact-soon');
+  assert.equal(sortedDeadline[1].id, 'd-tier1-exact-later');
+
+  // Tier 2 items come second: d2-today (Oct 18) then d2-later (Oct 25)
+  assert.equal(sortedDeadline[2].id, 'd-tier2-today');
+  assert.equal(sortedDeadline[3].id, 'd-tier2-later');
+
+  // Tier 3 items come third, sorted descending (most recently expired first): Oct 17 then Oct 10
+  assert.equal(sortedDeadline[4].id, 'd-tier3-expired-exact');
+  assert.equal(sortedDeadline[5].id, 'd-tier3-expired-calendar');
+
+  // Tier 4 items come last in original order: d-tier4-bad then d-tier4-unknown
+  assert.equal(sortedDeadline[6].id, 'd-tier4-bad');
+  assert.equal(sortedDeadline[7].id, 'd-tier4-unknown');
+
+  // Reviewed sorting: newest dates first, missing/invalid at end
+  const sortedReviewed = sortDeals(deals, 'reviewed', refNow);
+  assert.equal(sortedReviewed[0].id, 'd-tier2-today'); // 2026-10-17
+  assert.equal(sortedReviewed[1].id, 'd-tier1-exact-later'); // 2026-10-16
+  assert.equal(sortedReviewed[2].id, 'd-tier1-exact-soon'); // 2026-10-15
+  assert.equal(sortedReviewed.at(-1).id, 'd-tier4-unknown'); // empty date
+
+  // Default sorting preserves exact original order
+  const sortedDefault = sortDeals(deals, 'default', refNow);
+  assert.deepEqual(
+    sortedDefault.map((d) => d.id),
+    deals.map((d) => d.id)
+  );
+});

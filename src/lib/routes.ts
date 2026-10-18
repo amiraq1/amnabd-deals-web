@@ -2,6 +2,7 @@ export interface Route {
   name: 'home' | 'guide' | 'deal' | 'notfound';
   slug?: string;
 }
+
 export function isValidSlug(value: string): boolean {
   return (
     value.length > 0 &&
@@ -11,11 +12,22 @@ export function isValidSlug(value: string): boolean {
   );
 }
 
+export function extractHashSearch(raw: unknown): string {
+  if (typeof raw !== 'string') return '';
+  const qIndex = raw.indexOf('?');
+  return qIndex >= 0 ? raw.slice(qIndex + 1) : '';
+}
+
 export function parseHash(raw: unknown): Route {
   if (typeof raw !== 'string') return { name: 'notfound' };
-  const hash = raw.replace(/^#\/?/, '');
-  if (!hash) return { name: 'home' };
-  const parts = hash.split('/');
+  const withoutHash = raw.replace(/^#/, '');
+  const qIndex = withoutHash.indexOf('?');
+  const pathPart = qIndex >= 0 ? withoutHash.slice(0, qIndex) : withoutHash;
+  const cleanPath = pathPart.replace(/^\/+/, '');
+
+  if (!cleanPath) return { name: 'home' };
+
+  const parts = cleanPath.split('/');
   if (parts.length > 1 && parts[parts.length - 1] === '') parts.pop();
   if (parts.length === 1 && parts[0] === 'guide') return { name: 'guide' };
   if (parts.length !== 2 || parts[0] !== 'deal' || !parts[1]) return { name: 'notfound' };

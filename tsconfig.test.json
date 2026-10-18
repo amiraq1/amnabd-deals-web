@@ -17,6 +17,9 @@
     "src/lib/evidence.ts",
     "src/lib/discovery.ts",
     "src/lib/cardFacts.ts",
-    "src/lib/share.ts"
+    "src/lib/share.ts",
+    "src/lib/normalize.ts",
+    "src/lib/filterState.ts",
+    "src/lib/dealSort.ts"
   ]
 }

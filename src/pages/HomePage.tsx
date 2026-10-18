@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react';
-import { Search, X, SlidersHorizontal, Inbox, ShieldAlert } from 'lucide-react';
-import type { Deal, SiteConfig } from '@/types';
+import { useEffect, useMemo, useState } from 'react';
+import { Search, X, SlidersHorizontal, Inbox, ShieldAlert, Share2, Check } from 'lucide-react';
+import type { Deal, FilterState, SiteConfig, SortOption } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { categoryOptions, matchesCategory } from '@/lib/discovery';
-import { matchesQuery } from '@/lib/normalize';
+import { buildDealCorpus, categoryOptions, matchesCategory, matchesCorpus } from '@/lib/discovery';
 import { matchesEligibility, type ApplicantFilter, type CardFilter } from '@/lib/eligibility';
 import { reviewDateLabel } from '@/lib/format';
 import { tristateLabel } from '@/lib/tristate';
-import { getDealDisplayName } from '@/lib/dealMetadata';
+import { sortDeals } from '@/lib/dealSort';
+import { copyLink } from '@/lib/share';
+import { DEFAULT_FILTER_STATE } from '@/lib/filterState';
 import DealCard from '@/components/DealCard';
 import InfoBanner from '@/components/InfoBanner';
 
@@ -17,46 +18,102 @@ interface HomePageProps {
   loading: boolean;
   error: string | null;
   onOpenDeal: (slug: string) => void;
+  filterState?: FilterState;
+  onFilterChange?: (update: Partial<FilterState>, method?: 'push' | 'replace') => void;
+  onResetFilters?: () => void;
 }
 
-export default function HomePage({ deals, config, loading, error, onOpenDeal }: HomePageProps) {
+export default function HomePage({
+  deals,
+  config,
+  loading,
+  error,
+  onOpenDeal,
+  filterState = DEFAULT_FILTER_STATE,
+  onFilterChange = () => undefined,
+  onResetFilters = () => undefined,
+}: HomePageProps) {
   const { lang, pick } = useLanguage();
-  const [query, setQuery] = useState('');
-  const [applicant, setApplicant] = useState<ApplicantFilter>('all');
-  const [cardFilter, setCardFilter] = useState<CardFilter>('all');
-  const [category, setCategory] = useState<string | null>(null);
-  const categories = useMemo(() => categoryOptions(deals, lang), [deals, lang]);
-  const clearFilters = () => {
-    setApplicant('all');
-    setCardFilter('all');
-    setCategory(null);
-    setQuery('');
-  };
+  const [inputQuery, setInputQuery] = useState(filterState.q);
   const [showFilters, setShowFilters] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'success' | 'manual'>('idle');
+  const [manualLink, setManualLink] = useState('');
+
+  // Sync internal input query when filterState.q changes externally (e.g. popstate / reset)
+  useEffect(() => {
+    setInputQuery(filterState.q);
+  }, [filterState.q]);
+
+  // Debounce search query update (replaceState without polluting back history)
+  useEffect(() => {
+    if (inputQuery === filterState.q) return;
+    const timer = setTimeout(() => {
+      onFilterChange({ q: inputQuery }, 'replace');
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [inputQuery, filterState.q, onFilterChange]);
+
+  const categories = useMemo(() => categoryOptions(deals, lang), [deals, lang]);
+
+  // Precompute searchable corpora once per deals load
+  const corpora = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of deals) {
+      map.set(d.id, buildDealCorpus(d));
+    }
+    return map;
+  }, [deals]);
 
   const overview = config?.overview?.[lang] ?? {};
 
   const filtered = useMemo(() => {
     return deals.filter((deal) => {
-      if (!matchesCategory(deal.category.value, category)) return false;
-      if (!matchesEligibility(deal.eligibility, applicant, cardFilter)) return false;
-      if (query.trim()) {
-        const officialName = getDealDisplayName(deal);
-        const nameAr = deal.name_ar;
-        const desc = lang === 'ar' ? deal.description_ar : deal.description_en;
-        if (
-          !matchesQuery(officialName, query) &&
-          !matchesQuery(nameAr, query) &&
-          !matchesQuery(desc, query)
-        )
+      if (
+        filterState.category !== 'all' &&
+        !matchesCategory(deal.category?.value, filterState.category)
+      ) {
+        return false;
+      }
+      if (!matchesEligibility(deal.eligibility, filterState.applicant, filterState.card)) {
+        return false;
+      }
+      if (filterState.q.trim()) {
+        const corpus = corpora.get(deal.id) ?? '';
+        if (!matchesCorpus(corpus, filterState.q)) {
           return false;
+        }
       }
       return true;
     });
-  }, [deals, query, applicant, cardFilter, category, lang]);
+  }, [deals, corpora, filterState.category, filterState.applicant, filterState.card, filterState.q]);
+
+  const sorted = useMemo(() => {
+    return sortDeals(filtered, filterState.sort);
+  }, [filtered, filterState.sort]);
 
   const hasActiveFilters =
-    applicant !== 'all' || cardFilter !== 'all' || category !== null || query.trim() !== '';
+    filterState.applicant !== 'all' ||
+    filterState.card !== 'all' ||
+    filterState.category !== 'all' ||
+    filterState.sort !== 'default' ||
+    filterState.q.trim() !== '';
+
+  async function handleCopySearchLink() {
+    const url = window.location.href;
+    setManualLink(url);
+    setCopyStatus('copying');
+    let ok = false;
+    try {
+      const clipboard = navigator.clipboard;
+      ok = await copyLink(url, clipboard?.writeText?.bind(clipboard));
+    } catch {
+      /* Clipboard access may be denied */
+    }
+    setCopyStatus(ok ? 'success' : 'manual');
+    if (ok) {
+      setTimeout(() => setCopyStatus('idle'), 4000);
+    }
+  }
 
   if (loading) {
     return (
@@ -106,7 +163,7 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
             </p>
             <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-gold/30 bg-gold/5 p-4">
               <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
-              <p className="text-sm leading-relaxed text-gold-100 text-amber-100">
+              <p className="text-sm leading-relaxed text-amber-100">
                 {overview.unknown_note ??
                   (lang === 'ar'
                     ? 'لا تستنتج توفرًا في بلد بعينه، أو شرط بطاقة/هاتف، أو خصمًا أو رسومًا محددة، أو استمرار عرض من معلومة غير مذكورة. تحقق من الشروط الحالية لدى الجهة الرسمية.'
@@ -117,52 +174,49 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
         </div>
       </section>
 
-      <section className="mt-8">
-        <div
-          role="group"
-          aria-label={lang === 'ar' ? 'فئات العروض' : 'Deal categories'}
-          className="mb-4 flex min-w-0 flex-wrap gap-2"
+      {filterState.invalidCategory && (
+        <section
+          role="alert"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-200"
         >
-          {[
-            {
-              key: null,
-              label: lang === 'ar' ? 'كل الفئات' : 'All categories',
-              count: deals.length,
-            },
-            ...categories,
-          ].map((option) => (
-            <button
-              key={option.key === null ? 'all' : `category:${option.key}`}
-              type="button"
-              aria-pressed={category === option.key}
-              onClick={() => setCategory(option.key)}
-              className={`min-h-11 max-w-full break-words rounded-full border px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${category === option.key ? 'border-emerald-400 bg-emerald-500/15 text-emerald-200' : 'border-slate-600 bg-slate-900 text-slate-300 hover:border-slate-400'}`}
-            >
-              {option.label}{' '}
-              <span className="ms-1 text-xs">
-                ({option.count.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
-              </span>
-            </button>
-          ))}
-        </div>
+          <p>
+            {lang === 'ar'
+              ? `الفئة «${filterState.invalidCategory}» غير معتمدة ولم يتم تطبيقها.`
+              : `Category "${filterState.invalidCategory}" is unrecognized and was not applied.`}
+          </p>
+          <button
+            type="button"
+            onClick={() => onFilterChange({ category: 'all' }, 'push')}
+            className="rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-100 hover:bg-amber-500/30"
+          >
+            {lang === 'ar' ? 'مسح الفئة' : 'Clear category'}
+          </button>
+        </section>
+      )}
+
+      <section className="mt-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 ltr:left-3.5 rtl:right-3.5" />
             <input
               type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={inputQuery}
+              onChange={(e) => setInputQuery(e.target.value)}
               placeholder={
                 lang === 'ar'
-                  ? 'ابحث بالاسم أو الوصف (يدعم الهمزات والتشكيل)...'
-                  : 'Search by name or description...'
+                  ? 'ابحث بالاسم، الوصف، المنافع أو الفئات...'
+                  : 'Search by name, description, benefits or categories...'
               }
               className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pe-10 ps-11 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20"
               aria-label={lang === 'ar' ? 'بحث في العروض' : 'Search deals'}
             />
-            {query && (
+            {inputQuery && (
               <button
-                onClick={() => setQuery('')}
+                type="button"
+                onClick={() => {
+                  setInputQuery('');
+                  onFilterChange({ q: '' }, 'replace');
+                }}
                 className="absolute top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-500 transition-colors hover:text-slate-300 ltr:right-3 rtl:left-3"
                 aria-label={lang === 'ar' ? 'مسح البحث' : 'Clear search'}
               >
@@ -170,31 +224,105 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
               </button>
             )}
           </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopySearchLink}
+              disabled={copyStatus === 'copying'}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-500/50 hover:text-emerald-300"
+              title={lang === 'ar' ? 'نسخ رابط البحث المفلتر' : 'Copy filtered search link'}
+            >
+              {copyStatus === 'success' ? (
+                <Check className="h-4 w-4 text-emerald-400" />
+              ) : (
+                <Share2 className="h-4 w-4" />
+              )}
+              {copyStatus === 'success'
+                ? lang === 'ar'
+                  ? 'تم النسخ!'
+                  : 'Copied!'
+                : lang === 'ar'
+                  ? 'مشاركة البحث'
+                  : 'Share search'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowFilters((s) => !s)}
+              aria-expanded={showFilters}
+              aria-controls="home-filter-panel"
+              className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
+                hasActiveFilters
+                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
+                  : 'border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-600'
+              }`}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              {lang === 'ar' ? 'تصفية' : 'Filters'}
+            </button>
+          </div>
+        </div>
+
+        {copyStatus === 'manual' && (
+          <div className="mt-3 rounded-xl border border-slate-700 bg-slate-900/90 p-3">
+            <label className="block text-xs font-medium text-slate-300">
+              {lang === 'ar'
+                ? 'انسخ رابط البحث المفلتر من الحقل أدناه:'
+                : 'Copy the filtered search link from the field below:'}
+              <input
+                type="text"
+                readOnly
+                value={manualLink}
+                dir="ltr"
+                onFocus={(e) => e.currentTarget.select()}
+                className="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-950 p-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </label>
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setShowFilters((s) => !s)}
-            aria-expanded={showFilters}
-            aria-controls="offer-filters"
-            className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
-              hasActiveFilters
-                ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
-                : 'border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-600'
+            type="button"
+            onClick={() => onFilterChange({ category: 'all' }, 'push')}
+            aria-pressed={filterState.category === 'all'}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+              filterState.category === 'all'
+                ? 'bg-emerald-500 text-slate-950 font-semibold'
+                : 'border border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
             }`}
           >
-            <SlidersHorizontal className="h-4 w-4" />
-            {lang === 'ar' ? 'تصفية' : 'Filters'}
+            {lang === 'ar' ? 'الكل' : 'All'}{' '}
+            <span className="text-[11px] opacity-75">({deals.length})</span>
           </button>
+          {categories.map((opt) => (
+            <button
+              key={opt.key || 'unclassified'}
+              type="button"
+              onClick={() => onFilterChange({ category: opt.key }, 'push')}
+              aria-pressed={filterState.category === opt.key}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                filterState.category === opt.key
+                  ? 'bg-emerald-500 text-slate-950 font-semibold'
+                  : 'border border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+              }`}
+            >
+              {opt.label} <span className="text-[11px] opacity-75">({opt.count})</span>
+            </button>
+          ))}
         </div>
 
         {showFilters && (
           <div
-            id="offer-filters"
-            className="animate-fade-up mt-3 flex flex-wrap items-center gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4"
+            id="home-filter-panel"
+            className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-slate-800 bg-slate-900/60 p-4"
           >
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {lang === 'ar' ? 'نوع المستفيد' : 'Applicant type'}
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex gap-1.5">
                 {(
                   [
                     ['all', lang === 'ar' ? 'الكل' : 'All'],
@@ -204,10 +332,11 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
                 ).map(([value, label]) => (
                   <button
                     key={value}
-                    onClick={() => setApplicant(value)}
-                    aria-pressed={applicant === value}
+                    type="button"
+                    onClick={() => onFilterChange({ applicant: value }, 'push')}
+                    aria-pressed={filterState.applicant === value}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                      applicant === value
+                      filterState.applicant === value
                         ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40'
                         : 'bg-slate-800 text-slate-400 hover:text-slate-200'
                     }`}
@@ -217,11 +346,12 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
                 ))}
               </div>
             </div>
+
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex gap-1.5">
                 {(
                   [
                     ['all', lang === 'ar' ? 'الكل' : 'All'],
@@ -230,10 +360,11 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
                 ).map(([value, label]) => (
                   <button
                     key={value}
-                    onClick={() => setCardFilter(value)}
-                    aria-pressed={cardFilter === value}
+                    type="button"
+                    onClick={() => onFilterChange({ card: value }, 'push')}
+                    aria-pressed={filterState.card === value}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                      cardFilter === value
+                      filterState.card === value
                         ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40'
                         : 'bg-slate-800 text-slate-400 hover:text-slate-200'
                     }`}
@@ -243,9 +374,34 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
                 ))}
               </div>
             </div>
+
+            <div>
+              <label
+                htmlFor="sort-select"
+                className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+              >
+                {lang === 'ar' ? 'الترتيب' : 'Sort by'}
+              </label>
+              <select
+                id="sort-select"
+                value={filterState.sort}
+                onChange={(e) => onFilterChange({ sort: e.target.value as SortOption }, 'push')}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+              >
+                <option value="default">{lang === 'ar' ? 'الافتراضي' : 'Default'}</option>
+                <option value="reviewed">
+                  {lang === 'ar' ? 'تاريخ المراجعة (الأحدث)' : 'Review date (newest)'}
+                </option>
+                <option value="deadline">
+                  {lang === 'ar' ? 'موعد التسجيل' : 'Registration deadline'}
+                </option>
+              </select>
+            </div>
+
             {hasActiveFilters && (
               <button
-                onClick={clearFilters}
+                type="button"
+                onClick={onResetFilters}
                 className="ms-auto text-xs font-medium text-slate-400 underline-offset-4 transition-colors hover:text-white hover:underline"
               >
                 {lang === 'ar' ? 'مسح الكل' : 'Clear all'}
@@ -255,7 +411,7 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
         )}
       </section>
 
-      {applicant === 'any' && (
+      {filterState.applicant === 'any' && (
         <p className="mt-3 text-xs text-slate-400">
           {lang === 'ar'
             ? 'تظهر هنا فقط الأهلية العامة المثبتة صراحةً؛ غياب شرط الطالب لا يكفي، والمجهول لا يُعد متاحًا للجميع.'
@@ -264,13 +420,13 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
       )}
 
       <section className="mt-6">
-        <p role="status" aria-live="polite" aria-atomic="true" className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500" role="status" aria-live="polite">
           {lang === 'ar'
-            ? `${filtered.length.toLocaleString('ar-EG')} عرض من أصل ${deals.length.toLocaleString('ar-EG')}`
-            : `${filtered.length} of ${deals.length} offers`}
+            ? `${sorted.length.toLocaleString('ar-EG')} عرض من أصل ${deals.length.toLocaleString('ar-EG')}`
+            : `${sorted.length} of ${deals.length} offers`}
         </p>
 
-        {filtered.length === 0 ? (
+        {sorted.length === 0 ? (
           <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 py-16 text-center">
             <Inbox className="h-10 w-10 text-slate-600" />
             <p className="text-slate-400">
@@ -281,16 +437,16 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
             {hasActiveFilters && (
               <button
                 type="button"
-                onClick={clearFilters}
-                className="min-h-11 rounded-lg border border-slate-600 px-4 py-2 text-sm text-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
+                onClick={onResetFilters}
+                className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
               >
-                {lang === 'ar' ? 'مسح الفلاتر والبحث' : 'Clear filters and search'}
+                {lang === 'ar' ? 'مسح الفلاتر وإعادة التعيين' : 'Clear filters and reset'}
               </button>
             )}
           </div>
         ) : (
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((deal, i) => (
+            {sorted.map((deal, i) => (
               <DealCard key={deal.id} deal={deal} onOpen={onOpenDeal} index={i} />
             ))}
           </div>

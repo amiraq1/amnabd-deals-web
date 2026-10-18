@@ -7,6 +7,19 @@ export type TriState = TruthState | RequirementState;
 export type ApplicantType =
   'any' | 'student' | 'startup' | 'organization' | 'individual' | 'multiple' | 'unknown';
 
+export type SortOption = 'default' | 'reviewed' | 'deadline';
+export type ApplicantFilter = 'all' | 'student' | 'any';
+export type CardFilter = 'all' | 'not_required';
+
+export interface FilterState {
+  q: string;
+  category: string;
+  applicant: ApplicantFilter;
+  card: CardFilter;
+  sort: SortOption;
+  invalidCategory?: string;
+}
+
 export interface Localized {
   ar: string;
   en: string;
