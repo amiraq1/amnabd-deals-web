@@ -20,6 +20,7 @@
     "src/lib/share.ts",
     "src/lib/normalize.ts",
     "src/lib/filterState.ts",
-    "src/lib/dealSort.ts"
+    "src/lib/dealSort.ts",
+    "src/lib/savedDeals.ts"
   ]
 }
