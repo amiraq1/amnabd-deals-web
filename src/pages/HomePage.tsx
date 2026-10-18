@@ -7,7 +7,7 @@ import { matchesEligibility, type ApplicantFilter, type CardFilter } from '@/lib
 import { compileQuery } from '@/lib/normalize';
 import { reviewDateLabel } from '@/lib/format';
 import { tristateLabel } from '@/lib/tristate';
-import { sortDeals } from '@/lib/dealSort';
+import { classifyDeadline, deadlineTierLabel, sortDeals } from '@/lib/dealSort';
 import { copyLink } from '@/lib/share';
 import { DEFAULT_FILTER_STATE } from '@/lib/filterState';
 import DealCard from '@/components/DealCard';
@@ -63,6 +63,16 @@ export default function HomePage({
     const timeout = window.setTimeout(() => setCopyStatus('idle'), 4000);
     return () => window.clearTimeout(timeout);
   }, [copyStatus]);
+  const [referenceNow, setReferenceNow] = useState(() => new Date());
+  useEffect(() => {
+    const refresh = () => setReferenceNow(new Date());
+    const timer = window.setInterval(refresh, 60000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, []);
   const queryGroups = useMemo(() => compileQuery(filterState.q), [filterState.q]);
   const categories = useMemo(() => categoryOptions(deals, lang), [deals, lang]);
 
@@ -101,8 +111,8 @@ export default function HomePage({
   }, [deals, corpora, filterState, queryGroups]);
 
   const sorted = useMemo(() => {
-    return sortDeals(filtered, filterState.sort, new Date());
-  }, [filtered, filterState.sort]);
+    return sortDeals(filtered, filterState.sort, referenceNow);
+  }, [filtered, filterState.sort, referenceNow]);
 
   const hasActiveFilters =
     filterState.applicant !== 'all' ||
@@ -466,6 +476,13 @@ export default function HomePage({
       )}
 
       <section className="mt-6">
+        {filterState.sort === 'deadline' && (
+          <p className="mb-3 text-sm text-slate-300">
+            {lang === 'ar'
+              ? 'مرجع المقارنة UTC. المواعيد الدقيقة القادمة أولاً، ثم الأيام التقويمية، ثم المواعيد السابقة، ثم المجهول؛ ليست مقارنة دقيقة بين المجموعات ولا إثباتاً لاستمرار العرض.'
+              : 'UTC reference. Upcoming exact times first, then calendar dates, past records, and unknowns. Groups do not imply a precise global deadline order or ongoing availability.'}
+          </p>
+        )}
         <p className="text-sm text-slate-500" role="status" aria-live="polite">
           {lang === 'ar'
             ? `${sorted.length.toLocaleString('ar-EG')} عرض من أصل ${deals.length.toLocaleString('ar-EG')}`
@@ -492,9 +509,46 @@ export default function HomePage({
           </div>
         ) : (
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {sorted.map((deal, i) => (
-              <DealCard key={deal.id} deal={deal} onOpen={onOpenDeal} index={i} />
-            ))}
+            {sorted.map((deal, i) => {
+              const tier = classifyDeadline(deal.registration.deadline, referenceNow).tier;
+              const previous = i > 0 ? sorted[i - 1] : undefined;
+              const firstInGroup =
+                !previous ||
+                classifyDeadline(previous.registration.deadline, referenceNow).tier !== tier;
+              const headings =
+                lang === 'ar'
+                  ? [
+                      'مواعيد قادمة بتوقيت صريح',
+                      'تواريخ تقويمية دون ساعة',
+                      'مواعيد أو تواريخ سابقة',
+                      'مواعيد غير معلومة',
+                    ]
+                  : [
+                      'Upcoming exact times',
+                      'Calendar dates without hours',
+                      'Past recorded dates or times',
+                      'Unknown deadlines',
+                    ];
+              return (
+                <div key={deal.id} className="contents">
+                  {filterState.sort === 'deadline' && firstInGroup && (
+                    <h2 className="col-span-full mt-4 text-base font-semibold text-slate-200">
+                      {headings[tier - 1]}
+                    </h2>
+                  )}
+                  {filterState.sort === 'deadline' ? (
+                    <div className="flex min-w-0 flex-col gap-2">
+                      <p className="text-xs text-slate-300">
+                        {deadlineTierLabel(deal.registration.deadline, lang, referenceNow)}
+                      </p>
+                      <DealCard deal={deal} onOpen={onOpenDeal} index={i} />
+                    </div>
+                  ) : (
+                    <DealCard deal={deal} onOpen={onOpenDeal} index={i} />
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

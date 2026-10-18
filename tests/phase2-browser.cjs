@@ -43,8 +43,10 @@ const rows = [
     async function run(name, opt, check) {
       const context = await browser.newContext({
         viewport: opt.viewport || { width: 1200, height: 900 },
+        timezoneId: opt.timezone || 'UTC',
       });
       const page = await context.newPage();
+      if (opt.referenceTime) await page.clock.setFixedTime(new Date(opt.referenceTime));
       const errors = [];
       const calls = { deals: 0, guides: 0, config: 0 };
       page.on('pageerror', (e) => errors.push(e.message));
@@ -297,6 +299,66 @@ const rows = [
           await p.keyboard.press('Enter');
         }
       );
+    const sortRows = [
+      ['unknown', null, '2026-02-30'],
+      ['calendar', '2026-10-18', '2026-10-17'],
+      ['past-calendar', '2026-10-16', null],
+      ['exact', '2026-10-19T14:00:00+03:00', '2026-10-17'],
+      ['past-exact', '2026-10-17T10:00:00Z', '2026-10-18'],
+      ['invalid', '2026-02-30', '2026-10-16'],
+    ].map(([slug, value, reviewed_on]) => ({
+      id: slug,
+      slug,
+      name_en: slug,
+      name_ar: slug,
+      registration: { deadline: { status: 'known', date: value } },
+      review: { reviewed_on },
+    }));
+    for (const timezone of ['Asia/Baghdad', 'America/Los_Angeles']) {
+      await run(
+        'sort UTC grouping and reviewed order in ' + timezone,
+        {
+          english: true,
+          rows: sortRows,
+          timezone,
+          referenceTime: '2026-10-17T12:00:00Z',
+          hash: '#/?sort=deadline',
+        },
+        async (p) => {
+          await count(p, 6);
+          const names = () => p.locator('article h3').allTextContents();
+          assert.deepEqual(await names(), [
+            'exact',
+            'calendar',
+            'past-exact',
+            'past-calendar',
+            'unknown',
+            'invalid',
+          ]);
+          for (const name of [
+            'Upcoming exact times',
+            'Calendar dates without hours',
+            'Past recorded dates or times',
+            'Unknown deadlines',
+          ])
+            await p.getByRole('heading', { name, exact: true }).waitFor();
+          await p.getByText('UTC reference.', { exact: false }).waitFor();
+          await p.getByRole('button', { name: 'Filters', exact: true }).click();
+          await p.getByRole('combobox').selectOption('reviewed');
+          await p.waitForFunction(
+            () => document.querySelector('article h3')?.textContent === 'past-exact'
+          );
+          assert.deepEqual(await names(), [
+            'past-exact',
+            'calendar',
+            'exact',
+            'invalid',
+            'unknown',
+            'past-calendar',
+          ]);
+        }
+      );
+    }
     if (process.env.AMN_PHASE2_REPORT)
       fs.writeFileSync(process.env.AMN_PHASE2_REPORT, JSON.stringify(results, null, 2));
     console.log(JSON.stringify(results, null, 2));
