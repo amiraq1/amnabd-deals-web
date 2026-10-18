@@ -42,23 +42,17 @@ export function expandTextWithVariants(text: string): string {
   if (typeof text !== 'string' || !text.trim()) return '';
   const normalized = normalizeArabic(text);
   const tokens = extractTokens(normalized);
-  const compacts: string[] = [];
-  for (const tok of tokens) {
-    if (!PROTECTED_SYMBOLS.has(tok) && /[\p{L}\p{N}][-.][\p{L}\p{N}]/u.test(tok)) {
-      const compact = tok.replace(/[-.]/g, '');
-      if (compact && compact !== tok) compacts.push(compact);
-    }
-  }
-  return compacts.length > 0 ? `${normalized} ${compacts.join(' ')}` : normalized;
+  const variants = tokens.flatMap(tokenVariants);
+  return `${normalized} ${variants.join(' ')}`;
+}
+
+export function compileQuery(query: string): string[][] {
+  return extractTokens(query).map(tokenVariants);
 }
 
 export function matchesQuery(haystack: string, query: string): boolean {
   if (!query || !query.trim()) return true;
-  const tokens = extractTokens(query);
-  if (tokens.length === 0) return true;
+  const groups = compileQuery(query);
   const expandedHaystack = expandTextWithVariants(haystack);
-  return tokens.every((tok) => {
-    const variants = tokenVariants(tok);
-    return variants.some((v) => expandedHaystack.includes(v));
-  });
+  return groups.every((variants) => variants.some((v) => expandedHaystack.includes(v)));
 }
