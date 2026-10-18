@@ -14,6 +14,9 @@
     "src/lib/environment.ts",
     "src/lib/resource.ts",
     "src/lib/languageStorage.ts",
-    "src/lib/evidence.ts"
+    "src/lib/evidence.ts",
+    "src/lib/discovery.ts",
+    "src/lib/cardFacts.ts",
+    "src/lib/share.ts"
   ]
 }

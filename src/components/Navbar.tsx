@@ -12,16 +12,17 @@ interface NavbarProps {
 export default function Navbar({ route, navigate }: NavbarProps) {
   const { lang, toggle } = useLanguage();
 
-  const linkBase = 'px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200';
+  const linkBase =
+    'inline-flex min-h-11 items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400';
   const activeClass = 'text-emerald-400 bg-emerald-500/10';
   const idleClass = 'text-slate-300 hover:text-white hover:bg-slate-800';
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+      <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:h-16 sm:flex-nowrap sm:px-6 sm:py-0">
         <button
           onClick={() => navigate({ name: 'home' })}
-          className="flex items-center gap-2.5 focus:outline-none"
+          className="flex min-h-11 items-center gap-2.5 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-900/40">
             <Sparkles className="h-5 w-5 text-white" />
@@ -31,7 +32,7 @@ export default function Navbar({ route, navigate }: NavbarProps) {
           </span>
         </button>
 
-        <nav className="flex items-center gap-1">
+        <nav className="flex max-w-full flex-wrap items-center gap-1">
           <button
             onClick={() => navigate({ name: 'home' })}
             className={`${linkBase} ${route.name === 'home' || route.name === 'deal' ? activeClass : idleClass}`}
