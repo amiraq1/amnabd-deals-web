@@ -2,6 +2,7 @@ import { CalendarDays, ExternalLink } from 'lucide-react';
 import type { GuideSectionKey, SiteConfig, UsageGuide } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { safeUrl } from '@/lib/safeUrl';
+import { reviewDateLabel } from '@/lib/format';
 import { OFFICIAL_TOOL_NAMES } from '@/lib/dealMetadata';
 
 interface UsageGuidePageProps {
@@ -34,7 +35,7 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
         <p className="mt-3 text-base leading-relaxed text-slate-300">{overview.intro ?? ''}</p>
         <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-800/80 px-3 py-1.5 text-xs text-slate-400">
           <CalendarDays className="h-3.5 w-3.5" />
-          {overview.last_reviewed_label ?? ''}: <bdi>{config?.last_reviewed}</bdi>
+          {overview.last_reviewed_label ?? ''}: <bdi>{reviewDateLabel(config?.last_reviewed, lang)}</bdi>
         </div>
       </header>
 

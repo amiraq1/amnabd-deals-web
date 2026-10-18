@@ -1,10 +1,8 @@
 import { Globe, Sparkles, BookOpen } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
-export interface Route {
-  name: 'home' | 'guide' | 'deal' | 'notfound';
-  slug?: string;
-}
+import type { Route } from '@/lib/routes';
+export type { Route } from '@/lib/routes';
 
 interface NavbarProps {
   route: Route;

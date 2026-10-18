@@ -6,13 +6,13 @@
 
 - React 18 + TypeScript + Vite
 - Tailwind CSS + lucide-react
-- Supabase (data + auth-ready)
+- Supabase PostgREST (public, read-only data)
 
 ## Scripts
 
 ```bash
 npm run dev        # dev server
-npm run typecheck  # TS strict check (app + node configs)
+npm run typecheck  # TS strict check (app config)
 npm run lint       # eslint
 npm run build      # production build
 ```
@@ -20,3 +20,114 @@ npm run build      # production build
 ## Env
 
 `.env` (ignored) needs `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`.
+
+## اختبارات إصلاحات الإصدار (AMN-002 / AMN-005 / AMN-007)
+
+```bash
+npm ci
+npm test
+npm run typecheck
+npm run lint
+```
+
+`npm test` يعمل على Node 20+ باستخدام TypeScript الموجود و`node:test`، دون
+إضافة حزم. يترجم وحدات التنسيق والتحقق إلى مجلد مؤقت، يشغّل الاختبارات ثم
+يحذف المجلد. لا يحتاج Supabase أو متغيرات إنتاج أو اتصالاً بقاعدة بيانات.
+
+- التحقق من ردود API في `src/lib/validate.ts`: عزل الهوية غير الصالحة والتكرارات،
+  وتطبيع حقول JSON الاختيارية إلى قيم مجهولة آمنة، وعدم اختلاق السعر أو الأهلية.
+- يجب وجود id وslug واسم حقيقي بلغة واحدة على الأقل. الاسم الموجود يُستخدم
+  كما هو إذا غابت الترجمة، ولا تُنشأ هوية من slug أو فهرس الصف.
+- تحذيرات التطبيق للتشخيص تحتوي أعداداً/رموزاً ثابتة فقط، لا حمولة الصفوف.
+- إذا رُفضت بعض الصفوف يظهر تنبيه عام، وإذا كانت مجموعة العروض غير صالحة
+  بالكامل يظهر خطأ صريح. Error Boundary أخير يحتوى خطأ عرض غير متوقع.
+
+اختبار واجهة اختياري في بيئة QA فيها Playwright وChromium مثبتان مسبقاً
+(ليسا اعتماداً جديداً للمشروع):
+
+```bash
+# ابنِ فقط بقيم اختبار صناعية، لا بمفاتيح إنتاج.
+VITE_SUPABASE_URL=https://audit-fixture.supabase.co \
+VITE_SUPABASE_ANON_KEY=sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001 npm run build
+npm run preview -- --host 127.0.0.1 --port 4173
+# في طرفية ثانية؛ CHROMIUM_PATH اختياري إذا كانت نسخة Playwright مثبتة:
+CHROMIUM_PATH=/path/to/chromium node tests/browser-smoke.cjs
+```
+
+اختبار الواجهة يعترض API محلياً ويمنع موارد الطرف الثالث. يمكن ضبط
+`AMN_PREVIEW_URL` لعنوان preview آخر و`AMN_SMOKE_REPORT` لحفظ نتيجة JSON.
+لا يقرأ بيانات إنتاج ولا يختبر صلاحيات Supabase الحقيقية.
+
+الدفعة الأولى أُتبعت بإصلاحات release المتبقية في PR المراجعة نفسه؛ راجع
+قسم الاستكمال أدناه. لا يوجد نشر من فرع الإصلاح في workflow الحالي.
+
+## استكمال مرحلة release
+
+المهام المنفذة على فرع المراجعة: AMN-001/002/003/004/005/007/008/009/018/019.
+أُنجز AMN-011 أيضاً ضمن فصل طلبات البيانات عن لغة العرض. لا دمج أو نشر أو
+تغيير لبيانات الإنتاج أو سياسات RLS أو migrations.
+
+### نموذج الأهلية المحافظ
+
+- حقول المتطلبات (`student_status`, `card_required`, `new_account`, `phone_required`)
+  تُطبّع إلى required/not_required/unknown؛ yes/no قيم قديمة مرادفة وليست حقائق مختلفة.
+- applicant_type نموذج مستقل: any/student/startup/organization/individual/multiple/unknown.
+  individual لا تعني any، والقيم غير المعروفة لا تُرقّى إلى أهلية عامة.
+- فلتر «مفتوحة للجميع» يتطلب **تأكيد مراجعة صريحاً** `eligibility.open_to_all: "yes"`
+  داخل JSON الموجود (ليس عموداً أو migration جديداً). لا يضيف التطبيق هذا الإثبات إلى الإنتاج.
+- ويتطلب أيضاً applicant_type=any، وعدم اشتراط طالب أو حساب جديد، وحالة بلد
+  worldwide/global/all/unrestricted مع قائمة قيود بلدان فارغة. التعارض أو المجهول يُستبعد.
+- يجب ألا يضيف المسؤول التأكيد إلا بعد مراجعة مصدر يثبت نطاق الأهلية والقيود.
+  لا يُستنتج من النص أو غياب شرط الطالب، ولا من مجرد وجود رابط رسمي.
+- قد تكون نتائج هذا الفلتر فارغة للبيانات القديمة حتى تُوثّق الأهلية؛ هذا أفضل من
+  اعتبار المجهول متاحاً للجميع. بطاقة/هاتف يظلان متطلبين منفصلين لا ضماناً لأهلية كل فرد.
+
+### التحميل والتخزين والتوثيق
+
+- العروض والأدلة والإعدادات تُطلب وتستقر بصورة مستقلة، بمهلة 10 ثوانٍ وإلغاء.
+  فشل مورد اختياري لا يمنع العروض، وإعادة المحاولة لا تعيد جلب الموردين الآخرين.
+- 404 للعرض يأتي فقط بعد نجاح تحميل العروض وعدم العثور على slug؛ خطأ الشبكة/البيانات
+  له رسالة وإعادة محاولة. لا تُعرض تفاصيل SQL أو الأخطاء الخام.
+- تغيير اللغة يترجم واجهة الحالة محلياً دون إعادة جلب Supabase؛ تفضيل اللغة يعمل
+  في الذاكرة حتى عند رفض getter/getItem/setItem الخاص بالتخزين المحلي.
+- لا يفتح التطبيق جلسة مستخدم؛ يستعمل عميل PostgREST 2.109.0، الموجود سابقاً
+  كاعتماد انتقالي لـSupabase SDK، وأصبح اعتماداً مباشراً بدلاً من SDK الشامل.
+  السبب: وحدة Auth في SDK تقرأ localStorage عند الاستيراد حتى مع تعطيل persistence.
+  لا تعديل لملفات node_modules أو تعطيل لسياسة المتصفح. لا Auth/Realtime في حزمة الموقع.
+- الشارة تميز المدعوم/الجزئي/غير المدعوم/المجهول، وتعرض تاريخ المراجعة. قوة الدليل
+  ليست ضمان استمرار العرض أو أهلية الفرد، وعدد الحقول غير المثبتة ليس شهادة اكتمال.
+- hash غير صحيح أو ترميز معطوب أو أجزاء زائدة لا يسقط التطبيق. slug مقطع URL واحد
+  بلا فراغات/محارف تحكم أو فواصل مسار، مع دعم العربية وفك الترميز مرة واحدة فقط.
+
+### بيئة البناء
+
+كل `vite build` يفحص URL ومفتاحاً عاماً: HTTPS، دون credentials/query/hash،
+وpublishable key أو JWT بصفة anon. مفاتيح sb_secret_ وservice_role مرفوضة.
+التحقق يراجع الشكل/الصفة فقط، **لا يثبت صحة توقيع JWT أو صلاحيات مشروع الإنتاج**.
+السجلات تذكر رموز الخطأ فقط دون قيم المفاتيح. HTTP على loopback مسموح للتطوير فقط.
+غياب الإعدادات في التطوير يعرض واجهة خطأ قابلة للفهم بدلاً من خطأ استيراد وشاشة فارغة.
+
+```bash
+npm test
+npm run test:build-env
+npm run typecheck
+./node_modules/.bin/tsc --noEmit -p tsconfig.node.json
+npm run lint
+```
+
+`test:build-env` يجرب ست حالات رفض وحالة نجاح بقيم صناعية، ويؤكد عدم إنتاج
+artifact في حالات الرفض وعدم ظهور المفاتيح في المخرجات. لا يستعمل أسرار الإنتاج.
+اختبارات الواجهة الموسّعة في `tests/browser-smoke.cjs` تشمل الفلاتر، وفشل كل مورد
+وإعادة المحاولة والمهلة، والتوثيق، والتخزين المحظور، والتوجيه، وعدم الجلب عند تغيير اللغة.
+
+لفحص واجهة التطوير عند غياب البيئة أيضاً، شغّل dev بقيمتين فارغتين على منفذ آخر،
+ثم مرّر `AMN_DEV_PREVIEW_URL` للاختبار الاختياري:
+
+```bash
+VITE_SUPABASE_URL='' VITE_SUPABASE_ANON_KEY='' npm run dev -- --host 127.0.0.1 --port 4174
+# مع بقاء preview لنسخة البناء الصناعية على 4173:
+AMN_DEV_PREVIEW_URL=http://127.0.0.1:4174 CHROMIUM_PATH=/path/to/chromium node tests/browser-smoke.cjs
+```
+
+اختبارات الجودة هنا محلية؛ لم تُضف حواجز CI إلى workflow ضمن release، ولم يُنجز
+SEO/SSG أو بقية تحسينات quality/product/discoverability/later. لا تُغلق تلك المهام تلقائياً.

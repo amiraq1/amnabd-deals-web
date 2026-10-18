@@ -1,4 +1,5 @@
-import { ArrowLeft, ArrowRight, ExternalLink, BadgeCheck, CircleAlert } from 'lucide-react';
+import EvidenceBadge from './EvidenceBadge';
+import { ArrowLeft, ArrowRight, ExternalLink, CircleAlert } from 'lucide-react';
 import type { Deal } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { benefitAmount, durationLabel, frequencyLabel, benefitTypeLabel } from '@/lib/format';
@@ -34,12 +35,11 @@ export default function DealCard({ deal, onOpen, index }: DealCardProps) {
               {displayName}
             </h3>
           </div>
-          {deal.review.verification_status === 'supported' && (
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
-              <BadgeCheck className="h-3.5 w-3.5" />
-              {lang === 'ar' ? 'موثق' : 'Verified'}
-            </span>
-          )}
+          <EvidenceBadge
+            status={deal.review.verification_status}
+            reviewedOn={deal.review.reviewed_on}
+            lang={lang}
+          />
         </div>
         <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-400">{description}</p>
       </button>

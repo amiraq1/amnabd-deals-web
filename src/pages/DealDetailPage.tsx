@@ -1,4 +1,6 @@
-import { ExternalLink, BadgeCheck, CircleAlert, FileText, ShieldCheck } from 'lucide-react';
+import EvidenceBadge from '@/components/EvidenceBadge';
+import { offerStatusLabel } from '@/lib/evidence';
+import { ExternalLink, FileText, ShieldCheck } from 'lucide-react';
 import type { Deal, UsageGuide } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -6,8 +8,9 @@ import {
   durationLabel,
   frequencyLabel,
   benefitTypeLabel,
+  reviewDateLabel,
 } from '@/lib/format';
-import { tristateLabel } from '@/lib/tristate';
+import { requirementLabel } from '@/lib/tristate';
 import { safeUrl, resolveDealOfficialUrl } from '@/lib/safeUrl';
 import InfoBanner from '@/components/InfoBanner';
 import { getDealDisplayName } from '@/lib/dealMetadata';
@@ -56,17 +59,11 @@ export default function DealDetailPage({
               )}
             </div>
           </div>
-          {deal.review.verification_status === 'supported' ? (
-            <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-              <BadgeCheck className="h-4 w-4" />
-              {lang === 'ar' ? 'موثق رسميًا' : 'Officially verified'}
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 rounded-full bg-gold/10 px-3 py-1 text-xs font-medium text-gold">
-              <CircleAlert className="h-4 w-4" />
-              {lang === 'ar' ? 'مدعوم جزئيًا' : 'Partially supported'}
-            </span>
-          )}
+          <EvidenceBadge
+            status={deal.review.verification_status}
+            reviewedOn={deal.review.reviewed_on}
+            lang={lang}
+          />
         </div>
         <p className="mt-4 text-base leading-relaxed text-slate-300">{description}</p>
         {offerUrl && (
@@ -87,27 +84,39 @@ export default function DealDetailPage({
           <h2 className="font-heading text-xl font-bold text-white">
             {sectionLabels.eligibility ?? (lang === 'ar' ? 'الأهلية' : 'Eligibility')}
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">{guide.sections.eligibility[lang]}</p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            {guide.sections.eligibility[lang]}
+          </p>
 
           <h2 className="font-heading mt-8 text-xl font-bold text-white">
-            {sectionLabels.registration ?? (lang === 'ar' ? 'التسجيل والموعد النهائي' : 'Registration and deadline')}
+            {sectionLabels.registration ??
+              (lang === 'ar' ? 'التسجيل والموعد النهائي' : 'Registration and deadline')}
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">{guide.sections.registration[lang]}</p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            {guide.sections.registration[lang]}
+          </p>
 
           <h2 className="font-heading mt-8 text-xl font-bold text-white">
             {sectionLabels.limitations ?? (lang === 'ar' ? 'القيود والرسوم' : 'Limits and fees')}
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">{guide.sections.limitations[lang]}</p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            {guide.sections.limitations[lang]}
+          </p>
 
           <h2 className="font-heading mt-8 text-xl font-bold text-white">
-            {sectionLabels.after_expiry ?? (lang === 'ar' ? 'بعد انتهاء المنفعة' : 'After the benefit ends')}
+            {sectionLabels.after_expiry ??
+              (lang === 'ar' ? 'بعد انتهاء المنفعة' : 'After the benefit ends')}
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">{guide.sections.after_expiry[lang]}</p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            {guide.sections.after_expiry[lang]}
+          </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
             {Array.from(
               new Set(
-                Object.values(guide.sections).flatMap((s) => s.sources.map((u) => safeUrl(u)).filter((u): u is string => !!u))
+                Object.values(guide.sections).flatMap((s) =>
+                  s.sources.map((u) => safeUrl(u)).filter((u): u is string => !!u)
+                )
               )
             ).map((url) => (
               <a
@@ -133,19 +142,19 @@ export default function DealDetailPage({
           <dl className="mt-4 space-y-2.5 text-sm">
             <FactRow
               label={lang === 'ar' ? 'حالة الطالب' : 'Student status'}
-              value={tristateLabel(e.student_status === 'required' ? 'yes' : 'unknown', lang)}
+              value={requirementLabel(e.student_status, lang)}
             />
             <FactRow
               label={lang === 'ar' ? 'حساب جديد' : 'New account'}
-              value={tristateLabel(e.new_account, lang)}
+              value={requirementLabel(e.new_account, lang)}
             />
             <FactRow
               label={lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
-              value={tristateLabel(e.card_required, lang)}
+              value={requirementLabel(e.card_required, lang)}
             />
             <FactRow
               label={lang === 'ar' ? 'هاتف' : 'Phone'}
-              value={tristateLabel(e.phone_required, lang)}
+              value={requirementLabel(e.phone_required, lang)}
             />
           </dl>
           <p className="mt-4 text-xs leading-relaxed text-slate-500">{e.conditions[lang]}</p>
@@ -194,6 +203,12 @@ export default function DealDetailPage({
         </section>
       )}
 
+      <p className="mt-6 text-xs text-slate-400">
+        {lang === 'ar'
+          ? `حقول مسجلة غير مثبتة: ${unknownCount.toLocaleString('ar-EG')}. عددها لا يثبت اكتمال المعلومات، ودعم المصدر لا يضمن استمرار العرض أو الأهلية.`
+          : `Recorded unestablished fields: ${unknownCount}. This count does not prove completeness; source support does not guarantee availability or eligibility.`}
+      </p>
+
       <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
         <h3 className="font-heading flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
           <ShieldCheck className="h-4 w-4" />
@@ -219,7 +234,10 @@ export default function DealDetailPage({
               )}
               <ul className="mt-2 space-y-1.5">
                 {src.claims.map((claim, j) => (
-                  <li key={j} className="flex items-start gap-2 text-xs leading-relaxed text-slate-400">
+                  <li
+                    key={j}
+                    className="flex items-start gap-2 text-xs leading-relaxed text-slate-400"
+                  >
                     <FileText className="mt-0.5 h-3 w-3 shrink-0 text-slate-600" />
                     <span>{claim.evidence}</span>
                   </li>
@@ -229,16 +247,11 @@ export default function DealDetailPage({
           ))}
         </div>
         <p className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-500">
-          {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}: <bdi>{deal.review.reviewed_on}</bdi>
+          {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}:{' '}
+          <bdi>{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
           {' · '}
           {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
-          <span className="text-slate-300">
-            {deal.review.offer_status === 'unknown'
-              ? lang === 'ar'
-                ? 'غير معلوم'
-                : 'Unknown'
-              : deal.review.offer_status}
-          </span>
+          <span className="text-slate-300">{offerStatusLabel(deal.review.offer_status, lang)}</span>
         </p>
       </section>
 
