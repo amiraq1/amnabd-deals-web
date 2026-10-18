@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { loadConfig, loadDeals, loadGuides } from '@/lib/loadResources';
 import { extractHashSearch, parseHash, routeHash, type Route } from '@/lib/routes';
-import { buildDiscoveryHash, DEFAULT_FILTER_STATE, parseFilterState } from '@/lib/filterState';
+import {
+  buildDiscoveryHash,
+  DEFAULT_FILTER_STATE,
+  parseFilterState,
+  validateFilterState,
+} from '@/lib/filterState';
 import { categoryKey } from '@/lib/discovery';
 import type { FilterState } from '@/types';
 import { useResource } from '@/hooks/useResource';
@@ -18,12 +23,6 @@ import NotFoundPage from '@/pages/NotFoundPage';
 function AppInner() {
   const { lang } = useLanguage();
   const [route, setRoute] = useState<Route>(() => parseHash(window.location.hash));
-  const [lastDiscoveryHash, setLastDiscoveryHash] = useState<string>(() => {
-    const h = window.location.hash;
-    const r = parseHash(h);
-    return r.name === 'home' ? h || '#/' : '#/';
-  });
-
   // Each resource settles independently. Language is presentation state and is
   // deliberately not a dependency of any data request.
   const offers = useResource(loadDeals);
@@ -33,105 +32,130 @@ function AppInner() {
   const guideRows = useMemo(() => guides.data?.value ?? [], [guides.data?.value]);
   const config = settings.data?.value ?? null;
 
-  const validCategoryKeys = useMemo(() => {
-    const set = new Set<string>();
-    for (const d of deals) {
-      const k = categoryKey(d.category?.value);
-      if (k) set.add(k);
+  const validCategoryKeys = useMemo(
+    () => new Set(deals.map((d) => categoryKey(d.category.value))),
+    [deals]
+  );
+  const [rawFilters, setRawFilters] = useState<FilterState>(() =>
+    parseFilterState(extractHashSearch(window.location.hash))
+  );
+  const filterState = useMemo(
+    () =>
+      validateFilterState(rawFilters, offers.status === 'ready' ? validCategoryKeys : undefined),
+    [rawFilters, offers.status, validCategoryKeys]
+  );
+  const filtersRef = useRef(rawFilters);
+  const categoriesRef = useRef<ReadonlySet<string> | undefined>(undefined);
+  categoriesRef.current = offers.status === 'ready' ? validCategoryKeys : undefined;
+  const routeRef = useRef(route);
+  const lastDiscoveryHash = useRef(route.name === 'home' ? window.location.hash || '#/' : '#/');
+  const lastAppliedHash = useRef(window.location.hash || '#/');
+  const timer = useRef<number | null>(null);
+  const cancelPending = useCallback(() => {
+    const pending = timer.current !== null;
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    timer.current = null;
+    return pending;
+  }, []);
+  const applyLocation = useCallback((hash: string) => {
+    const next = parseHash(hash);
+    routeRef.current = next;
+    setRoute(next);
+    lastAppliedHash.current = hash || '#/';
+    if (next.name === 'home') {
+      const parsed = parseFilterState(extractHashSearch(hash));
+      filtersRef.current = parsed;
+      setRawFilters(parsed);
+      lastDiscoveryHash.current = hash || '#/';
     }
-    return set;
-  }, [deals]);
-
-  const [filterState, setFilterState] = useState<FilterState>(() => {
-    return parseFilterState(extractHashSearch(window.location.hash));
-  });
-
-  // Re-validate category once deals load
-  useEffect(() => {
-    if (deals.length > 0) {
-      setFilterState(() =>
-        parseFilterState(extractHashSearch(window.location.hash), validCategoryKeys)
-      );
-    }
-  }, [deals, validCategoryKeys]);
-
+  }, []);
+  const writeLocation = useCallback(
+    (hash: string, method: 'push' | 'replace', preserveDraft = false) => {
+      if ((window.location.hash || '#/') !== hash) {
+        if (method === 'push') window.history.pushState(null, '', hash);
+        else window.history.replaceState(window.history.state, '', hash);
+      }
+      if (preserveDraft) {
+        lastAppliedHash.current = hash;
+        lastDiscoveryHash.current = hash;
+      } else applyLocation(hash);
+    },
+    [applyLocation]
+  );
   useEffect(() => {
     const onLocationChange = () => {
-      const h = window.location.hash;
-      const parsedRoute = parseHash(h);
-      setRoute(parsedRoute);
-      if (parsedRoute.name === 'home') {
-        const parsedFilters = parseFilterState(extractHashSearch(h), validCategoryKeys);
-        setFilterState(parsedFilters);
-        setLastDiscoveryHash(h || '#/');
-      }
+      const hadPending = cancelPending();
+      const hash = window.location.hash || '#/';
+      if (!hadPending && hash === lastAppliedHash.current) return;
+      applyLocation(hash);
       window.scrollTo({ top: 0 });
     };
-
     window.addEventListener('popstate', onLocationChange);
     window.addEventListener('hashchange', onLocationChange);
     return () => {
+      cancelPending();
       window.removeEventListener('popstate', onLocationChange);
       window.removeEventListener('hashchange', onLocationChange);
     };
-  }, [validCategoryKeys]);
+  }, [applyLocation, cancelPending]);
 
-  const navigate = useCallback(
-    (next: Route) => {
-      if (next.name === 'home') {
-        const targetHash = lastDiscoveryHash || '#/';
-        if (window.location.hash === targetHash) setRoute(parseHash(targetHash));
-        else window.location.hash = targetHash;
-        return;
-      }
-      const hash = routeHash(next);
-      if (window.location.hash === hash) setRoute(parseHash(hash));
-      else window.location.hash = hash;
-    },
-    [lastDiscoveryHash]
-  );
-
-  const handleFilterChange = useCallback(
-    (update: Partial<FilterState>, method: 'push' | 'replace' = 'push') => {
-      setFilterState((prev) => {
-        const next: FilterState = { ...prev, ...update };
-        if ('category' in update) {
-          delete next.invalidCategory;
-        }
-        const newHash = buildDiscoveryHash(next);
-        if (method === 'replace') {
-          window.history.replaceState(null, '', newHash);
-        } else {
-          window.history.pushState(null, '', newHash);
-        }
-        setLastDiscoveryHash(newHash);
-        return next;
-      });
-    },
+  const currentDiscoveryHash = useCallback(
+    () => buildDiscoveryHash(validateFilterState(filtersRef.current, categoriesRef.current)),
     []
   );
-
-  const handleResetFilters = useCallback(() => {
-    const reset = { ...DEFAULT_FILTER_STATE };
-    const newHash = '#/';
-    window.history.pushState(null, '', newHash);
-    setFilterState(reset);
-    setLastDiscoveryHash(newHash);
-  }, []);
-
-  const onOpenDeal = useCallback(
-    (slug: string) => {
-      setLastDiscoveryHash(window.location.hash || '#/');
-      navigate({ name: 'deal', slug });
+  const flushDiscovery = useCallback(() => {
+    cancelPending();
+    if (routeRef.current.name === 'home') writeLocation(currentDiscoveryHash(), 'replace');
+  }, [cancelPending, currentDiscoveryHash, writeLocation]);
+  const navigate = useCallback(
+    (next: Route) => {
+      flushDiscovery();
+      const hash = next.name === 'home' ? lastDiscoveryHash.current : routeHash(next);
+      writeLocation(hash, 'push');
+      window.scrollTo({ top: 0 });
     },
-    [navigate]
+    [flushDiscovery, writeLocation]
   );
-
-  const onBackFromDeal = useCallback(() => {
-    const target = lastDiscoveryHash || '#/';
-    if (window.location.hash === target) setRoute(parseHash(target));
-    else window.location.hash = target;
-  }, [lastDiscoveryHash]);
+  const handleFilterChange = useCallback(
+    (update: Partial<FilterState>, method: 'push' | 'replace' = 'push') => {
+      cancelPending();
+      const previous = validateFilterState(filtersRef.current, categoriesRef.current);
+      // Any intentional change cleans invalid category diagnostics.
+      const next = { ...previous, ...update };
+      delete next.invalidCategory;
+      delete next.filterError;
+      const hash = buildDiscoveryHash(next);
+      const parsed = parseFilterState(extractHashSearch(hash));
+      if ('q' in update && typeof update.q === 'string')
+        parsed.q = Array.from(update.q.replace(/[\p{Cc}]/gu, ' '))
+          .slice(0, 120)
+          .join('');
+      filtersRef.current = parsed;
+      setRawFilters(parsed);
+      if (method === 'replace')
+        timer.current = window.setTimeout(() => {
+          timer.current = null;
+          if (routeRef.current.name === 'home') writeLocation(hash, 'replace', true);
+        }, 250);
+      else writeLocation(hash, 'push');
+    },
+    [cancelPending, writeLocation]
+  );
+  const handleResetFilters = useCallback(() => {
+    cancelPending();
+    filtersRef.current = { ...DEFAULT_FILTER_STATE };
+    writeLocation('#/', 'push');
+  }, [cancelPending, writeLocation]);
+  const getSearchLink = useCallback(() => {
+    cancelPending();
+    writeLocation(currentDiscoveryHash(), 'replace', true);
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = currentDiscoveryHash();
+    return url.href;
+  }, [cancelPending, currentDiscoveryHash, writeLocation]);
+  const onOpenDeal = useCallback((slug: string) => navigate({ name: 'deal', slug }), [navigate]);
+  const onBackFromDeal = useCallback(() => navigate({ name: 'home' }), [navigate]);
 
   const deal = route.name === 'deal' ? deals.find((row) => row.slug === route.slug) : undefined;
   const guide = deal ? (guideRows.find((row) => row.slug === deal.slug) ?? null) : null;
@@ -190,6 +214,7 @@ function AppInner() {
         loading={offers.status === 'loading'}
         error={null}
         filterState={filterState}
+        getSearchLink={getSearchLink}
         onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
         onOpenDeal={onOpenDeal}

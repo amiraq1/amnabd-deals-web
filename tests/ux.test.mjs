@@ -247,6 +247,7 @@ test('UX Phase 2: Search corpus includes benefits, units, and matches across fie
 
 test('UX Phase 2: URL FilterState parse -> serialize -> parse is idempotent and safe', () => {
   const state = {
+    ...DEFAULT_FILTER_STATE,
     q: 'gpt-4 developer',
     category: 'cloud',
     applicant: 'student',
@@ -275,7 +276,7 @@ test('UX Phase 2: URL FilterState handles single %, 50%, truncation, duplicate a
   const p2 = parseFilterState(`?q=${longQ}`);
   assert.equal(p2.q.length, 120);
 
-  // Duplicate params take the first valid value
+  // Duplicate params take the first value
   const p3 = parseFilterState('?sort=reviewed&sort=deadline');
   assert.equal(p3.sort, 'reviewed');
 
@@ -288,7 +289,7 @@ test('UX Phase 2: URL FilterState handles single %, 50%, truncation, duplicate a
 test('UX Phase 2: Invalid category in URL is captured and not re-serialized', () => {
   const validKeys = new Set(['cloud', 'ai models']);
   const parsed = parseFilterState('?category=unsupported-category&sort=reviewed', validKeys);
-  assert.equal(parsed.category, 'all');
+  assert.equal(parsed.category, null);
   assert.equal(parsed.invalidCategory, 'unsupported-category');
   assert.equal(parsed.sort, 'reviewed');
 

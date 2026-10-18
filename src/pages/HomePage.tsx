@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, SlidersHorizontal, Inbox, ShieldAlert, Share2, Check } from 'lucide-react';
 import type { Deal, FilterState, SiteConfig, SortOption } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { buildDealCorpus, categoryOptions, matchesCategory, matchesCorpus } from '@/lib/discovery';
 import { matchesEligibility, type ApplicantFilter, type CardFilter } from '@/lib/eligibility';
+import { compileQuery } from '@/lib/normalize';
 import { reviewDateLabel } from '@/lib/format';
 import { tristateLabel } from '@/lib/tristate';
 import { sortDeals } from '@/lib/dealSort';
@@ -19,6 +20,7 @@ interface HomePageProps {
   error: string | null;
   onOpenDeal: (slug: string) => void;
   filterState?: FilterState;
+  getSearchLink?: () => string;
   onFilterChange?: (update: Partial<FilterState>, method?: 'push' | 'replace') => void;
   onResetFilters?: () => void;
 }
@@ -30,29 +32,38 @@ export default function HomePage({
   error,
   onOpenDeal,
   filterState = DEFAULT_FILTER_STATE,
+  getSearchLink = () => window.location.href,
   onFilterChange = () => undefined,
   onResetFilters = () => undefined,
 }: HomePageProps) {
   const { lang, pick } = useLanguage();
-  const [inputQuery, setInputQuery] = useState(filterState.q);
   const [showFilters, setShowFilters] = useState(false);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'success' | 'manual'>('idle');
   const [manualLink, setManualLink] = useState('');
-
-  // Sync internal input query when filterState.q changes externally (e.g. popstate / reset)
+  const generation = useRef(0);
+  const busy = useRef(false);
   useEffect(() => {
-    setInputQuery(filterState.q);
-  }, [filterState.q]);
-
-  // Debounce search query update (replaceState without polluting back history)
+    generation.current += 1;
+    busy.current = false;
+    setCopyStatus('idle');
+    setManualLink('');
+    return () => {
+      generation.current += 1;
+    };
+  }, [
+    filterState.q,
+    filterState.category,
+    filterState.uncategorized,
+    filterState.applicant,
+    filterState.card,
+    filterState.sort,
+  ]);
   useEffect(() => {
-    if (inputQuery === filterState.q) return;
-    const timer = setTimeout(() => {
-      onFilterChange({ q: inputQuery }, 'replace');
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [inputQuery, filterState.q, onFilterChange]);
-
+    if (copyStatus !== 'success') return;
+    const timeout = window.setTimeout(() => setCopyStatus('idle'), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [copyStatus]);
+  const queryGroups = useMemo(() => compileQuery(filterState.q), [filterState.q]);
   const categories = useMemo(() => categoryOptions(deals, lang), [deals, lang]);
 
   // Precompute searchable corpora once per deals load
@@ -68,8 +79,10 @@ export default function HomePage({
 
   const filtered = useMemo(() => {
     return deals.filter((deal) => {
+      if (filterState.categoryValidation === 'pending') return false;
+      if (filterState.uncategorized && !matchesCategory(deal.category.value, '')) return false;
       if (
-        filterState.category !== 'all' &&
+        filterState.category !== null &&
         !matchesCategory(deal.category?.value, filterState.category)
       ) {
         return false;
@@ -79,27 +92,32 @@ export default function HomePage({
       }
       if (filterState.q.trim()) {
         const corpus = corpora.get(deal.id) ?? '';
-        if (!matchesCorpus(corpus, filterState.q)) {
+        if (!matchesCorpus(corpus, queryGroups)) {
           return false;
         }
       }
       return true;
     });
-  }, [deals, corpora, filterState.category, filterState.applicant, filterState.card, filterState.q]);
+  }, [deals, corpora, filterState, queryGroups]);
 
   const sorted = useMemo(() => {
-    return sortDeals(filtered, filterState.sort);
+    return sortDeals(filtered, filterState.sort, new Date());
   }, [filtered, filterState.sort]);
 
   const hasActiveFilters =
     filterState.applicant !== 'all' ||
     filterState.card !== 'all' ||
-    filterState.category !== 'all' ||
+    filterState.category !== null ||
+    filterState.uncategorized ||
+    Boolean(filterState.filterError) ||
     filterState.sort !== 'default' ||
     filterState.q.trim() !== '';
 
   async function handleCopySearchLink() {
-    const url = window.location.href;
+    if (busy.current) return;
+    const url = getSearchLink();
+    const version = generation.current;
+    busy.current = true;
     setManualLink(url);
     setCopyStatus('copying');
     let ok = false;
@@ -107,11 +125,11 @@ export default function HomePage({
       const clipboard = navigator.clipboard;
       ok = await copyLink(url, clipboard?.writeText?.bind(clipboard));
     } catch {
-      /* Clipboard access may be denied */
+      /* Clipboard getter may be denied. */
     }
-    setCopyStatus(ok ? 'success' : 'manual');
-    if (ok) {
-      setTimeout(() => setCopyStatus('idle'), 4000);
+    if (generation.current === version) {
+      busy.current = false;
+      setCopyStatus(ok ? 'success' : 'manual');
     }
   }
 
@@ -174,19 +192,23 @@ export default function HomePage({
         </div>
       </section>
 
-      {filterState.invalidCategory && (
+      {filterState.categoryValidation === 'invalid' && (
         <section
           role="alert"
           className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-200"
         >
           <p>
-            {lang === 'ar'
-              ? `الفئة «${filterState.invalidCategory}» غير معتمدة ولم يتم تطبيقها.`
-              : `Category "${filterState.invalidCategory}" is unrecognized and was not applied.`}
+            {filterState.filterError !== 'category'
+              ? lang === 'ar'
+                ? 'معاملات الفئة غير صالحة أو متعارضة ولم تُطبّق.'
+                : 'Category parameters are invalid or conflicting and were not applied.'
+              : lang === 'ar'
+                ? `الفئة «${filterState.invalidCategory}» غير معتمدة ولم يتم تطبيقها.`
+                : `Category "${filterState.invalidCategory}" is unrecognized and was not applied.`}
           </p>
           <button
             type="button"
-            onClick={() => onFilterChange({ category: 'all' }, 'push')}
+            onClick={onResetFilters}
             className="rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-100 hover:bg-amber-500/30"
           >
             {lang === 'ar' ? 'مسح الفئة' : 'Clear category'}
@@ -200,8 +222,9 @@ export default function HomePage({
             <Search className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 ltr:left-3.5 rtl:right-3.5" />
             <input
               type="search"
-              value={inputQuery}
-              onChange={(e) => setInputQuery(e.target.value)}
+              value={filterState.q}
+              onChange={(e) => onFilterChange({ q: e.target.value }, 'replace')}
+              maxLength={120}
               placeholder={
                 lang === 'ar'
                   ? 'ابحث بالاسم، الوصف، المنافع أو الفئات...'
@@ -210,11 +233,10 @@ export default function HomePage({
               className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pe-10 ps-11 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20"
               aria-label={lang === 'ar' ? 'بحث في العروض' : 'Search deals'}
             />
-            {inputQuery && (
+            {filterState.q && (
               <button
                 type="button"
                 onClick={() => {
-                  setInputQuery('');
                   onFilterChange({ q: '' }, 'replace');
                 }}
                 className="absolute top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-500 transition-colors hover:text-slate-300 ltr:right-3 rtl:left-3"
@@ -225,7 +247,7 @@ export default function HomePage({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleCopySearchLink}
@@ -264,6 +286,17 @@ export default function HomePage({
           </div>
         </div>
 
+        <p role="status" aria-live="polite" className="mt-2 text-sm text-emerald-300">
+          {copyStatus === 'success'
+            ? lang === 'ar'
+              ? 'تم نسخ رابط البحث.'
+              : 'Search link copied.'
+            : copyStatus === 'manual'
+              ? lang === 'ar'
+                ? 'تعذر النسخ التلقائي؛ استخدم الحقل التالي.'
+                : 'Automatic copying unavailable; use the field below.'
+              : ''}
+        </p>
         {copyStatus === 'manual' && (
           <div className="mt-3 rounded-xl border border-slate-700 bg-slate-900/90 p-3">
             <label className="block text-xs font-medium text-slate-300">
@@ -282,33 +315,46 @@ export default function HomePage({
           </div>
         )}
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div
+          role="group"
+          aria-label={lang === 'ar' ? 'فئات العروض' : 'Deal categories'}
+          className="mt-4 flex flex-wrap items-center gap-2"
+        >
           <button
             type="button"
-            onClick={() => onFilterChange({ category: 'all' }, 'push')}
-            aria-pressed={filterState.category === 'all'}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-              filterState.category === 'all'
+            onClick={() => onFilterChange({ category: null, uncategorized: false }, 'push')}
+            aria-pressed={filterState.category === null && !filterState.uncategorized}
+            className={`min-h-11 max-w-full break-words rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+              filterState.category === null && !filterState.uncategorized
                 ? 'bg-emerald-500 text-slate-950 font-semibold'
                 : 'border border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
             }`}
           >
-            {lang === 'ar' ? 'الكل' : 'All'}{' '}
-            <span className="text-[11px] opacity-75">({deals.length})</span>
+            {lang === 'ar' ? 'كل الفئات' : 'All categories'}{' '}
+            <span className="text-[11px] opacity-75">
+              ({deals.length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
+            </span>
           </button>
           {categories.map((opt) => (
             <button
-              key={opt.key || 'unclassified'}
+              key={`category:${opt.key}`}
               type="button"
-              onClick={() => onFilterChange({ category: opt.key }, 'push')}
-              aria-pressed={filterState.category === opt.key}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                filterState.category === opt.key
+              onClick={() =>
+                onFilterChange({ category: opt.key || null, uncategorized: opt.key === '' }, 'push')
+              }
+              aria-pressed={
+                opt.key === '' ? filterState.uncategorized : filterState.category === opt.key
+              }
+              className={`min-h-11 max-w-full break-words rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                (opt.key === '' ? filterState.uncategorized : filterState.category === opt.key)
                   ? 'bg-emerald-500 text-slate-950 font-semibold'
                   : 'border border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200'
               }`}
             >
-              {opt.label} <span className="text-[11px] opacity-75">({opt.count})</span>
+              {opt.label}{' '}
+              <span className="text-[11px] opacity-75">
+                ({opt.count.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
+              </span>
             </button>
           ))}
         </div>
@@ -322,7 +368,7 @@ export default function HomePage({
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {lang === 'ar' ? 'نوع المستفيد' : 'Applicant type'}
               </p>
-              <div className="flex gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {(
                   [
                     ['all', lang === 'ar' ? 'الكل' : 'All'],
@@ -351,7 +397,7 @@ export default function HomePage({
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
               </p>
-              <div className="flex gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {(
                   [
                     ['all', lang === 'ar' ? 'الكل' : 'All'],
@@ -440,7 +486,7 @@ export default function HomePage({
                 onClick={onResetFilters}
                 className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
               >
-                {lang === 'ar' ? 'مسح الفلاتر وإعادة التعيين' : 'Clear filters and reset'}
+                {lang === 'ar' ? 'مسح الفلاتر والبحث' : 'Clear filters and search'}
               </button>
             )}
           </div>

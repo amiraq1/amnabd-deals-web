@@ -13,7 +13,10 @@ export type CardFilter = 'all' | 'not_required';
 
 export interface FilterState {
   q: string;
-  category: string;
+  category: string | null;
+  uncategorized: boolean;
+  categoryValidation: 'pending' | 'valid' | 'invalid';
+  filterError?: 'category' | 'uncategorized' | 'conflict';
   applicant: ApplicantFilter;
   card: CardFilter;
   sort: SortOption;
