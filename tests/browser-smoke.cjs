@@ -177,7 +177,10 @@ const config = {
         guides: [{ slug: 'offer', sections: { eligibility: { ar: 'شرط', sources: {} } } }],
         hash: '#/deal/offer',
       },
-      async (p) => assert.match(await p.locator('main').innerText(), /شرط/)
+      async (p) => {
+        await p.getByText('شرط', { exact: true }).waitFor();
+        assert.match(await p.locator('main').innerText(), /شرط/);
+      }
     );
     await run(
       'AMN-007 invalid identity quarantined with generic status',
@@ -260,11 +263,11 @@ const config = {
       },
       async (p) => {
         await p.getByRole('button', { name: 'تصفية', exact: true }).click();
-        await p.getByRole('button', { name: 'مفتوحة للجميع', exact: true }).click();
+        await p.locator('#applicant-select').selectOption('any');
         assert.equal(await p.locator('article').count(), 1);
         assert.match(await p.locator('article').innerText(), /Open proof/);
-        await p.getByRole('button', { name: 'الطلاب', exact: true }).click();
-        await p.getByRole('button', { name: 'بدون بطاقة', exact: true }).click();
+        await p.locator('#applicant-select').selectOption('student');
+        await p.locator('#card-select').selectOption('not_required');
         assert.equal(await p.locator('article').count(), 1);
         assert.match(await p.locator('article').innerText(), /Student only/);
         await p.getByRole('button', { name: 'مسح الكل', exact: true }).click();
@@ -276,7 +279,7 @@ const config = {
       { deals: [row({ eligibility: eligibility({ open_to_all: undefined }) })] },
       async (p) => {
         await p.getByRole('button', { name: 'تصفية', exact: true }).click();
-        await p.getByRole('button', { name: 'مفتوحة للجميع', exact: true }).click();
+        await p.locator('#applicant-select').selectOption('any');
         assert.equal(await p.locator('article').count(), 0);
         assert.match(await p.locator('main').innerText(), /المجهول لا يُعد/);
       }

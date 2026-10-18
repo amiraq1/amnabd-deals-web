@@ -183,7 +183,12 @@ test('handles Arabic and Unicode slugs gracefully', () => {
 
 test('dead ID isolation: only active deals in catalog count towards valid saved count', () => {
   const storage = createMockStorage({
-    [SAVED_DEALS_STORAGE_KEY]: JSON.stringify(['active-1', 'dead-deal-999', 'active-2', 'deprecated-xyz']),
+    [SAVED_DEALS_STORAGE_KEY]: JSON.stringify([
+      'active-1',
+      'dead-deal-999',
+      'active-2',
+      'deprecated-xyz',
+    ]),
   });
 
   const catalog = [
@@ -200,3 +205,209 @@ test('dead ID isolation: only active deals in catalog count towards valid saved 
   assert.equal(saved.length, 4);
 });
 
+// Regression contracts added after inspecting the merged phase-three implementation.
+for (const raw of ['{broken', '{"not":"array"}', 'null', '"value"']) {
+  test(`corrupt/non-array data clears an existing memory snapshot: ${raw}`, () => {
+    const storage = createMockStorage();
+    saveDeal('old', storage);
+    storage.setItem(SAVED_DEALS_STORAGE_KEY, raw);
+    assert.deepEqual(getSavedDeals(storage), []);
+    assert.deepEqual(getSavedDeals(null), []);
+  });
+}
+test('key removal clears cached data before a later storage failure', () => {
+  const storage = createMockStorage();
+  saveDeal('old', storage);
+  storage.removeItem(SAVED_DEALS_STORAGE_KEY);
+  assert.deepEqual(getSavedDeals(storage), []);
+  storage.getItem = () => {
+    throw Error('denied');
+  };
+  assert.deepEqual(getSavedDeals(storage), []);
+});
+test('getItem failure retains memory edits while writes also remain unavailable', () => {
+  const storage = createMockStorage();
+  saveDeal('before-failure', storage);
+  storage.getItem = () => {
+    throw Error('denied');
+  };
+  storage.setItem = () => {
+    throw Error('quota');
+  };
+  saveDeal('memory-edit', storage);
+  storage.getItem = () => '["stale-on-disk"]';
+  assert.deepEqual(getSavedDeals(storage), ['before-failure', 'memory-edit']);
+  removeSavedDeal('before-failure', storage);
+  assert.deepEqual(getSavedDeals(storage), ['memory-edit']);
+});
+test('quota failure retains previous saves and removal for the rest of the tab session', () => {
+  const storage = createMockStorage();
+  saveDeal('one', storage);
+  storage.setItem = () => {
+    throw Error('quota');
+  };
+  saveDeal('two', storage);
+  removeSavedDeal('one', storage);
+  assert.deepEqual(getSavedDeals(storage), ['two']);
+  clearSavedDeals(storage);
+  assert.deepEqual(getSavedDeals(storage), []);
+});
+test('stored IDs are strings, trimmed and unique without prototype semantics', () => {
+  const storage = createMockStorage({
+    [SAVED_DEALS_STORAGE_KEY]: JSON.stringify([
+      ' a ',
+      'a',
+      '',
+      null,
+      2,
+      {},
+      '__proto__',
+      'constructor',
+    ]),
+  });
+  assert.deepEqual(getSavedDeals(storage), ['a', '__proto__', 'constructor']);
+});
+test('returned arrays cannot mutate the saved state', () => {
+  saveDeal('one', null);
+  const list = getSavedDeals(null);
+  list.push('injected');
+  assert.deepEqual(getSavedDeals(null), ['one']);
+});
+test('blocked localStorage getter is contained and reported as session-only', async () => {
+  const { isSavedDealsSessionOnly } = await import(
+    pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/savedDeals.js'))
+  );
+  const previous = globalThis.window;
+  globalThis.window = Object.defineProperty({}, 'localStorage', {
+    get() {
+      throw Error('SecurityError');
+    },
+  });
+  try {
+    assert.equal(saveDeal('temporary'), true);
+    assert.deepEqual(getSavedDeals(), ['temporary']);
+    assert.equal(isSavedDealsSessionOnly(), true);
+  } finally {
+    if (previous === undefined) delete globalThis.window;
+    else globalThis.window = previous;
+  }
+});
+test('same-window events, storage remove/clear and unsubscribe stay synchronized', async () => {
+  const { subscribeSavedDeals } = await import(
+    pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/savedDeals.js'))
+  );
+  const previous = globalThis.window;
+  const win = new EventTarget();
+  win.localStorage = createMockStorage();
+  globalThis.window = win;
+  const snapshots = [];
+  const off = subscribeSavedDeals(() => snapshots.push(getSavedDeals()));
+  const storageEvent = (key, storageArea = win.localStorage) => {
+    const e = new Event('storage');
+    Object.defineProperties(e, { key: { value: key }, storageArea: { value: storageArea } });
+    win.dispatchEvent(e);
+  };
+  try {
+    saveDeal('one');
+    assert.deepEqual(snapshots, [['one']]);
+    win.localStorage.setItem(SAVED_DEALS_STORAGE_KEY, '["two"]');
+    storageEvent(SAVED_DEALS_STORAGE_KEY);
+    assert.deepEqual(snapshots.at(-1), ['two']);
+    win.localStorage.removeItem(SAVED_DEALS_STORAGE_KEY);
+    storageEvent(null);
+    assert.deepEqual(snapshots.at(-1), []);
+    const size = snapshots.length;
+    storageEvent('other-key');
+    storageEvent(SAVED_DEALS_STORAGE_KEY, createMockStorage());
+    assert.equal(snapshots.length, size);
+    off();
+    saveDeal('after-unsubscribe');
+    storageEvent(null);
+    assert.equal(snapshots.length, size);
+  } finally {
+    off();
+    if (previous === undefined) delete globalThis.window;
+    else globalThis.window = previous;
+  }
+});
+
+test('500 cap filters unique keys and adding at the limit is a no-op', async () => {
+  const { MAX_SAVED_DEALS, sanitizeSavedDealKeys } = await import(
+    pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/savedDeals.js'))
+  );
+  assert.equal(MAX_SAVED_DEALS, 500);
+  const values = Array.from({ length: 600 }, (_, i) => 'k' + i);
+  assert.equal(sanitizeSavedDealKeys(['', 'k0', 'k0', null, ...values]).length, 500);
+  const storage = createMockStorage({ [SAVED_DEALS_STORAGE_KEY]: JSON.stringify(values) });
+  assert.equal(saveDeal('extra', storage), false);
+  assert.equal(toggleSavedDeal('extra', storage), false);
+  assert.equal(getSavedDeals(storage).length, 500);
+  removeSavedDeal('k0', storage);
+  assert.equal(saveDeal('extra', storage), true);
+});
+test('later successful write recovers degraded mode without dropping memory edits', async () => {
+  const { isSavedDealsSessionOnly } = await import(
+    pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/savedDeals.js'))
+  );
+  const storage = createMockStorage();
+  saveDeal('one', storage);
+  const write = storage.setItem;
+  storage.setItem = () => {
+    throw Error('quota');
+  };
+  saveDeal('two', storage);
+  assert.equal(isSavedDealsSessionOnly(), true);
+  storage.setItem = write;
+  saveDeal('three', storage);
+  assert.equal(isSavedDealsSessionOnly(), false);
+  assert.deepEqual(JSON.parse(storage.getItem(SAVED_DEALS_STORAGE_KEY)), ['one', 'two', 'three']);
+  assert.deepEqual(getSavedDeals(storage), ['one', 'two', 'three']);
+});
+test('count helper ignores old IDs and duplicate saved/catalogue IDs', async () => {
+  const { countValidSavedDeals } = await import(
+    pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/savedDeals.js'))
+  );
+  assert.equal(countValidSavedDeals(['one', 'one', 'gone', 'two'], ['one', 'two', 'two']), 2);
+  assert.equal(countValidSavedDeals(['one'], []), 0);
+});
+test('external-store snapshots are immutable and reference-stable without signature collisions', async () => {
+  const { getSavedDealsSnapshot } = await import(
+    pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/savedDeals.js'))
+  );
+  const previous = globalThis.window;
+  const win = new EventTarget();
+  win.localStorage = createMockStorage();
+  globalThis.window = win;
+  try {
+    const initial = getSavedDealsSnapshot();
+    assert.equal(getSavedDealsSnapshot(), initial);
+    saveDeal('a\u0000b');
+    const first = getSavedDealsSnapshot();
+    assert.notEqual(first, initial);
+    assert.equal(getSavedDealsSnapshot(), first);
+    assert.ok(Object.isFrozen(first.keys));
+    clearSavedDeals();
+    saveDeal('a');
+    saveDeal('b');
+    const second = getSavedDealsSnapshot();
+    assert.notEqual(second, first);
+    assert.deepEqual(second.keys, ['a', 'b']);
+    assert.equal(getSavedDealsSnapshot(), second);
+    const write = win.localStorage.setItem;
+    win.localStorage.setItem = () => {
+      throw Error('quota');
+    };
+    removeSavedDeal('b');
+    const degraded = getSavedDealsSnapshot();
+    assert.equal(degraded.degraded, true);
+    assert.equal(getSavedDealsSnapshot(), degraded);
+    win.localStorage.setItem = write;
+    saveDeal('b');
+    const recovered = getSavedDealsSnapshot();
+    assert.equal(recovered.degraded, false);
+    assert.notEqual(recovered, degraded);
+  } finally {
+    if (previous === undefined) delete globalThis.window;
+    else globalThis.window = previous;
+  }
+});

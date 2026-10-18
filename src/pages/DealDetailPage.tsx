@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import CopyDealLink from '@/components/CopyDealLink';
 import EvidenceBadge from '@/components/EvidenceBadge';
 import { offerStatusLabel } from '@/lib/evidence';
@@ -33,7 +34,7 @@ export default function DealDetailPage({
   onBack,
 }: DealDetailPageProps) {
   const { lang, dir } = useLanguage();
-  const { isSaved, toggle } = useSavedDeals();
+  const { isSaved, toggle, degraded, atLimit } = useSavedDeals();
   const saved = isSaved(deal.slug);
 
   const displayName = getDealDisplayName(deal);
@@ -41,12 +42,39 @@ export default function DealDetailPage({
   const offerUrl = resolveDealOfficialUrl(deal);
   const firstBenefit = deal.benefits[0];
 
+  const mobileBar = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const bar = mobileBar.current;
+    if (!bar) return;
+    const root = document.documentElement;
+    const property = '--amnabd-mobile-actions-height';
+    const previous = root.style.getPropertyValue(property);
+    const measure = () =>
+      root.style.setProperty(property, `${Math.ceil(bar.getBoundingClientRect().height)}px`);
+    measure();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    observer?.observe(bar, { box: 'border-box' });
+    window.addEventListener('resize', measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+      if (previous) root.style.setProperty(property, previous);
+      else root.style.removeProperty(property);
+    };
+  }, []);
+
   const e = deal.eligibility;
   const unknownCount = deal.review.unknown_fields.length;
 
   return (
     <>
-      <main className="mx-auto max-w-4xl px-4 pb-28 pt-8 sm:px-6 sm:pb-8">
+      {/* Mounted only on detail routes. Compensate the actual bar height even at
+          large text/safe-area sizes, including the Footer outside this component. */}
+      <style>{`@media (max-width: 639px) {
+        .deal-detail-content { padding-bottom: calc(var(--amnabd-mobile-actions-height, 7rem) + 1rem); }
+        footer { padding-bottom: calc(var(--amnabd-mobile-actions-height, 7rem) + 1rem); }
+      }`}</style>
+      <main className="deal-detail-content mx-auto max-w-4xl px-4 pb-8 pt-8 sm:px-6">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-white"
@@ -87,6 +115,14 @@ export default function DealDetailPage({
                 <ExternalLink className="h-4 w-4" />
               </a>
             )}
+            {!offerUrl && (
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-11 items-center rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-400"
+              >
+                {lang === 'ar' ? 'المصدر الرسمي غير متاح' : 'Official source unavailable'}
+              </span>
+            )}
 
             <button
               type="button"
@@ -101,7 +137,7 @@ export default function DealDetailPage({
                     ? `Remove ${displayName} from saved`
                     : `Save ${displayName}`
               }
-              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
+              className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
                 saved
                   ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
                   : 'border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-600 hover:text-white'
@@ -121,6 +157,23 @@ export default function DealDetailPage({
 
             <CopyDealLink key={deal.slug} slug={deal.slug} />
           </div>
+          <p className="mt-3 text-sm text-slate-400">
+            {lang === 'ar' ? 'الحفظ محلي في هذا المتصفح فقط.' : 'Saves stay in this browser only.'}
+          </p>
+          {atLimit && (
+            <p role="status" className="mt-2 text-sm text-amber-200">
+              {lang === 'ar'
+                ? 'بلغت حد 500 عرض محفوظ؛ أزل عرضاً لحفظ آخر.'
+                : '500-save limit reached. Remove a saved deal before adding another.'}
+            </p>
+          )}
+          {degraded && (
+            <p role="status" className="mt-2 text-sm text-amber-200">
+              {lang === 'ar'
+                ? 'التخزين المحلي غير متاح؛ الحفظ مؤقت في هذا التبويب ما لم تنجح محاولة كتابة لاحقة؛ قد يُفقد عند إعادة التحميل أو الإغلاق.'
+                : 'Local storage is unavailable. Saves are temporary in this tab until a later write succeeds; they may be lost on reload or close.'}
+            </p>
+          )}
         </header>
 
         {guide && (
@@ -274,7 +327,9 @@ export default function DealDetailPage({
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
                 {src.context && (
-                  <p className="mt-1 text-xs italic leading-relaxed text-slate-500">{src.context}</p>
+                  <p className="mt-1 text-xs italic leading-relaxed text-slate-500">
+                    {src.context}
+                  </p>
                 )}
                 <ul className="mt-2 space-y-1.5">
                   {src.claims.map((claim, j) => (
@@ -295,7 +350,9 @@ export default function DealDetailPage({
             <bdi>{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
             {' · '}
             {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
-            <span className="text-slate-300">{offerStatusLabel(deal.review.offer_status, lang)}</span>
+            <span className="text-slate-300">
+              {offerStatusLabel(deal.review.offer_status, lang)}
+            </span>
           </p>
         </section>
 
@@ -309,11 +366,12 @@ export default function DealDetailPage({
 
       {/* Sticky Mobile Action Bar */}
       <aside
+        ref={mobileBar}
         aria-label={lang === 'ar' ? 'إجراءات العرض السريعة' : 'Quick deal actions'}
         className="sm:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl backdrop-blur-md"
       >
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 basis-28 flex-1">
             <h2 className="truncate text-sm font-bold text-white">{displayName}</h2>
             <div className="flex items-center gap-2 text-xs text-slate-400">
               {firstBenefit ? (
@@ -324,13 +382,14 @@ export default function DealDetailPage({
                 </span>
               ) : (
                 <span className="truncate text-slate-400">
-                  {lang === 'ar' ? 'عرض موثق' : 'Verified offer'}
+                  {lang === 'ar' ? 'البطاقة: ' : 'Card: '}
+                  {requirementLabel(e.card_required, lang)}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => toggle(deal.slug)}
@@ -344,7 +403,7 @@ export default function DealDetailPage({
                     ? `Remove ${displayName} from saved`
                     : `Save ${displayName}`
               }
-              className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-colors ${
+              className={`flex h-11 w-11 items-center justify-center rounded-xl border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
                 saved
                   ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
                   : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
@@ -358,15 +417,18 @@ export default function DealDetailPage({
                 href={offerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-bold text-slate-950 shadow-md transition-all hover:bg-emerald-400 active:scale-95"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-md transition-all hover:bg-emerald-400 active:scale-95"
               >
                 <bdi>{lang === 'ar' ? 'المصدر الرسمي' : 'Official Source'}</bdi>
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-500">
-                <CircleAlert className="h-3 w-3" />
-                {lang === 'ar' ? 'غير متاح' : 'Unavailable'}
+              <span
+                aria-disabled="true"
+                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-400"
+              >
+                <CircleAlert aria-hidden="true" className="h-4 w-4 shrink-0" />
+                {lang === 'ar' ? 'المصدر الرسمي غير متاح' : 'Official source unavailable'}
               </span>
             )}
           </div>
@@ -380,7 +442,7 @@ export default function DealDetailPage({
 
 function FactRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <dt className="text-slate-400">{label}</dt>
       <dd
         className={`font-medium ${

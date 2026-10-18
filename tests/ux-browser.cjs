@@ -143,7 +143,7 @@ const deals = [
         await p.getByRole('button', { name: 'تصفية', exact: true }).getAttribute('aria-expanded'),
         'true'
       );
-      await p.getByRole('button', { name: 'بدون بطاقة', exact: true }).click();
+      await p.locator('#card-select').selectOption('not_required');
       await p.getByRole('button', { name: 'مسح الفلاتر والبحث', exact: true }).waitFor();
       assert.equal(await p.locator('article').count(), 0);
       await p.getByRole('button', { name: 'مسح الفلاتر والبحث', exact: true }).click();
