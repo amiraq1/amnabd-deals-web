@@ -1,3 +1,4 @@
+import CopyDealLink from '@/components/CopyDealLink';
 import EvidenceBadge from '@/components/EvidenceBadge';
 import { offerStatusLabel } from '@/lib/evidence';
 import { ExternalLink, FileText, ShieldCheck } from 'lucide-react';
@@ -77,6 +78,7 @@ export default function DealDetailPage({
             <ExternalLink className="h-4 w-4" />
           </a>
         )}
+        <CopyDealLink key={deal.slug} slug={deal.slug} />
       </header>
 
       {guide && (

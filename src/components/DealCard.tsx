@@ -1,3 +1,4 @@
+import { extraBenefitsLabel, recordedPrice, registrationDeadlineValue } from '@/lib/cardFacts';
 import EvidenceBadge from './EvidenceBadge';
 import { ArrowLeft, ArrowRight, ExternalLink, CircleAlert } from 'lucide-react';
 import type { Deal } from '@/types';
@@ -18,6 +19,8 @@ export default function DealCard({ deal, onOpen, index }: DealCardProps) {
   const displayName = getDealDisplayName(deal);
   const description = lang === 'ar' ? deal.description_ar : deal.description_en;
   const firstBenefit = deal.benefits[0];
+  const additional = extraBenefitsLabel(deal.benefits.length, lang);
+  const deadline = registrationDeadlineValue(deal.registration.deadline);
   const offerUrl = resolveDealOfficialUrl(deal);
 
   const ArrowIcon = dir === 'rtl' ? ArrowLeft : ArrowRight;
@@ -27,11 +30,14 @@ export default function DealCard({ deal, onOpen, index }: DealCardProps) {
       className="animate-fade-up group flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-950/40"
       style={{ animationDelay: `${Math.min(index * 60, 400)}ms` }}
     >
-      <button onClick={() => onOpen(deal.slug)} className="text-start focus:outline-none">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
+      <button
+        onClick={() => onOpen(deal.slug)}
+        className="min-w-0 rounded-lg text-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-400"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <DealIcon deal={deal} size="md" />
-            <h3 className="font-heading text-lg font-bold text-white transition-colors group-hover:text-emerald-300">
+            <h3 className="font-heading min-w-0 break-words text-lg font-bold text-white transition-colors group-hover:text-emerald-300">
               {displayName}
             </h3>
           </div>
@@ -64,7 +70,18 @@ export default function DealCard({ deal, onOpen, index }: DealCardProps) {
         )}
       </div>
 
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-800 pt-4">
+      <div className="mt-3 min-w-0 space-y-2 break-words text-xs text-slate-300">
+        {additional && <p className="font-medium text-emerald-300">{additional}</p>}
+        <p>
+          <bdi>{recordedPrice(deal.pricing, lang)}</bdi>
+        </p>
+        <p>
+          {lang === 'ar' ? 'موعد التسجيل' : 'Registration deadline'}:{' '}
+          {deadline ? <bdi dir="ltr">{deadline}</bdi> : lang === 'ar' ? 'غير معلوم' : 'Unknown'}
+        </p>
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 pt-4">
         <button
           onClick={() => onOpen(deal.slug)}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-400 transition-colors hover:text-emerald-300"

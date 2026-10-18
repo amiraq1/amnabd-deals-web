@@ -113,7 +113,8 @@ const config = {
     await run('AMN-002 valid review date in both languages', {}, async (p) => {
       let t = await p.locator('main').innerText();
       assert.match(t, /آخر مراجعة للمصادر: 2026-10-17/);
-      assert.doesNotMatch(t, /موعد التسجيل:/);
+      // Cards now legitimately show registration deadlines; the review date must not use that label.
+      assert.doesNotMatch(t, /موعد التسجيل:\s*2026-10-17/);
       await p.getByRole('button', { name: 'Switch to English' }).click();
       await p.waitForTimeout(200);
       assert.match(await p.locator('main').innerText(), /Last reviewed: 2026-10-17/);
@@ -183,7 +184,10 @@ const config = {
       { deals: [{ id: 'PRIVATE-ROW', token: 'PRIVATE-TOKEN' }, row()] },
       async (p, logs) => {
         assert.equal(await p.locator('article').count(), 1);
-        assert.match(await p.getByRole('status').innerText(), /استبعاد/);
+        assert.match(
+          await p.getByRole('status').filter({ hasText: 'استبعاد' }).innerText(),
+          /استبعاد/
+        );
         assert.doesNotMatch(logs.join(' '), /PRIVATE/);
       }
     );

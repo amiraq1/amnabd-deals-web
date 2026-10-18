@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Search, X, SlidersHorizontal, Inbox, ShieldAlert } from 'lucide-react';
 import type { Deal, SiteConfig } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
+import { categoryOptions, matchesCategory } from '@/lib/discovery';
 import { matchesQuery } from '@/lib/normalize';
 import { matchesEligibility, type ApplicantFilter, type CardFilter } from '@/lib/eligibility';
 import { reviewDateLabel } from '@/lib/format';
@@ -23,12 +24,21 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
   const [query, setQuery] = useState('');
   const [applicant, setApplicant] = useState<ApplicantFilter>('all');
   const [cardFilter, setCardFilter] = useState<CardFilter>('all');
+  const [category, setCategory] = useState<string | null>(null);
+  const categories = useMemo(() => categoryOptions(deals, lang), [deals, lang]);
+  const clearFilters = () => {
+    setApplicant('all');
+    setCardFilter('all');
+    setCategory(null);
+    setQuery('');
+  };
   const [showFilters, setShowFilters] = useState(false);
 
   const overview = config?.overview?.[lang] ?? {};
 
   const filtered = useMemo(() => {
     return deals.filter((deal) => {
+      if (!matchesCategory(deal.category.value, category)) return false;
       if (!matchesEligibility(deal.eligibility, applicant, cardFilter)) return false;
       if (query.trim()) {
         const officialName = getDealDisplayName(deal);
@@ -43,9 +53,10 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
       }
       return true;
     });
-  }, [deals, query, applicant, cardFilter, lang]);
+  }, [deals, query, applicant, cardFilter, category, lang]);
 
-  const hasActiveFilters = applicant !== 'all' || cardFilter !== 'all' || query.trim() !== '';
+  const hasActiveFilters =
+    applicant !== 'all' || cardFilter !== 'all' || category !== null || query.trim() !== '';
 
   if (loading) {
     return (
@@ -107,6 +118,33 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
       </section>
 
       <section className="mt-8">
+        <div
+          role="group"
+          aria-label={lang === 'ar' ? 'فئات العروض' : 'Deal categories'}
+          className="mb-4 flex min-w-0 flex-wrap gap-2"
+        >
+          {[
+            {
+              key: null,
+              label: lang === 'ar' ? 'كل الفئات' : 'All categories',
+              count: deals.length,
+            },
+            ...categories,
+          ].map((option) => (
+            <button
+              key={option.key === null ? 'all' : `category:${option.key}`}
+              type="button"
+              aria-pressed={category === option.key}
+              onClick={() => setCategory(option.key)}
+              className={`min-h-11 max-w-full break-words rounded-full border px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${category === option.key ? 'border-emerald-400 bg-emerald-500/15 text-emerald-200' : 'border-slate-600 bg-slate-900 text-slate-300 hover:border-slate-400'}`}
+            >
+              {option.label}{' '}
+              <span className="ms-1 text-xs">
+                ({option.count.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
+              </span>
+            </button>
+          ))}
+        </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 ltr:left-3.5 rtl:right-3.5" />
@@ -134,6 +172,8 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
           </div>
           <button
             onClick={() => setShowFilters((s) => !s)}
+            aria-expanded={showFilters}
+            aria-controls="offer-filters"
             className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
               hasActiveFilters
                 ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
@@ -146,12 +186,15 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
         </div>
 
         {showFilters && (
-          <div className="animate-fade-up mt-3 flex flex-wrap items-center gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <div
+            id="offer-filters"
+            className="animate-fade-up mt-3 flex flex-wrap items-center gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-4"
+          >
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {lang === 'ar' ? 'نوع المستفيد' : 'Applicant type'}
               </p>
-              <div className="flex gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {(
                   [
                     ['all', lang === 'ar' ? 'الكل' : 'All'],
@@ -162,6 +205,7 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
                   <button
                     key={value}
                     onClick={() => setApplicant(value)}
+                    aria-pressed={applicant === value}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                       applicant === value
                         ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40'
@@ -177,7 +221,7 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
               </p>
-              <div className="flex gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {(
                   [
                     ['all', lang === 'ar' ? 'الكل' : 'All'],
@@ -187,6 +231,7 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
                   <button
                     key={value}
                     onClick={() => setCardFilter(value)}
+                    aria-pressed={cardFilter === value}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                       cardFilter === value
                         ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40'
@@ -200,11 +245,7 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
             </div>
             {hasActiveFilters && (
               <button
-                onClick={() => {
-                  setApplicant('all');
-                  setCardFilter('all');
-                  setQuery('');
-                }}
+                onClick={clearFilters}
                 className="ms-auto text-xs font-medium text-slate-400 underline-offset-4 transition-colors hover:text-white hover:underline"
               >
                 {lang === 'ar' ? 'مسح الكل' : 'Clear all'}
@@ -223,7 +264,7 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
       )}
 
       <section className="mt-6">
-        <p className="text-sm text-slate-500">
+        <p role="status" aria-live="polite" aria-atomic="true" className="text-sm text-slate-500">
           {lang === 'ar'
             ? `${filtered.length.toLocaleString('ar-EG')} عرض من أصل ${deals.length.toLocaleString('ar-EG')}`
             : `${filtered.length} of ${deals.length} offers`}
@@ -237,6 +278,15 @@ export default function HomePage({ deals, config, loading, error, onOpenDeal }: 
                 ? 'لا توجد عروض مطابقة. جرّب تعديل البحث أو التصفية.'
                 : 'No matching offers. Try adjusting your search or filters.'}
             </p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="min-h-11 rounded-lg border border-slate-600 px-4 py-2 text-sm text-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
+              >
+                {lang === 'ar' ? 'مسح الفلاتر والبحث' : 'Clear filters and search'}
+              </button>
+            )}
           </div>
         ) : (
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
