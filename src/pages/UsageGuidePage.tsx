@@ -19,7 +19,11 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <main
+        className="mx-auto max-w-4xl px-4 py-10 sm:px-6"
+        aria-busy="true"
+        aria-label={lang === 'ar' ? 'جارٍ تحميل الدليل' : 'Loading guide'}
+      >
         <div className="skeleton h-32 w-full" />
         <div className="skeleton mt-6 h-96 w-full" />
       </main>

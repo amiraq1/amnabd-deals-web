@@ -32,7 +32,10 @@ export default function Navbar({ route, navigate }: NavbarProps) {
           </span>
         </button>
 
-        <nav className="flex max-w-full flex-wrap items-center gap-1">
+        <nav
+          aria-label={lang === 'ar' ? 'التنقل الرئيسي' : 'Main navigation'}
+          className="flex max-w-full flex-wrap items-center gap-1"
+        >
           <button
             onClick={() => navigate({ name: 'home' })}
             className={`${linkBase} ${route.name === 'home' || route.name === 'deal' ? activeClass : idleClass}`}
@@ -50,7 +53,7 @@ export default function Navbar({ route, navigate }: NavbarProps) {
           </button>
           <button
             onClick={toggle}
-            className={`${linkBase} ml-1 flex items-center gap-1.5 border border-slate-700 text-slate-200 hover:border-emerald-500/50 hover:text-emerald-300`}
+            className={`${linkBase} ms-1 flex items-center gap-1.5 border border-slate-700 text-slate-200 hover:border-emerald-500/50 hover:text-emerald-300`}
             aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
           >
             <Globe className="h-4 w-4" />

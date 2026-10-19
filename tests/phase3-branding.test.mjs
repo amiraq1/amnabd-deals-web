@@ -11,11 +11,14 @@ test('branding references a real self-contained favicon, not Vite or third-party
   assert.doesNotMatch(svg, /<script|<foreignObject|(?:href|src)=|onload=/i);
   assert.doesNotMatch(html, /vite\.svg|bolt\.new|og-image\.svg/);
 });
-test('text-only social metadata makes no unsupported SVG image promise', () => {
-  assert.match(html, /name="twitter:card" content="summary"/);
+test('social metadata references rasterized PNG image and not unsupported SVG', () => {
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.match(html, /property="og:title"/);
   assert.match(html, /property="og:description"/);
-  assert.doesNotMatch(html, /(?:property="og:image|name="twitter:image|rel="apple-touch-icon)/);
+  assert.match(html, /property="og:image"[^>]*og-image\.png/);
+  assert.match(html, /name="twitter:image"[^>]*og-image\.png/);
+  assert.doesNotMatch(html, /og-image\.svg/);
+  assert.ok(existsSync(resolve('public/og-image.png')));
 });
 test('safe-area viewport and dark theme are explicit', () => {
   assert.match(html, /viewport-fit=cover/);

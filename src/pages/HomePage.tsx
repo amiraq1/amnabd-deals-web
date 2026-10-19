@@ -179,7 +179,11 @@ export default function HomePage({
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <main
+        className="mx-auto max-w-6xl px-4 py-10 sm:px-6"
+        aria-busy="true"
+        aria-label={lang === 'ar' ? 'جارٍ تحميل العروض' : 'Loading deals'}
+      >
         <div className="skeleton h-40 w-full" />
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (

@@ -163,6 +163,35 @@ function AppInner() {
   for (const row of deals) guideNames[row.slug] = { ar: row.name_ar, en: row.name_en };
   const omitted = (offers.data?.omitted ?? 0) + (guides.data?.omitted ?? 0);
 
+  useEffect(() => {
+    if (route.name === 'deal') {
+      if (deal) {
+        const dealName = lang === 'ar' ? deal.name_ar : deal.name_en;
+        document.title = `${dealName} — AMNABD Deals`;
+      } else if (offers.status === 'ready') {
+        document.title =
+          lang === 'ar'
+            ? 'العرض غير موجود — AMNABD Deals'
+            : 'Deal Not Found — AMNABD Deals';
+      }
+    } else if (route.name === 'guide') {
+      document.title =
+        lang === 'ar'
+          ? 'دليل الاستخدام والشروط — AMNABD Deals'
+          : 'Usage Guide & Terms — AMNABD Deals';
+    } else if (route.name === 'notfound') {
+      document.title =
+        lang === 'ar'
+          ? 'الصفحة غير موجودة (404) — AMNABD Deals'
+          : 'Page Not Found (404) — AMNABD Deals';
+    } else {
+      document.title =
+        lang === 'ar'
+          ? 'AMNABD Deals — دليل عروض أدوات الذكاء الاصطناعي المجانية'
+          : 'AMNABD Deals — Verified AI & Cloud Deals';
+    }
+  }, [route.name, route.slug, deal, lang, offers.status]);
+
   let content: JSX.Element;
   if (route.name === 'notfound')
     content = <NotFoundPage onBack={() => navigate({ name: 'home' })} />;
@@ -189,11 +218,12 @@ function AppInner() {
   } else if (route.name === 'deal') {
     if (offers.status === 'loading')
       content = (
-        <main className="mx-auto max-w-4xl px-4 py-10">
-          <div
-            className="skeleton h-64 w-full"
-            aria-label={lang === 'ar' ? 'جارٍ التحميل' : 'Loading'}
-          />
+        <main
+          className="mx-auto max-w-4xl px-4 py-10"
+          aria-busy="true"
+          aria-label={lang === 'ar' ? 'جارٍ التحميل' : 'Loading'}
+        >
+          <div className="skeleton h-64 w-full" />
         </main>
       );
     else if (!deal) content = <NotFoundPage onBack={() => navigate({ name: 'home' })} />;
@@ -224,8 +254,14 @@ function AppInner() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-50 focus:rounded-md focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-slate-950 focus:font-semibold focus:shadow-lg focus:outline-none"
+      >
+        {lang === 'ar' ? 'تخطي إلى المحتوى الرئيسي' : 'Skip to main content'}
+      </a>
       <Navbar route={route} navigate={navigate} />
-      <div className="flex-1">
+      <div id="main-content" tabIndex={-1} className="flex-1 outline-none">
         {settings.status === 'error' && (
           <ResourceNotice name="config" error={settings.error} lang={lang} retry={settings.retry} />
         )}
