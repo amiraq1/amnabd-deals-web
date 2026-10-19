@@ -1,5 +1,6 @@
-import { Globe, Sparkles, BookOpen } from 'lucide-react';
+import { Globe, Sparkles, BookOpen, Heart } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { useFavorites } from '@/hooks/useFavorites';
 
 import type { Route } from '@/lib/routes';
 export type { Route } from '@/lib/routes';
@@ -11,6 +12,7 @@ interface NavbarProps {
 
 export default function Navbar({ route, navigate }: NavbarProps) {
   const { lang, toggle } = useLanguage();
+  const { count } = useFavorites();
 
   const linkBase =
     'inline-flex min-h-11 items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400';
@@ -41,6 +43,27 @@ export default function Navbar({ route, navigate }: NavbarProps) {
             className={`${linkBase} ${route.name === 'home' || route.name === 'deal' ? activeClass : idleClass}`}
           >
             {lang === 'ar' ? 'العروض' : 'Deals'}
+          </button>
+          <button
+            onClick={() => navigate({ name: 'favorites' })}
+            className={`${linkBase} ${route.name === 'favorites' ? activeClass : idleClass}`}
+          >
+            <span className="flex items-center gap-1.5">
+              <Heart
+                className={`h-4 w-4 transition-colors ${
+                  route.name === 'favorites' ? 'fill-rose-400 text-rose-400' : 'text-slate-400'
+                }`}
+              />
+              <span>{lang === 'ar' ? 'المفضلة' : 'Favorites'}</span>
+              {count > 0 && (
+                <span
+                  className="ms-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500/20 px-1.5 text-xs font-bold text-rose-300"
+                  aria-label={`${count} ${lang === 'ar' ? 'عروض محفوظة' : 'saved deals'}`}
+                >
+                  {count}
+                </span>
+              )}
+            </span>
           </button>
           <button
             onClick={() => navigate({ name: 'guide' })}

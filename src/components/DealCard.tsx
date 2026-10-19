@@ -1,13 +1,13 @@
 import { extraBenefitsLabel, recordedPrice, registrationDeadlineValue } from '@/lib/cardFacts';
 import EvidenceBadge from './EvidenceBadge';
-import { ArrowLeft, ArrowRight, ExternalLink, CircleAlert, Bookmark } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, CircleAlert } from 'lucide-react';
 import type { Deal } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { benefitAmount, durationLabel, frequencyLabel, benefitTypeLabel } from '@/lib/format';
 import { resolveDealOfficialUrl } from '@/lib/safeUrl';
 import { getDealDisplayName } from '@/lib/dealMetadata';
 import DealIcon from '@/components/DealIcon';
-import { useSavedDeals } from '@/hooks/useSavedDeals';
+import FavoriteButton from '@/components/FavoriteButton';
 import { routeHash } from '@/lib/routes';
 
 interface DealCardProps {
@@ -18,10 +18,8 @@ interface DealCardProps {
   onToggleSave?: (slug: string) => void;
 }
 
-export default function DealCard({ deal, onOpen, index, isSaved, onToggleSave }: DealCardProps) {
+export default function DealCard({ deal, onOpen, index }: DealCardProps) {
   const { lang, dir } = useLanguage();
-  const savedHook = useSavedDeals();
-  const saved = isSaved !== undefined ? isSaved : savedHook.isSaved(deal.slug);
 
   const displayName = getDealDisplayName(deal);
   const description = lang === 'ar' ? deal.description_ar : deal.description_en;
@@ -39,10 +37,6 @@ export default function DealCard({ deal, onOpen, index, isSaved, onToggleSave }:
       return;
     event.preventDefault();
     onOpen(deal.slug);
-  };
-  const handleToggleSave = () => {
-    if (onToggleSave) onToggleSave(deal.slug);
-    else savedHook.toggle(deal.slug);
   };
 
   return (
@@ -63,31 +57,11 @@ export default function DealCard({ deal, onOpen, index, isSaved, onToggleSave }:
             </span>
           </a>
         </h3>
-        <button
-          type="button"
-          onClick={handleToggleSave}
-          aria-pressed={saved}
-          aria-label={
-            lang === 'ar'
-              ? saved
-                ? `إزالة ${displayName} من المحفوظات`
-                : `حفظ ${displayName} في المفضلة`
-              : saved
-                ? `Remove ${displayName} from saved`
-                : `Save ${displayName}`
-          }
-          className={`absolute end-3 top-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
-            saved
-              ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-              : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-          }`}
-        >
-          <Bookmark
-            className={`h-4 w-4 transition-transform duration-200 active:scale-90 ${
-              saved ? 'fill-emerald-400 text-emerald-400' : ''
-            }`}
-          />
-        </button>
+        <FavoriteButton
+          slug={deal.slug}
+          dealName={displayName}
+          className="absolute end-3 top-3"
+        />
       </div>
       <div className="mt-3 min-w-0 break-words">
         <EvidenceBadge

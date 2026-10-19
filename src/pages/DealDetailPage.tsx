@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import CopyDealLink from '@/components/CopyDealLink';
 import EvidenceBadge from '@/components/EvidenceBadge';
 import { offerStatusLabel } from '@/lib/evidence';
-import { ExternalLink, FileText, ShieldCheck, Bookmark, CircleAlert } from 'lucide-react';
+import { ExternalLink, FileText, ShieldCheck, CircleAlert } from 'lucide-react';
 import type { Deal, UsageGuide } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -18,7 +18,7 @@ import InfoBanner from '@/components/InfoBanner';
 import { getDealDisplayName } from '@/lib/dealMetadata';
 import DealIcon from '@/components/DealIcon';
 import ScrollToTop from '@/components/ScrollToTop';
-import { useSavedDeals } from '@/hooks/useSavedDeals';
+import FavoriteButton from '@/components/FavoriteButton';
 
 interface DealDetailPageProps {
   deal: Deal;
@@ -34,8 +34,6 @@ export default function DealDetailPage({
   onBack,
 }: DealDetailPageProps) {
   const { lang, dir } = useLanguage();
-  const { isSaved, toggle, degraded, atLimit } = useSavedDeals();
-  const saved = isSaved(deal.slug);
 
   const displayName = getDealDisplayName(deal);
   const description = lang === 'ar' ? deal.description_ar : deal.description_en;
@@ -124,56 +122,13 @@ export default function DealDetailPage({
               </span>
             )}
 
-            <button
-              type="button"
-              onClick={() => toggle(deal.slug)}
-              aria-pressed={saved}
-              aria-label={
-                lang === 'ar'
-                  ? saved
-                    ? `إزالة ${displayName} من المحفوظات`
-                    : `حفظ ${displayName} في المفضلة`
-                  : saved
-                    ? `Remove ${displayName} from saved`
-                    : `Save ${displayName}`
-              }
-              className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
-                saved
-                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
-                  : 'border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-600 hover:text-white'
-              }`}
-            >
-              <Bookmark className={`h-4 w-4 ${saved ? 'fill-emerald-400 text-emerald-400' : ''}`} />
-              <span>
-                {saved
-                  ? lang === 'ar'
-                    ? 'محفوظ في المفضلة'
-                    : 'Saved'
-                  : lang === 'ar'
-                    ? 'حفظ في المفضلة'
-                    : 'Save deal'}
-              </span>
-            </button>
+            <FavoriteButton slug={deal.slug} dealName={displayName} showText={true} />
 
             <CopyDealLink key={deal.slug} slug={deal.slug} />
           </div>
           <p className="mt-3 text-sm text-slate-400">
             {lang === 'ar' ? 'الحفظ محلي في هذا المتصفح فقط.' : 'Saves stay in this browser only.'}
           </p>
-          {atLimit && (
-            <p role="status" className="mt-2 text-sm text-amber-200">
-              {lang === 'ar'
-                ? 'بلغت حد 500 عرض محفوظ؛ أزل عرضاً لحفظ آخر.'
-                : '500-save limit reached. Remove a saved deal before adding another.'}
-            </p>
-          )}
-          {degraded && (
-            <p role="status" className="mt-2 text-sm text-amber-200">
-              {lang === 'ar'
-                ? 'التخزين المحلي غير متاح؛ الحفظ مؤقت في هذا التبويب ما لم تنجح محاولة كتابة لاحقة؛ قد يُفقد عند إعادة التحميل أو الإغلاق.'
-                : 'Local storage is unavailable. Saves are temporary in this tab until a later write succeeds; they may be lost on reload or close.'}
-            </p>
-          )}
         </header>
 
         {guide && (
@@ -390,27 +345,11 @@ export default function DealDetailPage({
           </div>
 
           <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => toggle(deal.slug)}
-              aria-pressed={saved}
-              aria-label={
-                lang === 'ar'
-                  ? saved
-                    ? `إزالة ${displayName} من المحفوظات`
-                    : `حفظ ${displayName} في المفضلة`
-                  : saved
-                    ? `Remove ${displayName} from saved`
-                    : `Save ${displayName}`
-              }
-              className={`flex h-11 w-11 items-center justify-center rounded-xl border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
-                saved
-                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
-                  : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
-              }`}
-            >
-              <Bookmark className={`h-4 w-4 ${saved ? 'fill-emerald-400 text-emerald-400' : ''}`} />
-            </button>
+            <FavoriteButton
+              slug={deal.slug}
+              dealName={displayName}
+              className="rounded-xl border border-slate-800 bg-slate-900"
+            />
 
             {offerUrl ? (
               <a

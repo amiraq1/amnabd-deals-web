@@ -1,5 +1,5 @@
 export interface Route {
-  name: 'home' | 'guide' | 'deal' | 'notfound';
+  name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites';
   slug?: string;
 }
 
@@ -30,6 +30,7 @@ export function parseHash(raw: unknown): Route {
   const parts = cleanPath.split('/');
   if (parts.length > 1 && parts[parts.length - 1] === '') parts.pop();
   if (parts.length === 1 && parts[0] === 'guide') return { name: 'guide' };
+  if (parts.length === 1 && parts[0] === 'favorites') return { name: 'favorites' };
   if (parts.length !== 2 || parts[0] !== 'deal' || !parts[1]) return { name: 'notfound' };
   try {
     const slug = decodeURIComponent(parts[1]);
@@ -42,6 +43,7 @@ export function parseHash(raw: unknown): Route {
 export function routeHash(route: Route): string {
   if (route.name === 'home') return '#/';
   if (route.name === 'guide') return '#/guide';
+  if (route.name === 'favorites') return '#/favorites';
   if (route.name === 'deal' && typeof route.slug === 'string' && isValidSlug(route.slug)) {
     try {
       return `#/deal/${encodeURIComponent(route.slug)}`;

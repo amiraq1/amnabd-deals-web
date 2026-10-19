@@ -19,6 +19,7 @@ import HomePage from '@/pages/HomePage';
 import DealDetailPage from '@/pages/DealDetailPage';
 import UsageGuidePage from '@/pages/UsageGuidePage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import FavoritesPage from '@/pages/FavoritesPage';
 
 function AppInner() {
   const { lang } = useLanguage();
@@ -179,6 +180,11 @@ function AppInner() {
         lang === 'ar'
           ? 'دليل الاستخدام والشروط — AMNABD Deals'
           : 'Usage Guide & Terms — AMNABD Deals';
+    } else if (route.name === 'favorites') {
+      document.title =
+        lang === 'ar'
+          ? 'مفضلتي — AMNABD Deals'
+          : 'My Favorites — AMNABD Deals';
     } else if (route.name === 'notfound') {
       document.title =
         lang === 'ar'
@@ -195,7 +201,15 @@ function AppInner() {
   let content: JSX.Element;
   if (route.name === 'notfound')
     content = <NotFoundPage onBack={() => navigate({ name: 'home' })} />;
-  else if (route.name === 'guide') {
+  else if (route.name === 'favorites') {
+    content = (
+      <FavoritesPage
+        deals={deals}
+        onOpenDeal={onOpenDeal}
+        onBackToHome={() => navigate({ name: 'home' })}
+      />
+    );
+  } else if (route.name === 'guide') {
     content =
       guides.status === 'error' ? (
         <main className="mx-auto max-w-4xl px-4 py-8">
