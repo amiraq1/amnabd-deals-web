@@ -1,139 +1,226 @@
-import { extraBenefitsLabel, recordedPrice, registrationDeadlineValue } from '@/lib/cardFacts';
-import EvidenceBadge from './EvidenceBadge';
-import { ArrowLeft, ArrowRight, ExternalLink, CircleAlert } from 'lucide-react';
-import type { Deal } from '@/types';
+import type { MouseEvent } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Clock,
+  ExternalLink,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
+import type { Deal, Lang } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { benefitAmount, durationLabel, frequencyLabel, benefitTypeLabel } from '@/lib/format';
 import { resolveDealOfficialUrl } from '@/lib/safeUrl';
-import { getDealDisplayName } from '@/lib/dealMetadata';
+import {
+  getDealDisplayName,
+  getDealHeadlineValue,
+  getDealKeyCondition,
+} from '@/lib/dealMetadata';
+import { routePath } from '@/lib/routes';
 import DealIcon from '@/components/DealIcon';
 import FavoriteButton from '@/components/FavoriteButton';
-import { routeHash } from '@/lib/routes';
 
-interface DealCardProps {
+export interface DealCardProps {
   deal: Deal;
-  onOpen: (slug: string) => void;
-  index: number;
+  onOpen?: (slug: string) => void;
+  // الخصائص التالية أبقيتها للتوافق مع الاستدعاءات الحالية، وهي غير مستخدمة داخل البطاقة.
+  index?: number;
   isSaved?: boolean;
   onToggleSave?: (slug: string) => void;
+  isFavorited?: boolean;
+  onToggleFavorite?: (slug: string) => void;
 }
 
-export default function DealCard({ deal, onOpen, index }: DealCardProps) {
+const DAY_MS = 24 * 60 * 60 * 1000;
+const ENDING_SOON_DAYS = 14;
+
+type Timing = { state: 'expired' } | { state: 'open'; daysLeft: number } | null;
+
+function getTiming(endsAt?: string | null, deadlineDate?: string | null): Timing {
+  const target = endsAt || deadlineDate;
+  if (!target) return null;
+  // التاريخ بدون وقت (2026-10-20) يعني أن العرض ينتهي في آخر ذلك اليوم، لا في بدايته.
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(target);
+  const end = new Date(isDateOnly ? `${target}T23:59:59` : target).getTime();
+  if (!Number.isFinite(end)) return null;
+  const daysLeft = Math.ceil((end - Date.now()) / DAY_MS);
+  return daysLeft > 0 ? { state: 'open', daysLeft } : { state: 'expired' };
+}
+
+function endsLabel(days: number, lang: Lang): string {
+  if (lang === 'ar') {
+    if (days === 1) return 'ينتهي خلال 24 ساعة';
+    if (days === 2) return 'ينتهي بعد يومين';
+    if (days <= 10) return `ينتهي خلال ${days} أيام`;
+    return `ينتهي خلال ${days} يومًا`;
+  }
+  return days === 1 ? 'Ends within 24h' : `Ends in ${days} days`;
+}
+
+function isRecentlyReviewed(reviewedOn?: string | null, createdAt?: string | null): boolean {
+  const value = reviewedOn || createdAt;
+  if (!value) return false;
+  const time = new Date(value).getTime();
+  if (!Number.isFinite(time)) return false;
+  const diffDays = (Date.now() - time) / DAY_MS;
+  return diffDays >= 0 && diffDays <= 7;
+}
+
+export default function DealCard({ deal, onOpen }: DealCardProps) {
   const { lang, dir } = useLanguage();
+  const isAr = lang === 'ar';
 
   const displayName = getDealDisplayName(deal);
-  const description = lang === 'ar' ? deal.description_ar : deal.description_en;
-  const firstBenefit = deal.benefits[0];
-  const additional = extraBenefitsLabel(deal.benefits.length, lang);
-  const deadline = registrationDeadlineValue(deal.registration.deadline);
-  const offerUrl = resolveDealOfficialUrl(deal);
+  const headlineValue = getDealHeadlineValue(deal);
+  const keyCondition = getDealKeyCondition(deal, lang);
+  const officialUrl = resolveDealOfficialUrl(deal);
+  const description = isAr
+    ? deal.description_ar || deal.description_en
+    : deal.description_en || deal.description_ar;
 
-  const ArrowIcon = dir === 'rtl' ? ArrowLeft : ArrowRight;
+  const timing = getTiming(deal.ends_at, deal.registration.deadline.date);
+  const expired = timing?.state === 'expired';
+  const daysLeft = timing?.state === 'open' ? timing.daysLeft : null;
+  const endingSoon = daysLeft !== null && daysLeft <= ENDING_SOON_DAYS;
+  const isNew = !expired && isRecentlyReviewed(deal.review.reviewed_on, deal.created_at);
+  const verified = deal.review.verification_status === 'verified';
 
-  const detailHref = routeHash({ name: 'deal', slug: deal.slug });
-  const handleOpen = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    // Native links still support middle-click, modifiers and opening a new tab.
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
-      return;
-    event.preventDefault();
+  const noCard = deal.eligibility.card_required === 'not_required';
+  const studentsOnly = deal.eligibility.applicant_type === 'student';
+
+  const href = routePath({ name: 'deal', slug: deal.slug });
+
+  // نقرة عادية = تنقل داخل التطبيق. Ctrl/Cmd/Shift/Alt أو الزر الأوسط = يتولاها المتصفح.
+  const handleOpen = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (!onOpen) return;
+    const plainClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+    if (!plainClick) return;
+    e.preventDefault();
     onOpen(deal.slug);
   };
 
+  const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
+
   return (
     <article
-      className="animate-fade-up group relative flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-950/40"
-      style={{ animationDelay: `${Math.min(index * 60, 400)}ms` }}
+      className={`group relative flex flex-col justify-between rounded-2xl border bg-slate-900/60 p-5 transition-colors focus-within:border-emerald-500/60 hover:bg-slate-900/90 ${
+        expired ? 'border-slate-800/60 opacity-70' : 'border-slate-800/80 hover:border-slate-700'
+      }`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 flex-1 pe-12">
-          <a
-            href={detailHref}
-            onClick={handleOpen}
-            className="flex min-h-11 w-full min-w-0 items-center gap-3 rounded-lg text-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-400"
-          >
-            <DealIcon deal={deal} size="md" />
-            <span className="font-heading min-w-0 break-words text-lg font-bold text-white transition-colors group-hover:text-emerald-300">
+      <div>
+        {/* الشارات وزر المفضلة */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {expired && (
+              <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/80 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300">
+                {isAr ? 'انتهى العرض' : 'Expired'}
+              </span>
+            )}
+            {endingSoon && daysLeft !== null && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-300">
+                <span className="relative flex h-2 w-2" aria-hidden="true">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60 motion-reduce:animate-none" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                </span>
+                <Clock className="h-3 w-3" aria-hidden="true" />
+                <span>{endsLabel(daysLeft, lang)}</span>
+              </span>
+            )}
+            {isNew && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300">
+                <Sparkles className="h-3 w-3" aria-hidden="true" />
+                <span>{isAr ? 'جديد' : 'New'}</span>
+              </span>
+            )}
+            {verified && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800/80 px-2 py-0.5 text-[11px] font-medium text-slate-300">
+                <ShieldCheck className="h-3 w-3 text-emerald-400" aria-hidden="true" />
+                <span>{isAr ? 'موثّق' : 'Verified'}</span>
+              </span>
+            )}
+          </div>
+
+          {/* z-10 حتى يبقى الزر قابلًا للنقر فوق رابط البطاقة الممتد */}
+          <div className="relative z-10">
+            <FavoriteButton
+              slug={deal.slug}
+              dealName={displayName}
+              className="rounded-lg border border-slate-800/80 bg-slate-950/50 p-2 text-slate-400 transition hover:border-slate-700 hover:text-white"
+            />
+          </div>
+        </div>
+
+        {/* الأيقونة والاسم. رابط العنوان يمتد ليغطي البطاقة كلها. */}
+        <div className="mt-4 flex items-start gap-3.5">
+          <DealIcon deal={deal} size="md" className="shrink-0" />
+          <h3 className="font-heading min-w-0 flex-1 text-base font-bold leading-snug text-white">
+            <a
+              href={href}
+              onClick={handleOpen}
+              className="line-clamp-2 rounded transition-colors after:absolute after:inset-0 after:rounded-2xl group-hover:text-emerald-300"
+            >
               {displayName}
-            </span>
-          </a>
-        </h3>
-        <FavoriteButton
-          slug={deal.slug}
-          dealName={displayName}
-          className="absolute end-3 top-3"
-        />
-      </div>
-      <div className="mt-3 min-w-0 break-words">
-        <EvidenceBadge
-          status={deal.review.verification_status}
-          reviewedOn={deal.review.reviewed_on}
-          lang={lang}
-        />
-      </div>
+            </a>
+          </h3>
+        </div>
 
-      <a
-        href={detailHref}
-        onClick={handleOpen}
-        className="mt-3 min-w-0 w-full text-start rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-400"
-      >
-        <span className="line-clamp-3 text-sm leading-relaxed text-slate-400">{description}</span>
-      </a>
+        {/* القيمة هي أهم معلومة في البطاقة. لا نفترض أن العرض مجاني إن غابت. */}
+        {headlineValue && (
+          <p className="font-heading mt-4 text-lg font-bold leading-snug text-emerald-300">
+            {headlineValue}
+          </p>
+        )}
+        {keyCondition && (
+          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-slate-300">
+            <span className="text-slate-500">{isAr ? 'الشرط: ' : 'Condition: '}</span>
+            {keyCondition}
+          </p>
+        )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {firstBenefit && (
-          <span className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-300">
-            <bdi>{benefitTypeLabel(firstBenefit.type, lang)}</bdi>
-            {' · '}
-            <bdi>{benefitAmount(firstBenefit.amount, lang)}</bdi>
-          </span>
+        {(noCard || studentsOnly) && (
+          <ul className="mt-3 flex flex-wrap gap-1.5">
+            {noCard && (
+              <li className="rounded-md border border-slate-700/80 px-2 py-0.5 text-[11px] font-medium text-slate-300">
+                {isAr ? 'بدون بطاقة ائتمان' : 'No credit card'}
+              </li>
+            )}
+            {studentsOnly && (
+              <li className="rounded-md border border-slate-700/80 px-2 py-0.5 text-[11px] font-medium text-slate-300">
+                {isAr ? 'للطلاب' : 'Students'}
+              </li>
+            )}
+          </ul>
         )}
-        {firstBenefit && (
-          <span className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-400">
-            <bdi>{durationLabel(firstBenefit.duration, lang)}</bdi>
-          </span>
-        )}
-        {firstBenefit && frequencyLabel(firstBenefit.frequency, lang) && (
-          <span className="rounded-lg bg-gold/10 px-2.5 py-1 text-xs font-medium text-gold">
-            <bdi>{frequencyLabel(firstBenefit.frequency, lang)}</bdi>
-          </span>
+
+        {description && (
+          <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-slate-400">
+            {description}
+          </p>
         )}
       </div>
 
-      <div className="mt-3 min-w-0 space-y-2 break-words text-xs text-slate-300">
-        {additional && <p className="font-medium text-emerald-300">{additional}</p>}
-        <p>
-          <bdi>{recordedPrice(deal.pricing, lang)}</bdi>
-        </p>
-        <p>
-          {lang === 'ar' ? 'موعد التسجيل' : 'Registration deadline'}:{' '}
-          {deadline ? <bdi dir="ltr">{deadline}</bdi> : lang === 'ar' ? 'غير معلوم' : 'Unknown'}
-        </p>
-      </div>
-
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800 pt-4">
-        <a
-          href={detailHref}
-          onClick={handleOpen}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-400 transition-colors hover:text-emerald-300"
+      {/* الذيل */}
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-800/60 pt-3.5">
+        <span
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 transition-colors group-hover:text-white"
+          aria-hidden="true"
         >
-          {lang === 'ar' ? 'التفاصيل' : 'Details'}
-          <ArrowIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0" />
-        </a>
-        {offerUrl ? (
+          {isAr ? 'تفاصيل العرض' : 'View details'}
+          <Arrow className="h-3.5 w-3.5 transition-transform motion-reduce:transition-none rtl:group-hover:-translate-x-1 ltr:group-hover:translate-x-1" />
+        </span>
+
+        {officialUrl && (
           <a
-            href={offerUrl}
+            href={officialUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-300 transition-all hover:border-emerald-400 hover:bg-emerald-500/20"
+            className="relative z-10 inline-flex items-center gap-1 rounded-lg border border-slate-700/80 bg-slate-800/60 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition hover:border-slate-600 hover:text-white"
           >
-            <bdi>{lang === 'ar' ? 'المصدر الرسمي' : 'Official Source'}</bdi>
-            <ExternalLink className="h-3.5 w-3.5" />
+            <span>{isAr ? 'المصدر' : 'Source'}</span>
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            <span className="sr-only">
+              {isAr ? `الرسمي لعرض ${displayName} (يفتح في نافذة جديدة)` : `for ${displayName} (opens in a new tab)`}
+            </span>
           </a>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
-            <CircleAlert className="h-3.5 w-3.5" />
-            {lang === 'ar' ? 'رابط غير متاح' : 'Link unavailable'}
-          </span>
         )}
       </div>
     </article>

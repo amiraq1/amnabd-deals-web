@@ -28,15 +28,52 @@ export default function Footer() {
                 ? 'دليل مراجعي بسرية — البيانات من المصادر الرسمية'
                 : 'A review-first directory — data from official sources'}
             </p>
-            <a
-              href="https://github.com/amiraq1/amnabd-deals"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-1.5 text-emerald-400 transition-colors hover:text-emerald-300"
-            >
-              {lang === 'ar' ? 'المشروع الأصلي' : 'Original project'}
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-slate-400 font-semibold">{lang === 'ar' ? 'مجموعات مميزة:' : 'Collections:'}</span>
+              <a href="/for-students" className="text-slate-400 hover:text-emerald-400">
+                {lang === 'ar' ? 'للطلاب' : 'For Students'}
+              </a>
+              <span className="text-slate-700">·</span>
+              <a href="/no-credit-card" className="text-slate-400 hover:text-emerald-400">
+                {lang === 'ar' ? 'بدون بطاقة' : 'No Card'}
+              </a>
+              <span className="text-slate-700">·</span>
+              <a href="/coding" className="text-slate-400 hover:text-emerald-400">
+                {lang === 'ar' ? 'أدوات البرمجة' : 'Coding Tools'}
+              </a>
+              <span className="text-slate-700">·</span>
+              <a href="/ending-soon" className="text-slate-400 hover:text-amber-400">
+                {lang === 'ar' ? 'تنتهي قريباً' : 'Ending Soon'}
+              </a>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <a
+                href="/changelog"
+                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-400"
+              >
+                {lang === 'ar' ? 'سجل التغييرات' : 'Changelog'}
+              </a>
+              <span className="text-slate-600">·</span>
+              <a
+                href="/feed.xml"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-400"
+              >
+                {lang === 'ar' ? 'تغذية RSS' : 'RSS Feed'}
+              </a>
+              <span className="text-slate-600">·</span>
+              <a
+                href="https://github.com/amiraq1/amnabd-deals"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-emerald-400 transition-colors hover:text-emerald-300"
+              >
+                {lang === 'ar' ? 'المشروع الأصلي' : 'Original project'}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
           </div>
         </div>
       </div>

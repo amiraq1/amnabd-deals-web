@@ -1,0 +1,104 @@
+{
+  "id": "deal-antigravity-001",
+  "slug": "antigravity-ultra-scientists",
+  "name": "Google Antigravity",
+  "name_ar": "Google Antigravity — وصول مجاني لـ10,000 باحث",
+  "name_en": "Google Antigravity — free access for 10,000 scientists",
+  "headline_value": "وصول مجاني لـ10,000 باحث",
+  "key_condition": "للعلماء والباحثين",
+  "use_cases": ["بحث", "برمجة"],
+  "status": "active",
+  "ends_at": null,
+  "description_ar": "تتيح جوجل أعلى فئة استخدام في Antigravity ونموذج Gemini 4 Argon مجاناً لـ 10,000 باحث وعالم عبر التقديم في النموذج الأكاديمي الرسمي.",
+  "description_en": "Google offers its highest usage tier in Antigravity and Gemini 4 Argon free of charge to 10,000 scientists. Apply via the form linked from the official science page.",
+  "benefits": [
+    {
+      "type": "tier_access",
+      "amount": {
+        "value": null,
+        "unit": "Ultra Tier",
+        "currency": "USD"
+      },
+      "duration": {
+        "value": 12,
+        "unit": "month",
+        "status": "active"
+      },
+      "frequency": "recurring",
+      "description": {
+        "ar": "حصة استخدام فائقة ونموذج Gemini 4 Argon مجاناً",
+        "en": "Top-tier usage quota and Gemini 4 Argon free of charge"
+      }
+    }
+  ],
+  "category": {
+    "value": "بحث وتطوير",
+    "review_status": "verified"
+  },
+  "eligibility": {
+    "countries": {
+      "status": "worldwide",
+      "values": []
+    },
+    "conditions": {
+      "ar": "إثبات الانتماء البحثي أو المؤسسي ورابط أوراق بحثية منشورة أو معرف ORCID",
+      "en": "Proof of academic/institutional research affiliation and publications or ORCID"
+    },
+    "applicant_type": "organization",
+    "open_to_all": "no",
+    "new_account": "not_required",
+    "card_required": "not_required",
+    "phone_required": "not_required",
+    "student_status": "not_required"
+  },
+  "pricing": {
+    "currency": "USD",
+    "offer_price": 0,
+    "original_price": 2400,
+    "billing_cycle": "annual"
+  },
+  "registration": {
+    "deadline": {
+      "date": null,
+      "status": "ongoing"
+    },
+    "credit_validity": {
+      "duration": 12,
+      "unit": "month",
+      "status": "active"
+    }
+  },
+  "review": {
+    "reviewed_on": "2026-10-18",
+    "verified_on": "2026-10-18",
+    "offer_status": "active",
+    "verification_status": "verified",
+    "unknown_fields": [],
+    "notes": {
+      "ar": "تم التحقق من النموذج الأكاديمي الرسمي المنشور على مدونة Google Deepmind للعلماء والباحثين.",
+      "en": "Verified against the official Google Deepmind Science announcement and application form."
+    }
+  },
+  "get_offer": {
+    "url": "https://deepmind.google/technologies/gemini/",
+    "type": "official_form",
+    "label": {
+      "ar": "المصدر الرسمي",
+      "en": "Official Source"
+    }
+  },
+  "official_sources": [
+    {
+      "url": "https://deepmind.google/technologies/gemini/",
+      "title": "Google Deepmind Science",
+      "claims": [
+        {
+          "field": "benefits",
+          "value": "Antigravity Ultra + Gemini 4 Argon",
+          "evidence": "Official announcement post and academic application Google Form"
+        }
+      ]
+    }
+  ],
+  "created_at": "2026-10-18T10:00:00Z"
+}

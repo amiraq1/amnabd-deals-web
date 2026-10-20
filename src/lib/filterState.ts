@@ -12,7 +12,13 @@ export const DEFAULT_FILTER_STATE: Readonly<FilterState> = Object.freeze({
 });
 const APPLICANTS = new Set<ApplicantFilter>(['all', 'student', 'any']);
 const CARDS = new Set<CardFilter>(['all', 'not_required']);
-const SORTS = new Set<SortOption>(['default', 'reviewed', 'deadline']);
+const SORTS = new Set<SortOption>([
+  'default',
+  'reviewed',
+  'deadline',
+  'ending_soon',
+  'highest_value',
+]);
 export function cleanQuery(value: string): string {
   return Array.from(value.replace(/[\p{Cc}]/gu, ' ').trim())
     .slice(0, 120)

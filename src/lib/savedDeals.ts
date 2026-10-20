@@ -119,6 +119,14 @@ function persistSlugs(slugs: string[], storageOverride?: Storage | null): void {
   if (storage) {
     try {
       storage.setItem(SAVED_DEALS_STORAGE_KEY, JSON.stringify(sanitized));
+      if (storageOverride === undefined) {
+        try {
+          storage.setItem('amnabd-favorites', JSON.stringify(sanitized));
+          window.dispatchEvent(new CustomEvent('amnabd:favorites-changed'));
+        } catch {
+          /* ignore */
+        }
+      }
       storageDisabled = false;
     } catch {
       storageDisabled = true;

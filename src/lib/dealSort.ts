@@ -103,27 +103,111 @@ export function deadlineTierLabel(
       return lang === 'ar' ? 'موعد التسجيل: غير معلوم' : 'Registration deadline: Unknown';
   }
 }
-export function sortDeals(deals: readonly Deal[], sortBy: SortOption, referenceNow: Date): Deal[] {
+export function getDealNumericValue(deal: Deal): number {
+  // 1. من المنفعة الأولى إن وجدت
+  const benefitValue = deal.benefits?.[0]?.amount?.value;
+  if (typeof benefitValue === 'number' && benefitValue > 0) {
+    return benefitValue;
+  }
+
+  // 2. من headline_value مع دعم الفواصل والاختصارات (مثل $1,000 أو $100k)
+  if (deal.headline_value) {
+    const match = deal.headline_value.match(
+      /(?:\$|USD|رصيد|بقيمة)\s*(\d[\d,.]*)\s*([kKmM])?|(\d[\d,.]*)\s*([kKmM])?\s*(?:\$|دولار|USD)/i
+    );
+    if (match) {
+      const rawNumber = match[1] ?? match[3];
+      const suffix = (match[2] ?? match[4] ?? '').toLowerCase();
+      if (rawNumber) {
+        const parsed = parseFloat(rawNumber.replace(/,/g, ''));
+        if (!Number.isNaN(parsed)) {
+          if (suffix === 'k') return parsed * 1_000;
+          if (suffix === 'm') return parsed * 1_000_000;
+          return parsed;
+        }
+      }
+    }
+  }
+
+  // 3. حساب مقدار التوفير من السعر الأصلي وسعر العرض
+  const regular =
+    (deal.pricing as { regular_price?: number | null } | undefined)?.regular_price ??
+    deal.pricing?.original_price;
+  const offer = deal.pricing?.offer_price;
+  if (typeof regular === 'number' && regular > 0) {
+    return typeof offer === 'number' ? Math.max(0, regular - offer) : regular;
+  }
+
+  return 0;
+}
+
+export function sortDeals(
+  deals: readonly Deal[],
+  sortBy: SortOption,
+  referenceNow: Date
+): Deal[] {
   referenceMs(referenceNow);
   if (sortBy === 'default') return [...deals];
+
   const decorated = deals.map((deal, originalIndex) => ({
     deal,
     originalIndex,
     reviewed: recordedDate(deal.review?.reviewed_on),
     deadline: classifyDeadline(deal.registration?.deadline, referenceNow),
   }));
+
   decorated.sort((a, b) => {
-    if (sortBy === 'reviewed') {
-      if (!a.reviewed || !b.reviewed)
-        return Number(!a.reviewed) - Number(!b.reviewed) || a.originalIndex - b.originalIndex;
-      return b.reviewed.ms - a.reviewed.ms || a.originalIndex - b.originalIndex;
+    // إبقاء العروض المنتهية دائماً في نهاية القائمة
+    if (a.deal.status === 'expired' && b.deal.status !== 'expired') return 1;
+    if (a.deal.status !== 'expired' && b.deal.status === 'expired') return -1;
+
+    switch (sortBy) {
+      case 'highest_value': {
+        const diff = getDealNumericValue(b.deal) - getDealNumericValue(a.deal);
+        if (diff !== 0) return diff;
+        break;
+      }
+
+      case 'ending_soon': {
+        if (a.deal.status === 'ending_soon' && b.deal.status !== 'ending_soon') return -1;
+        if (a.deal.status !== 'ending_soon' && b.deal.status === 'ending_soon') return 1;
+
+        const aEndsRaw = a.deal.ends_at ?? a.deal.registration?.deadline?.date;
+        const bEndsRaw = b.deal.ends_at ?? b.deal.registration?.deadline?.date;
+        const aEnds = aEndsRaw ? new Date(aEndsRaw).getTime() : Number.POSITIVE_INFINITY;
+        const bEnds = bEndsRaw ? new Date(bEndsRaw).getTime() : Number.POSITIVE_INFINITY;
+        const validA = Number.isNaN(aEnds) ? Number.POSITIVE_INFINITY : aEnds;
+        const validB = Number.isNaN(bEnds) ? Number.POSITIVE_INFINITY : bEnds;
+        if (validA !== validB) return validA - validB;
+        break;
+      }
+
+      case 'reviewed': {
+        if (!a.reviewed || !b.reviewed) {
+          const diff = Number(!a.reviewed) - Number(!b.reviewed);
+          if (diff !== 0) return diff;
+        } else {
+          const diff = b.reviewed.ms - a.reviewed.ms;
+          if (diff !== 0) return diff;
+        }
+        break;
+      }
+
+      case 'deadline': {
+        const x = a.deadline,
+          y = b.deadline;
+        if (x.tier !== y.tier) return x.tier - y.tier;
+        const delta = x.tier === 3 ? y.sortKey - x.sortKey : x.sortKey - y.sortKey;
+        if (delta !== 0) return delta;
+        break;
+      }
+
+      default:
+        break;
     }
-    if (sortBy !== 'deadline') return a.originalIndex - b.originalIndex;
-    const x = a.deadline,
-      y = b.deadline;
-    if (x.tier !== y.tier) return x.tier - y.tier;
-    const delta = x.tier === 3 ? y.sortKey - x.sortKey : x.sortKey - y.sortKey;
-    return delta || a.originalIndex - b.originalIndex;
+
+    return a.originalIndex - b.originalIndex;
   });
+
   return decorated.map((row) => row.deal);
 }

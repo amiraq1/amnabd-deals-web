@@ -4,6 +4,7 @@ import type {
   Benefit,
   Claim,
   Deal,
+  DealStatus,
   GuideSection,
   Localized,
   OfficialSource,
@@ -177,6 +178,25 @@ function parseSources(value: unknown, ctx: Context): OfficialSource[] {
   });
 }
 
+const VALID_DEAL_STATUSES = new Set(['active', 'ending_soon', 'expired', 'verifying']);
+function parseDealStatus(value: unknown): DealStatus | undefined {
+  if (typeof value === 'string' && VALID_DEAL_STATUSES.has(value.trim())) {
+    return value.trim() as DealStatus;
+  }
+  return undefined;
+}
+
+function parseUseCases(value: unknown, ctx: Context): string[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  return strings(value, ctx);
+}
+
+function parseEndsAt(value: unknown, ctx: Context): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null || value === '') return null;
+  return deadlineDate(value, ctx);
+}
+
 function parseDeal(input: unknown, ctx: Context): Deal | null {
   const row = object(input);
   const id = requiredText(get(row, 'id'));
@@ -197,6 +217,12 @@ function parseDeal(input: unknown, ctx: Context): Deal | null {
   return {
     id,
     slug,
+    name: requiredText(get(row, 'name')) ?? undefined,
+    headline_value: requiredText(get(row, 'headline_value')) ?? undefined,
+    key_condition: requiredText(get(row, 'key_condition')) ?? undefined,
+    use_cases: parseUseCases(get(row, 'use_cases'), ctx),
+    status: parseDealStatus(get(row, 'status')),
+    ends_at: parseEndsAt(get(row, 'ends_at'), ctx),
     // Reuse an actual supplied name if only one language is present; no translation is inferred.
     name_ar: ar ?? en ?? '',
     name_en: en ?? ar ?? '',

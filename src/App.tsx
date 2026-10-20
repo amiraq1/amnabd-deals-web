@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { loadConfig, loadDeals, loadGuides } from '@/lib/loadResources';
-import { extractHashSearch, parseHash, routeHash, type Route } from '@/lib/routes';
+import { extractHashSearch, normalizeLegacyHashRoute, parseLocationRoute, routeHash, type Route } from '@/lib/routes';
 import {
   buildDiscoveryHash,
   DEFAULT_FILTER_STATE,
@@ -11,6 +11,8 @@ import {
 import { categoryKey } from '@/lib/discovery';
 import type { FilterState } from '@/types';
 import { useResource } from '@/hooks/useResource';
+import { useFavorites } from '@/hooks/useFavorites';
+import { countValidSavedDeals } from '@/lib/savedDeals';
 import ContentErrorBoundary from '@/components/ContentErrorBoundary';
 import ResourceNotice from '@/components/ResourceNotice';
 import Navbar from '@/components/Navbar';
@@ -20,10 +22,16 @@ import DealDetailPage from '@/pages/DealDetailPage';
 import UsageGuidePage from '@/pages/UsageGuidePage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import FavoritesPage from '@/pages/FavoritesPage';
+import ChangelogPage from '@/pages/ChangelogPage';
+import CollectionPage from '@/pages/CollectionPage';
+import { getAggregationConfig } from '@/lib/aggregations';
 
 function AppInner() {
   const { lang } = useLanguage();
-  const [route, setRoute] = useState<Route>(() => parseHash(window.location.hash));
+  normalizeLegacyHashRoute();
+  const [route, setRoute] = useState<Route>(() =>
+    parseLocationRoute(window.location.pathname, window.location.hash)
+  );
   // Each resource settles independently. Language is presentation state and is
   // deliberately not a dependency of any data request.
   const offers = useResource(loadDeals);
@@ -32,6 +40,12 @@ function AppInner() {
   const deals = useMemo(() => offers.data?.value ?? [], [offers.data?.value]);
   const guideRows = useMemo(() => guides.data?.value ?? [], [guides.data?.value]);
   const config = settings.data?.value ?? null;
+
+  const { favorites } = useFavorites();
+  const validSavedCount = useMemo(
+    () => countValidSavedDeals(favorites, deals.map((d) => d.slug)),
+    [favorites, deals]
+  );
 
   const validCategoryKeys = useMemo(
     () => new Set(deals.map((d) => categoryKey(d.category.value))),
@@ -59,7 +73,8 @@ function AppInner() {
     return pending;
   }, []);
   const applyLocation = useCallback((hash: string) => {
-    const next = parseHash(hash);
+    normalizeLegacyHashRoute();
+    const next = parseLocationRoute(window.location.pathname, hash);
     routeRef.current = next;
     setRoute(next);
     lastAppliedHash.current = hash || '#/';
@@ -185,6 +200,16 @@ function AppInner() {
         lang === 'ar'
           ? 'مفضلتي — AMNABD Deals'
           : 'My Favorites — AMNABD Deals';
+    } else if (route.name === 'changelog') {
+      document.title =
+        lang === 'ar'
+          ? 'سجل التغييرات وتحديثات العروض — AMNABD Deals'
+          : 'Changelog & Deal Updates — AMNABD Deals';
+    } else if (route.name === 'collection' && route.collectionKey) {
+      const agg = getAggregationConfig(route.collectionKey);
+      document.title = agg
+        ? `${lang === 'ar' ? agg.titleAr : agg.titleEn} — AMNABD Deals`
+        : 'AMNABD Deals';
     } else if (route.name === 'notfound') {
       document.title =
         lang === 'ar'
@@ -196,7 +221,7 @@ function AppInner() {
           ? 'AMNABD Deals — دليل عروض أدوات الذكاء الاصطناعي المجانية'
           : 'AMNABD Deals — Verified AI & Cloud Deals';
     }
-  }, [route.name, route.slug, deal, lang, offers.status]);
+  }, [route.name, route.slug, route.collectionKey, deal, lang, offers.status]);
 
   let content: JSX.Element;
   if (route.name === 'notfound')
@@ -206,6 +231,24 @@ function AppInner() {
       <FavoritesPage
         deals={deals}
         onOpenDeal={onOpenDeal}
+        onBackToHome={() => navigate({ name: 'home' })}
+      />
+    );
+  } else if (route.name === 'changelog') {
+    content = (
+      <ChangelogPage
+        deals={deals}
+        onOpenDeal={onOpenDeal}
+        onBackToHome={() => navigate({ name: 'home' })}
+      />
+    );
+  } else if (route.name === 'collection' && route.collectionKey) {
+    content = (
+      <CollectionPage
+        collectionKey={route.collectionKey}
+        deals={deals}
+        onOpenDeal={onOpenDeal}
+        onNavigateCollection={(slug) => navigate({ name: 'collection', collectionKey: slug })}
         onBackToHome={() => navigate({ name: 'home' })}
       />
     );
@@ -274,7 +317,7 @@ function AppInner() {
       >
         {lang === 'ar' ? 'تخطي إلى المحتوى الرئيسي' : 'Skip to main content'}
       </a>
-      <Navbar route={route} navigate={navigate} />
+      <Navbar route={route} navigate={navigate} savedCount={validSavedCount} />
       <div id="main-content" tabIndex={-1} className="flex-1 outline-none">
         {settings.status === 'error' && (
           <ResourceNotice name="config" error={settings.error} lang={lang} retry={settings.retry} />

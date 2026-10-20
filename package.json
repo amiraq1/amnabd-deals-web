@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "node scripts/generate-static-seo.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
@@ -13,13 +14,14 @@
     "test:build-env": "node scripts/check-build-env.mjs"
   },
   "dependencies": {
+    "@supabase/postgrest-js": "2.109.0",
     "lucide-react": "^0.446.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@supabase/postgrest-js": "2.109.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^26.6.5",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",

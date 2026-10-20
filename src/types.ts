@@ -7,7 +7,12 @@ export type TriState = TruthState | RequirementState;
 export type ApplicantType =
   'any' | 'student' | 'startup' | 'organization' | 'individual' | 'multiple' | 'unknown';
 
-export type SortOption = 'default' | 'reviewed' | 'deadline';
+export type SortOption =
+  | 'default'
+  | 'reviewed'
+  | 'deadline'
+  | 'ending_soon'
+  | 'highest_value';
 export type ApplicantFilter = 'all' | 'student' | 'any';
 export type CardFilter = 'all' | 'not_required';
 
@@ -113,9 +118,17 @@ export interface Review {
   verification_status: string;
 }
 
+export type DealStatus = 'active' | 'ending_soon' | 'expired' | 'verifying';
+
 export interface Deal {
   id: string;
   slug: string;
+  name?: string;
+  headline_value?: string;
+  key_condition?: string;
+  use_cases?: string[];
+  status?: DealStatus;
+  ends_at?: string | null;
   name_ar: string;
   name_en: string;
   icon_url?: string;

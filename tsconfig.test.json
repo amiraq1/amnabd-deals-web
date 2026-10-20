@@ -22,6 +22,14 @@
     "src/lib/filterState.ts",
     "src/lib/dealSort.ts",
     "src/lib/savedDeals.ts",
-    "src/lib/favorites.ts"
+    "src/lib/favorites.ts",
+    "src/lib/safeUrl.ts",
+    "src/lib/dealMetadata.ts",
+    "src/lib/seo.ts",
+    "src/lib/dealReports.ts",
+    "src/lib/shareFavorites.ts",
+    "src/lib/changelog.ts",
+    "src/lib/aggregations.ts",
+    "src/content/activationGuides.ts"
   ]
 }

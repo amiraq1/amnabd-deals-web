@@ -21,3 +21,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Tool and bundle artifacts
+bundle-batch*.txt
+.commandcode/

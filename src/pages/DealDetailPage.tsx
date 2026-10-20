@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import CopyDealLink from '@/components/CopyDealLink';
 import EvidenceBadge from '@/components/EvidenceBadge';
 import { offerStatusLabel } from '@/lib/evidence';
-import { ExternalLink, FileText, ShieldCheck, CircleAlert } from 'lucide-react';
+import { Sparkles, ExternalLink, FileText, ShieldCheck, CircleAlert } from 'lucide-react';
 import type { Deal, UsageGuide } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -19,6 +19,10 @@ import { getDealDisplayName } from '@/lib/dealMetadata';
 import DealIcon from '@/components/DealIcon';
 import ScrollToTop from '@/components/ScrollToTop';
 import FavoriteButton from '@/components/FavoriteButton';
+import ReportDealBox from '@/components/ReportDealBox';
+import { buildDealSeo, applyDealSeoToDocument } from '@/lib/seo';
+import { getActivationGuide } from '@/content/activationGuides';
+import { ActivationGuide } from '@/components/ActivationGuide';
 
 interface DealDetailPageProps {
   deal: Deal;
@@ -61,8 +65,26 @@ export default function DealDetailPage({
     };
   }, []);
 
+  useEffect(() => {
+    const seo = buildDealSeo(deal);
+    applyDealSeoToDocument(seo);
+  }, [deal]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#how-to-activate') {
+      const timer = setTimeout(() => {
+        const el = document.getElementById('how-to-activate');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [deal.slug]);
+
   const e = deal.eligibility;
   const unknownCount = deal.review.unknown_fields.length;
+  const activationGuide = getActivationGuide(deal.slug);
 
   return (
     <>
@@ -125,6 +147,16 @@ export default function DealDetailPage({
             <FavoriteButton slug={deal.slug} dealName={displayName} showText={true} />
 
             <CopyDealLink key={deal.slug} slug={deal.slug} />
+
+            {activationGuide && (
+              <a
+                href="#how-to-activate"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:border-emerald-500/50 hover:bg-emerald-500/20 active:scale-95"
+              >
+                <Sparkles className="h-4 w-4" />
+                <bdi>{lang === 'ar' ? 'طريقة التفعيل' : 'Activation guide'}</bdi>
+              </a>
+            )}
           </div>
           <p className="mt-3 text-sm text-slate-400">
             {lang === 'ar' ? 'الحفظ محلي في هذا المتصفح فقط.' : 'Saves stay in this browser only.'}
@@ -317,6 +349,10 @@ export default function DealDetailPage({
           </h3>
           <p className="mt-3 text-sm leading-relaxed text-slate-300">{deal.review.notes[lang]}</p>
         </section>
+
+        {activationGuide && <ActivationGuide guide={activationGuide} officialUrl={offerUrl} />}
+
+        <ReportDealBox dealSlug={deal.slug} />
       </main>
 
       {/* Sticky Mobile Action Bar */}

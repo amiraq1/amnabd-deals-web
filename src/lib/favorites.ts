@@ -87,6 +87,14 @@ export function saveFavorites(slugs: string[], override?: Storage | null): boole
 
   try {
     storage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(sanitized));
+    if (override === undefined) {
+      try {
+        storage.setItem('amnabd_saved_deals_v1', JSON.stringify(sanitized));
+        window.dispatchEvent(new CustomEvent('amnabd:saved-deals-changed'));
+      } catch {
+        /* ignore */
+      }
+    }
     memoryOnly = false;
     notifyChange();
     return true;

@@ -1,6 +1,7 @@
 export interface Route {
-  name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites';
+  name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites' | 'changelog' | 'collection';
   slug?: string;
+  collectionKey?: string;
 }
 
 export function isValidSlug(value: string): boolean {
@@ -29,8 +30,15 @@ export function parseHash(raw: unknown): Route {
 
   const parts = cleanPath.split('/');
   if (parts.length > 1 && parts[parts.length - 1] === '') parts.pop();
-  if (parts.length === 1 && parts[0] === 'guide') return { name: 'guide' };
-  if (parts.length === 1 && parts[0] === 'favorites') return { name: 'favorites' };
+  const first = parts[0];
+  if (parts.length === 1 && first) {
+    if (first === 'guide') return { name: 'guide' };
+    if (first === 'favorites') return { name: 'favorites' };
+    if (first === 'changelog') return { name: 'changelog' };
+    if (['for-students', 'no-credit-card', 'coding', 'ending-soon'].includes(first)) {
+      return { name: 'collection', collectionKey: first };
+    }
+  }
   if (parts.length !== 2 || parts[0] !== 'deal' || !parts[1]) return { name: 'notfound' };
   try {
     const slug = decodeURIComponent(parts[1]);
@@ -44,6 +52,10 @@ export function routeHash(route: Route): string {
   if (route.name === 'home') return '#/';
   if (route.name === 'guide') return '#/guide';
   if (route.name === 'favorites') return '#/favorites';
+  if (route.name === 'changelog') return '#/changelog';
+  if (route.name === 'collection' && route.collectionKey) {
+    return `#/${route.collectionKey}`;
+  }
   if (route.name === 'deal' && typeof route.slug === 'string' && isValidSlug(route.slug)) {
     try {
       return `#/deal/${encodeURIComponent(route.slug)}`;
@@ -52,4 +64,38 @@ export function routeHash(route: Route): string {
     }
   }
   return '#/404';
+}
+
+export function routePath(route: Route): string {
+  if (route.name === 'home') return '/';
+  if (route.name === 'guide') return '/guide';
+  if (route.name === 'favorites') return '/favorites';
+  if (route.name === 'changelog') return '/changelog';
+  if (route.name === 'collection' && route.collectionKey) {
+    return `/${route.collectionKey}`;
+  }
+  if (route.name === 'deal' && typeof route.slug === 'string' && isValidSlug(route.slug)) {
+    try {
+      return `/deal/${encodeURIComponent(route.slug)}`;
+    } catch {
+      return '/404';
+    }
+  }
+  return '/404';
+}
+
+export function normalizeLegacyHashRoute(): void {
+  if (typeof window === 'undefined') return;
+  const { hash, search } = window.location;
+  if (hash.startsWith('#/')) {
+    const cleanPath = hash.slice(1);
+    window.history.replaceState(null, '', `${cleanPath}${search}`);
+  }
+}
+
+export function parseLocationRoute(pathname: string, hash = ''): Route {
+  if (hash && hash.startsWith('#/')) {
+    return parseHash(hash);
+  }
+  return parseHash(pathname);
 }
