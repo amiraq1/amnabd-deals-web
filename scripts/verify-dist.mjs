@@ -4,6 +4,16 @@
 // prove. Runs after `npm run build` and before the artifact is uploaded, so a
 // regression cannot ship silently (audit C-01 / H-03).
 //
+// Scope: every *text* artifact a crawler or a share preview can read —
+//   dist/deal/<slug>/index.html, dist/og/<slug>.svg,
+//   dist/<collection>/index.html, dist/index.html, dist/404.html,
+//   dist/feed.xml, dist/sitemap.xml, dist/llms.txt
+//
+// Deliberately out of scope: dist/assets/*.js and *.css. Those are the running
+// app, where "متاح للجميع" is the label of a filter option ("open to all —
+// verified"), not a claim about any specific deal. The filter itself fails
+// closed (isOpenToAll), so the string there is UI copy, not an assertion.
+//
 //   node scripts/verify-dist.mjs [--dist <dir>]
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -13,19 +23,47 @@ import { loadDealsCatalog, STATIC_AGGREGATIONS, sharedSeo } from './generate-sta
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { dealFacts } = sharedSeo;
 
-const CLAIMS = [
+// Per-deal claims: each phrase is allowed only when its own explicit field holds.
+const DEAL_CLAIMS = [
   {
-    phrase: 'متاح للجميع',
+    phrases: ['متاح للجميع'],
     allowed: (facts) => facts.openToAll,
     needs: 'open_to_all=yes + applicant_type=any + worldwide + بلا قائمة دول',
   },
-  { phrase: 'مخصص للطلاب', allowed: (facts) => facts.studentsOnly, needs: 'student_status=required' },
-  { phrase: 'بدون بطاقة', allowed: (facts) => facts.noCard, needs: 'card_required=not_required' },
+  { phrases: ['مخصص للطلاب'], allowed: (facts) => facts.studentsOnly, needs: 'student_status=required' },
+  { phrases: ['بدون بطاقة'], allowed: (facts) => facts.noCard, needs: 'card_required=not_required' },
   {
-    phrase: 'موثّق',
+    phrases: ['موثّق', 'موثق', 'verified'],
     allowed: (facts) => facts.verified,
     needs: 'review.verification_status=verified',
   },
+];
+
+// Site-wide claims (homepage, 404, feed, llms.txt) speak about the whole
+// directory, so they are allowed only when *every* published deal holds the fact.
+const SITE_CLAIMS = [
+  {
+    phrases: ['موثّق', 'موثق', 'verified'],
+    every: (facts) => facts.verified,
+    needs: 'كل عرض منشور موثّق',
+  },
+  { phrases: ['متاح للجميع'], every: (facts) => facts.openToAll, needs: 'كل عرض منشور متاح للجميع' },
+  { phrases: ['بدون بطاقة'], every: (facts) => facts.noCard, needs: 'كل عرض منشور بلا بطاقة' },
+];
+
+const SITE_FILES = ['index.html', '404.html', 'feed.xml', 'sitemap.xml', 'llms.txt'];
+
+// Source text that sounds like a claim; reported as a warning, never a failure,
+// because it is editorial content and a human has to decide.
+const SUMMARY_HINTS = [
+  'موثّق',
+  'موثق',
+  'verified',
+  'متاح للجميع',
+  'مجان',
+  'بدون بطاقة',
+  'no credit card',
+  'free',
 ];
 
 function readIfExists(path) {
@@ -50,11 +88,12 @@ function jsonLdOf(html) {
   }
 }
 
-function checkText(report, file, text, facts) {
-  for (const claim of CLAIMS) {
-    if (!text.includes(claim.phrase)) continue;
-    if (!claim.allowed(facts)) {
-      report(`${file}: ادعاء «${claim.phrase}» غير مثبت (يتطلب ${claim.needs})`);
+function checkText(report, file, text, claims, allow) {
+  for (const claim of claims) {
+    const hit = claim.phrases.find((phrase) => text.includes(phrase));
+    if (!hit) continue;
+    if (!allow(claim)) {
+      report(`${file}: ادعاء «${hit}» غير مثبت (يتطلب ${claim.needs})`);
     }
   }
 }
@@ -64,8 +103,9 @@ function checkDealPage(report, distDir, slug, facts) {
   const html = readIfExists(join(distDir, rel));
   if (html === null) return;
 
-  checkText(report, rel, metaContent(html, 'name', 'description'), facts);
-  checkText(report, rel, metaContent(html, 'property', 'og:description'), facts);
+  const allow = (claim) => claim.allowed(facts);
+  checkText(report, rel, metaContent(html, 'name', 'description'), DEAL_CLAIMS, allow);
+  checkText(report, rel, metaContent(html, 'property', 'og:description'), DEAL_CLAIMS, allow);
 
   const jsonLd = jsonLdOf(html);
   if (jsonLd === 'invalid') {
@@ -83,6 +123,43 @@ function checkDealPage(report, distDir, slug, facts) {
     report(`${rel}: حقل dateModified بلا تاريخ مراجعة صالح`);
 }
 
+function checkSiteFiles(report, distDir, deals) {
+  const facts = deals.map((deal) => dealFacts(deal));
+  for (const rel of SITE_FILES) {
+    const raw = readIfExists(join(distDir, rel));
+    if (raw === null) continue;
+    const allow = (claim) => facts.length > 0 && facts.every(claim.every);
+    checkText(report, rel, siteTextOf(rel, raw), SITE_CLAIMS, allow);
+  }
+}
+
+// Only the parts of a site file that speak about the directory as a whole.
+// Per-deal text (feed items, llms.txt deal lines, JSON-LD ItemList entries) is
+// source content and must not be judged by a site-wide rule.
+function siteTextOf(rel, raw) {
+  if (rel === 'feed.xml') return raw.split('<item>')[0];
+  if (rel === 'llms.txt') return raw.split(/^- \[/m)[0];
+
+  const withoutJsonLd = raw.replace(
+    /<script[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi,
+    ''
+  );
+  const siteNodes = [...raw.matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)]
+    .flatMap((match) => {
+      try {
+        const doc = JSON.parse(match[1]);
+        return doc['@graph'] ?? [doc];
+      } catch {
+        return [];
+      }
+    })
+    .filter((node) => node && (node['@type'] === 'WebSite' || node['@type'] === 'Organization'))
+    .map((node) => `${node.name ?? ''} ${node.description ?? ''}`)
+    .join(' ');
+
+  return `${withoutJsonLd} ${siteNodes}`;
+}
+
 function listSlugs(distDir, sub) {
   const dir = join(distDir, sub);
   if (!existsSync(dir)) return [];
@@ -91,11 +168,27 @@ function listSlugs(distDir, sub) {
     .map((entry) => entry.name);
 }
 
-export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}) {
-  if (!existsSync(distDir)) return [`${distDir}: مجلد البناء غير موجود`];
+function summaryWarnings(deals) {
+  const warnings = [];
+  for (const deal of deals) {
+    const text = [deal.name, deal.summary]
+      .filter((value) => typeof value === 'string')
+      .join(' ')
+      .toLowerCase();
+    if (!text) continue;
+    const hit = SUMMARY_HINTS.find((word) => text.includes(word.toLowerCase()));
+    if (hit) warnings.push(`deal/${deal.slug}: نص المصدر يحوي «${hit}» — راجعه يدوياً`);
+  }
+  return warnings;
+}
 
-  const found = [];
-  const report = (message) => found.push(message);
+export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}) {
+  if (!existsSync(distDir)) {
+    return { violations: [`${distDir}: مجلد البناء غير موجود`], warnings: [] };
+  }
+
+  const violations = [];
+  const report = (message) => violations.push(message);
 
   const deals = loadDealsCatalog(rootDir);
   const bySlug = new Map(deals.map((deal) => [deal.slug, deal]));
@@ -120,9 +213,14 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}
         continue;
       }
       const svg = readIfExists(join(ogDir, file));
-      if (svg !== null) checkText(report, `og/${file}`, svg, dealFacts(deal));
+      if (svg !== null) {
+        const facts = dealFacts(deal);
+        checkText(report, `og/${file}`, svg, DEAL_CLAIMS, (claim) => claim.allowed(facts));
+      }
     }
   }
+
+  checkSiteFiles(report, distDir, deals);
 
   // An empty collection page advertises deals that were never established.
   for (const agg of STATIC_AGGREGATIONS) {
@@ -140,7 +238,7 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}
     }
   }
 
-  return found;
+  return { violations, warnings: summaryWarnings(deals) };
 }
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
@@ -148,10 +246,15 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(fileURLTo
 if (isMain) {
   const index = process.argv.indexOf('--dist');
   const distDir = index > -1 && process.argv[index + 1] ? resolve(process.argv[index + 1]) : undefined;
-  const problems = verifyDist(distDir ? { distDir } : {});
-  if (problems.length > 0) {
+  const { violations, warnings } = verifyDist(distDir ? { distDir } : {});
+  if (warnings.length > 0) {
+    console.warn(`verify-dist: ${warnings.length} تحذير محتوى (لا يوقف البناء)`);
+    for (const warning of warnings.slice(0, 15)) console.warn(`  ! ${warning}`);
+    if (warnings.length > 15) console.warn(`  ! … و${warnings.length - 15} أخرى`);
+  }
+  if (violations.length > 0) {
     console.error('verify-dist: FAIL');
-    for (const problem of problems) console.error(`  - ${problem}`);
+    for (const violation of violations) console.error(`  - ${violation}`);
     process.exit(1);
   }
   console.log('verify-dist: OK');

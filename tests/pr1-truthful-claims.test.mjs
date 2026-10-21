@@ -1,7 +1,7 @@
 // PR-1: truthful claims. Each test pins one finding from the audit:
 // C-01, H-03, H-04, M-12 (data side), L-04, M-01, L-09.
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -252,4 +252,47 @@ test('verify-dist passes a clean build and fails a build with unproven claims', 
     assert.match(String(error.stderr), /متاح للجميع/);
     return true;
   });
+});
+
+test('verify-dist covers site-level files, not just deal pages', () => {
+  const siteDirty = fixtureDist({
+    'index.html': '<html><head><meta name="description" content="verified deals"></head></html>',
+    'llms.txt': '# AMNABD Deals\n\n> Every deal is verified.\n',
+  });
+  assert.throws(() => runVerifyDist(siteDirty), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /index\.html/);
+    assert.match(String(error.stderr), /llms\.txt/);
+    return true;
+  });
+});
+
+test('verify-dist judges the feed channel header, not the per-deal item text', () => {
+  // "بدون بطاقة" inside an <item> is source content, not a site-wide claim.
+  const feed = fixtureDist({
+    'feed.xml':
+      '<?xml version="1.0"?><rss version="2.0"><channel><title>عروض موثّقة</title><link>https://amnabd.com/</link><item><title>x</title><description>بدون بطاقة</description></item></channel></rss>',
+  });
+  assert.throws(() => runVerifyDist(feed), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /feed\.xml/);
+    assert.equal(String(error.stderr).includes('بدون بطاقة'), false);
+    return true;
+  });
+});
+
+test('verify-dist warns about claim-like source summaries without failing', () => {
+  const dist = fixtureDist({
+    'index.html': '<html><head><title>AMNABD Deals</title></head></html>',
+  });
+  // Warnings are printed but the build stays green: source copy is editorial.
+  const result = spawnSync(
+    process.execPath,
+    [join(process.cwd(), 'scripts/verify-dist.mjs'), '--dist', dist],
+    { encoding: 'utf8' }
+  );
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /verify-dist: OK/);
+  assert.match(result.stderr, /تحذير محتوى/);
+  assert.match(result.stderr, /نص المصدر يحوي/);
 });
