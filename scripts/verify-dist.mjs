@@ -15,7 +15,8 @@
 // closed (isOpenToAll), so the string there is UI copy, not an assertion.
 //
 //   node scripts/verify-dist.mjs [--dist <dir>]
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadDealsCatalog, STATIC_AGGREGATIONS, sharedSeo } from './generate-static-seo.mjs';
@@ -181,10 +182,17 @@ function summaryWarnings(deals) {
     const text = [deal.name, deal.summary]
       .filter((value) => typeof value === 'string')
       .join(' ')
-      .toLowerCase();
+      .trim();
     if (!text) continue;
-    const hit = SUMMARY_HINTS.find((word) => text.includes(word.toLowerCase()));
-    if (hit) warnings.push(`deal/${deal.slug}: نص المصدر يحوي «${hit}» — راجعه يدوياً`);
+    const lower = text.toLowerCase();
+    const hit = SUMMARY_HINTS.find((word) => lower.includes(word.toLowerCase()));
+    if (!hit) continue;
+    const at = lower.indexOf(hit.toLowerCase());
+    const excerpt = text
+      .slice(Math.max(0, at - 30), at + hit.length + 30)
+      .replace(/\s+/g, ' ')
+      .trim();
+    warnings.push({ slug: deal.slug, word: hit, excerpt });
   }
   return warnings;
 }
@@ -255,9 +263,19 @@ if (isMain) {
   const distDir = index > -1 && process.argv[index + 1] ? resolve(process.argv[index + 1]) : undefined;
   const { violations, warnings } = verifyDist(distDir ? { distDir } : {});
   if (warnings.length > 0) {
-    console.warn(`verify-dist: ${warnings.length} تحذير محتوى (لا يوقف البناء)`);
-    for (const warning of warnings.slice(0, 15)) console.warn(`  ! ${warning}`);
-    if (warnings.length > 15) console.warn(`  ! … و${warnings.length - 15} أخرى`);
+    // Written outside the repo so the list is reviewable without being committed.
+    const warningFile = join(tmpdir(), 'amnabd-verify-dist-warnings.txt');
+    writeFileSync(
+      warningFile,
+      warnings.map((w) => `${w.slug}\t${w.word}\t${w.excerpt}`).join('\n') + '\n',
+      'utf8'
+    );
+    console.warn(
+      `verify-dist: ${warnings.length} تحذير محتوى (لا يوقف البناء) — ${warningFile}`
+    );
+    for (const warning of warnings) {
+      console.warn(`  ! deal/${warning.slug}: نص المصدر يحوي «${warning.word}»`);
+    }
   }
   if (violations.length > 0) {
     console.error('verify-dist: FAIL');
