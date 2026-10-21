@@ -1,4 +1,5 @@
 import type { Deal } from '@/types';
+import { getTimingState } from './dealTiming.js';
 
 export interface AggregationConfig {
   slug: string;
@@ -103,7 +104,9 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
       'Immediate alerts on AI perks and cloud compute credits nearing their recorded expiration date.',
     badgeLabelAr: '⏳ ينتهي قريباً',
     badgeLabelEn: '⏳ Ending Soon',
-    filter: (deal: Deal) => deal.status === 'ending_soon',
+    // Same model as the card and the sort: an explicit flag or an ends_at inside
+    // the window. A registration deadline never qualifies an offer here.
+    filter: (deal: Deal) => getTimingState(deal, new Date()).offer.state === 'ending_soon',
   },
 };
 

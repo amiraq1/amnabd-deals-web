@@ -8,6 +8,7 @@ import { compileQuery } from '@/lib/normalize';
 import { reviewDateLabel } from '@/lib/format';
 import { tristateLabel } from '@/lib/tristate';
 import { classifyDeadline, deadlineTierLabel, sortDeals } from '@/lib/dealSort';
+import { getTimingState } from '@/lib/dealTiming';
 import { copyLink } from '@/lib/share';
 import { DEFAULT_FILTER_STATE, cleanQuery } from '@/lib/filterState';
 import DealCard from '@/components/DealCard';
@@ -174,8 +175,9 @@ export default function HomePage({
 
   // Active deals (excluding expired) for counters and hero stats
   const activeDeals = useMemo(
-    () => deals.filter((d) => d.status !== 'expired'),
-    [deals]
+    // Expiry comes from the shared timing model, not from the status alone.
+    () => deals.filter((d) => getTimingState(d, referenceNow).offer.state !== 'expired'),
+    [deals, referenceNow]
   );
 
   // نصف بـ«موثّق» فقط ما حالته verified فعلًا، لا كل ما ليس منتهيًا.
@@ -260,7 +262,8 @@ export default function HomePage({
       if (uncategorized && !matchesCategory(deal.category.value, '')) return false;
       if (category !== null && !matchesCategory(deal.category?.value, category)) return false;
       if (!matchesEligibility(deal.eligibility, applicant, card)) return false;
-      if (isEndingSoon && deal.status !== 'ending_soon') return false;
+      if (isEndingSoon && getTimingState(deal, referenceNow).offer.state !== 'ending_soon')
+        return false;
 
       // OR logic for multiple use_cases
       if (useCases.length > 0 && !useCases.some((uc) => deal.use_cases?.includes(uc))) {
@@ -287,6 +290,7 @@ export default function HomePage({
       savedSet,
       queryGroups,
       corpora,
+      referenceNow,
     ]
   );
 
@@ -347,12 +351,14 @@ export default function HomePage({
       {
         key: 'endingSoon' as const,
         label: lang === 'ar' ? 'ينتهي قريبًا' : 'Ending soon',
-        count: activeDeals.filter((d) => d.status === 'ending_soon').length,
+        count: activeDeals.filter(
+          (d) => getTimingState(d, referenceNow).offer.state === 'ending_soon'
+        ).length,
         isActive: endingSoon,
         onToggle: () => setEndingSoon((prev) => !prev),
       },
     ],
-    [activeDeals, filterState.applicant, filterState.card, endingSoon, lang, onFilterChange]
+    [activeDeals, filterState.applicant, filterState.card, endingSoon, lang, onFilterChange, referenceNow]
   );
 
   // "Reviewed this week" section: strictly hidden when any filter/search is active

@@ -15,6 +15,8 @@ const SHARED_MODULES = [
   'src/lib/eligibility.ts',
   'src/lib/format.ts',
   'src/lib/aggregations.ts',
+  'src/lib/dealTiming.ts',
+  'src/lib/instants.ts',
 ];
 
 export async function loadSharedSeo(rootDir) {

@@ -1,50 +1,9 @@
 import type { Deal, Lang, Registration, SortOption } from '@/types';
+import { parseCalendarDate, parseInstant } from './instants.js';
+import { getTimingState } from './dealTiming.js';
 
-// UTC calendar parser, including years 0000..0099 without Date.UTC's 1900 remapping.
-export function parseCalendarDate(value: unknown): number | null {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const year = Number(value.slice(0, 4)),
-    month = Number(value.slice(5, 7)),
-    day = Number(value.slice(8, 10));
-  const date = new Date(0);
-  date.setUTCFullYear(year, month - 1, day);
-  date.setUTCHours(0, 0, 0, 0);
-  return date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
-    ? date.getTime()
-    : null;
-}
-
-export function parseInstant(value: unknown): number | null {
-  if (typeof value !== 'string') return null;
-  const match =
-    /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|([+-])(\d{2}):(\d{2}))$/.exec(
-      value
-    );
-  if (!match) return null;
-  const day = parseCalendarDate(match[1]);
-  const hour = Number(match[2]),
-    minute = Number(match[3]),
-    second = Number(match[4] ?? 0);
-  const offsetHour = Number(match[8] ?? 0),
-    offsetMinute = Number(match[9] ?? 0);
-  // -00:00 denotes an unknown offset; it is not an established timezone.
-  if (
-    day === null ||
-    hour > 23 ||
-    minute > 59 ||
-    second > 59 ||
-    offsetHour > 23 ||
-    offsetMinute > 59 ||
-    match[6] === '-00:00'
-  )
-    return null;
-  const offset = (match[7] === '-' ? -1 : 1) * (offsetHour * 60 + offsetMinute) * 60000;
-  const ms = Number((match[5] ?? '').padEnd(3, '0').slice(0, 3));
-  const result = day + ((hour * 60 + minute) * 60 + second) * 1000 + ms - offset;
-  return Number.isFinite(result) ? result : null;
-}
+// Re-exported for callers that still import the parsers from here.
+export { parseCalendarDate, parseInstant } from './instants.js';
 
 function recordedDate(value: unknown): { kind: 'calendar' | 'instant'; ms: number } | null {
   const calendar = parseCalendarDate(value);
@@ -154,12 +113,15 @@ export function sortDeals(
     originalIndex,
     reviewed: recordedDate(deal.review?.reviewed_on),
     deadline: classifyDeadline(deal.registration?.deadline, referenceNow),
+    offer: getTimingState(deal, referenceNow).offer,
   }));
 
   decorated.sort((a, b) => {
-    // إبقاء العروض المنتهية دائماً في نهاية القائمة
-    if (a.deal.status === 'expired' && b.deal.status !== 'expired') return 1;
-    if (a.deal.status !== 'expired' && b.deal.status === 'expired') return -1;
+    // Offers that are over always sit at the end, whether the status says so or
+    // the recorded ends_at has passed (PR-2: one model for both).
+    const aOver = a.offer.state === 'expired';
+    const bOver = b.offer.state === 'expired';
+    if (aOver !== bOver) return aOver ? 1 : -1;
 
     switch (sortBy) {
       case 'highest_value': {
@@ -169,16 +131,13 @@ export function sortDeals(
       }
 
       case 'ending_soon': {
-        if (a.deal.status === 'ending_soon' && b.deal.status !== 'ending_soon') return -1;
-        if (a.deal.status !== 'ending_soon' && b.deal.status === 'ending_soon') return 1;
-
-        const aEndsRaw = a.deal.ends_at ?? a.deal.registration?.deadline?.date;
-        const bEndsRaw = b.deal.ends_at ?? b.deal.registration?.deadline?.date;
-        const aEnds = aEndsRaw ? new Date(aEndsRaw).getTime() : Number.POSITIVE_INFINITY;
-        const bEnds = bEndsRaw ? new Date(bEndsRaw).getTime() : Number.POSITIVE_INFINITY;
-        const validA = Number.isNaN(aEnds) ? Number.POSITIVE_INFINITY : aEnds;
-        const validB = Number.isNaN(bEnds) ? Number.POSITIVE_INFINITY : bEnds;
-        if (validA !== validB) return validA - validB;
+        const rank = (offer: typeof a.offer) =>
+          offer.state === 'ending_soon' ? 0 : offer.state === 'expired' ? 2 : 1;
+        const byState = rank(a.offer) - rank(b.offer);
+        if (byState !== 0) return byState;
+        const aEnds = a.offer.expiresAt ?? Number.POSITIVE_INFINITY;
+        const bEnds = b.offer.expiresAt ?? Number.POSITIVE_INFINITY;
+        if (aEnds !== bEnds) return aEnds - bEnds;
         break;
       }
 

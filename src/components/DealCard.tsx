@@ -10,11 +10,8 @@ import {
 import type { Deal, Lang } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { resolveDealOfficialUrl } from '@/lib/safeUrl';
-import {
-  getDealDisplayName,
-  getDealHeadlineValue,
-  getDealKeyCondition,
-} from '@/lib/dealMetadata';
+import { getDealDisplayName, getDealHeadlineValue, getDealKeyCondition } from '@/lib/dealMetadata';
+import { getTimingState } from '@/lib/dealTiming';
 import { routePath } from '@/lib/routes';
 import DealIcon from '@/components/DealIcon';
 import FavoriteButton from '@/components/FavoriteButton';
@@ -31,20 +28,6 @@ export interface DealCardProps {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const ENDING_SOON_DAYS = 14;
-
-type Timing = { state: 'expired' } | { state: 'open'; daysLeft: number } | null;
-
-function getTiming(endsAt?: string | null, deadlineDate?: string | null): Timing {
-  const target = endsAt || deadlineDate;
-  if (!target) return null;
-  // التاريخ بدون وقت (2026-10-20) يعني أن العرض ينتهي في آخر ذلك اليوم، لا في بدايته.
-  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(target);
-  const end = new Date(isDateOnly ? `${target}T23:59:59` : target).getTime();
-  if (!Number.isFinite(end)) return null;
-  const daysLeft = Math.ceil((end - Date.now()) / DAY_MS);
-  return daysLeft > 0 ? { state: 'open', daysLeft } : { state: 'expired' };
-}
 
 function endsLabel(days: number, lang: Lang): string {
   if (lang === 'ar') {
@@ -54,6 +37,12 @@ function endsLabel(days: number, lang: Lang): string {
     return `ينتهي خلال ${days} يومًا`;
   }
   return days === 1 ? 'Ends within 24h' : `Ends in ${days} days`;
+}
+
+function registrationLabel(date: string, passed: boolean, lang: Lang): string {
+  const prefix = lang === 'ar' ? 'آخر موعد للتسجيل' : 'Registration closes';
+  if (passed) return lang === 'ar' ? `انتهى موعد التسجيل (${date})` : `Registration closed (${date})`;
+  return `${prefix}: ${date}`;
 }
 
 function isRecentlyReviewed(reviewedOn?: string | null, createdAt?: string | null): boolean {
@@ -77,10 +66,13 @@ export default function DealCard({ deal, onOpen }: DealCardProps) {
     ? deal.description_ar || deal.description_en
     : deal.description_en || deal.description_ar;
 
-  const timing = getTiming(deal.ends_at, deal.registration.deadline.date);
-  const expired = timing?.state === 'expired';
-  const daysLeft = timing?.state === 'open' ? timing.daysLeft : null;
-  const endingSoon = daysLeft !== null && daysLeft <= ENDING_SOON_DAYS;
+  // One timing model for the card, the sort and the collections (PR-2).
+  const timing = getTimingState(deal, new Date());
+  const expired = timing.offer.state === 'expired';
+  const endingSoon = timing.offer.state === 'ending_soon';
+  const daysLeft = timing.offer.daysLeft;
+  const expiredByDate = expired && timing.offer.reason === 'ends_at';
+  const registration = timing.registration;
   const isNew = !expired && isRecentlyReviewed(deal.review.reviewed_on, deal.created_at);
   const verified = deal.review.verification_status === 'verified';
 
@@ -111,8 +103,24 @@ export default function DealCard({ deal, onOpen }: DealCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5">
             {expired && (
-              <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/80 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300">
+              <span
+                className="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/80 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300"
+                title={
+                  expiredByDate
+                    ? isAr
+                      ? 'انتهى حسب تاريخ الانتهاء المسجّل'
+                      : 'Ended per the recorded end date'
+                    : isAr
+                      ? 'حسب حالة العرض المسجّلة'
+                      : 'Per the recorded offer status'
+                }
+              >
                 {isAr ? 'انتهى العرض' : 'Expired'}
+                {expiredByDate && (
+                  <span className="ms-1 font-normal text-slate-400">
+                    {isAr ? '· حسب التاريخ المسجّل' : '· per recorded date'}
+                  </span>
+                )}
               </span>
             )}
             {endingSoon && daysLeft !== null && (
@@ -189,6 +197,17 @@ export default function DealCard({ deal, onOpen }: DealCardProps) {
               </li>
             )}
           </ul>
+        )}
+
+        {/* The registration deadline is reported as itself, never as "the offer ends". */}
+        {registration.date && registration.state !== 'unknown' && (
+          <p
+            className={`mt-2 text-[11px] ${
+              registration.state === 'soon' ? 'text-amber-300' : 'text-slate-400'
+            }`}
+          >
+            {registrationLabel(registration.date, registration.state === 'passed', lang)}
+          </p>
         )}
 
         {description && (
