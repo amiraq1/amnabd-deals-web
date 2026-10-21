@@ -158,10 +158,12 @@ export interface LocationChange {
  */
 export function resolveLocationChange(input: LocationChangeInput): LocationChange {
   const hash = typeof input.hash === 'string' ? input.hash : '';
-  if (isInPageHash(hash)) {
-    return { apply: false, route: parseHash(input.pathname), filterSearch: '' };
-  }
+  // Computed once and returned on every path, so callers can read the current
+  // query even when the decision is "do not apply".
   const filterSearch = filterSearchFromLocation(input.search, hash);
+  if (isInPageHash(hash)) {
+    return { apply: false, route: parseHash(input.pathname), filterSearch };
+  }
   const hashChanged = (hash || '#/') !== input.lastAppliedHash;
   const searchChanged = filterSearch !== (input.lastAppliedSearch ?? '');
   if (!input.hadPending && !hashChanged && !searchChanged) {

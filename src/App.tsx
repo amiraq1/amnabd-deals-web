@@ -106,6 +106,13 @@ function AppInner() {
       }
       if (preserveDraft) {
         lastAppliedHash.current = hash;
+        // This path skips applyLocation, so normalizeLegacyHashRoute has not run
+        // yet and `window.location.search` may still hold the previous query
+        // (e.g. arriving with ?q=old and then typing). What becomes live after
+        // normalization is the query carried by the route hash.
+        lastAppliedSearch.current = hash.startsWith('#/')
+          ? extractHashSearch(hash)
+          : filterSearchFromLocation(window.location.search, hash);
         lastDiscoveryHash.current = hash;
       } else applyLocation(hash);
     },

@@ -124,6 +124,27 @@ test('PR-3: an unchanged query and hash are not re-applied', () => {
   assert.equal(same.apply, false);
 });
 
+test('PR-3: the decision always reports the current filter query', () => {
+  // `filterSearch` is the live query, not a placeholder, even when nothing is
+  // applied — so a caller never has to re-derive it from the location.
+  const unchanged = resolveLocationChange(
+    at({ search: '?q=alpha', lastAppliedHash: '#/', lastAppliedSearch: 'q=alpha' })
+  );
+  assert.equal(unchanged.apply, false);
+  assert.equal(unchanged.filterSearch, 'q=alpha');
+
+  const anchored = resolveLocationChange(
+    at({ search: '?q=alpha&sort=deadline', hash: '#main-content' })
+  );
+  assert.equal(anchored.apply, false);
+  assert.equal(anchored.filterSearch, 'q=alpha&sort=deadline');
+
+  // A legacy hash with no modern query reports the hash's query.
+  const legacy = resolveLocationChange(at({ search: '', hash: '#/?q=alpha' }));
+  assert.equal(legacy.apply, true);
+  assert.equal(legacy.filterSearch, 'q=alpha');
+});
+
 test('PR-3: the skip link changes nothing about the search', () => {
   const before = resolveLocationChange(
     at({ search: '?q=deepgram&sort=deadline', lastAppliedHash: '', lastAppliedSearch: '' })
@@ -133,8 +154,8 @@ test('PR-3: the skip link changes nothing about the search', () => {
   );
   assert.equal(before.apply, true);
   assert.equal(afterSkip.apply, false);
-  // Nothing is recomputed, so nothing can be reset.
-  assert.equal(afterSkip.filterSearch, '');
+  // Nothing is recomputed, and the reported query is still the live one.
+  assert.equal(afterSkip.filterSearch, 'q=deepgram&sort=deadline');
 
   // And the filters read straight from the location are untouched.
   const live = filters(filterSearchFromLocation('?q=deepgram&sort=deadline', '#main-content'));
