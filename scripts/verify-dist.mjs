@@ -49,6 +49,13 @@ const SITE_CLAIMS = [
   },
   { phrases: ['متاح للجميع'], every: (facts) => facts.openToAll, needs: 'كل عرض منشور متاح للجميع' },
   { phrases: ['بدون بطاقة'], every: (facts) => facts.noCard, needs: 'كل عرض منشور بلا بطاقة' },
+  // No field proves "free": a zero offer price is a recorded price, not a
+  // promise that the whole offer costs nothing (Docker needs a card).
+  {
+    phrases: ['مجان', 'free', 'Free'],
+    every: () => false,
+    needs: 'لا يوجد حقل في المصدر يثبت المجانية',
+  },
 ];
 
 const SITE_FILES = ['index.html', '404.html', 'feed.xml', 'sitemap.xml', 'llms.txt'];

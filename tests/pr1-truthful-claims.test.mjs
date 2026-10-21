@@ -281,6 +281,25 @@ test('verify-dist judges the feed channel header, not the per-deal item text', (
   });
 });
 
+test('verify-dist rejects "free"/"مجان" in site-level copy', () => {
+  // Nothing in the catalog proves an offer is free, so the homepage may not say it.
+  const withFree = fixtureDist({
+    'index.html':
+      '<html><head><meta name="description" content="دليل عروض مجانية"></head></html>',
+  });
+  assert.throws(() => runVerifyDist(withFree), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /مجان/);
+    return true;
+  });
+
+  const clean = fixtureDist({
+    'index.html':
+      '<html><head><meta name="description" content="دليل عروض الذكاء الاصطناعي والسحابة"></head></html>',
+  });
+  assert.match(runVerifyDist(clean), /verify-dist: OK/);
+});
+
 test('verify-dist warns about claim-like source summaries without failing', () => {
   const dist = fixtureDist({
     'index.html': '<html><head><title>AMNABD Deals</title></head></html>',
