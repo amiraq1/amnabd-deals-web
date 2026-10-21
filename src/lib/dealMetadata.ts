@@ -104,7 +104,9 @@ export function getDealDisplayName(deal: Deal): string {
   return deal.name_ar;
 }
 
-export function getDealHeadlineValue(deal: Deal, lang: 'ar' | 'en' = 'ar'): string {
+// Never invent a value: a card with no recorded benefit shows no headline.
+// "Free featured offer" was a claim the data did not support.
+export function getDealHeadlineValue(deal: Deal, lang: 'ar' | 'en' = 'ar'): string | null {
   if (deal.headline_value && deal.headline_value.trim()) {
     return deal.headline_value.trim();
   }
@@ -121,7 +123,7 @@ export function getDealHeadlineValue(deal: Deal, lang: 'ar' | 'en' = 'ar'): stri
     const desc = lang === 'ar' ? benefit.description.ar : benefit.description.en;
     if (desc && desc !== 'غير معلوم' && desc !== 'Unknown') return desc;
   }
-  return lang === 'ar' ? 'عرض مجاني مميز' : 'Free featured offer';
+  return null;
 }
 
 export function getDealKeyCondition(deal: Deal, lang: 'ar' | 'en' = 'ar'): string | null {

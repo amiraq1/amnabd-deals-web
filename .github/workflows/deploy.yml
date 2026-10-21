@@ -50,6 +50,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      # Fails the build if dist/ publishes a claim the catalog cannot prove.
+      - run: node scripts/verify-dist.mjs
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

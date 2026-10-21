@@ -26,6 +26,7 @@
     "src/lib/safeUrl.ts",
     "src/lib/dealMetadata.ts",
     "src/lib/seo.ts",
+    "src/lib/seoFacts.ts",
     "src/lib/dealReports.ts",
     "src/lib/shareFavorites.ts",
     "src/lib/changelog.ts",

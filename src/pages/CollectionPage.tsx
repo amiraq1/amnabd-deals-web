@@ -49,6 +49,12 @@ export default function CollectionPage({
     return deals.filter(config.filter);
   }, [deals, config]);
 
+  // "Verified" is only counted for rows that explicitly carry that status.
+  const verifiedCount = useMemo(
+    () => matchingDeals.filter((deal) => deal.review?.verification_status === 'verified').length,
+    [matchingDeals]
+  );
+
   if (!config) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6">
@@ -126,18 +132,19 @@ export default function CollectionPage({
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-400">
             <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-400">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              {/* Counts are separated from the "verified" adjective so neither is
+                  claimed for rows that were never verified. */}
               <span>
-                {matchingDeals.length}{' '}
                 {lang === 'ar'
-                  ? matchingDeals.length === 1
-                    ? 'عرض متوفر وموثّق'
-                    : matchingDeals.length === 2
-                      ? 'عرضان متوفران'
-                      : 'عروض متوفرة'
-                  : matchingDeals.length === 1
-                    ? 'verified deal'
-                    : 'verified deals'}
+                  ? `العروض: ${matchingDeals.length.toLocaleString('ar-EG')}`
+                  : `Deals: ${matchingDeals.length}`}
               </span>
+            </span>
+            <span className="text-slate-600">·</span>
+            <span>
+              {lang === 'ar'
+                ? `الموثّق: ${verifiedCount.toLocaleString('ar-EG')}`
+                : `Verified: ${verifiedCount}`}
             </span>
             <span className="text-slate-600">·</span>
             <span>
