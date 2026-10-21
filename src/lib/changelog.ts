@@ -1,7 +1,7 @@
 import type { Deal } from '@/types';
 import { getDealDisplayName } from './dealMetadata.js';
 
-export type ChangelogEventType = 'verified' | 'ending_soon' | 'expired';
+export type ChangelogEventType = 'verified' | 'active' | 'ending_soon' | 'expired';
 
 export interface ChangelogEntry {
   id: string;
@@ -21,10 +21,12 @@ export interface ChangelogGroup {
   entries: ChangelogEntry[];
 }
 
+// "verified" is a claim, so it requires the explicit status. An active deal
+// without that field is listed as active — never as verified (audit H-11).
 export function getChangelogEventType(deal: Deal): ChangelogEventType {
   if (deal.status === 'expired') return 'expired';
   if (deal.status === 'ending_soon') return 'ending_soon';
-  return 'verified';
+  return deal.review?.verification_status === 'verified' ? 'verified' : 'active';
 }
 
 export function buildChangelogSummary(deal: Deal, type: ChangelogEventType): string {
@@ -40,7 +42,13 @@ export function buildChangelogSummary(deal: Deal, type: ChangelogEventType): str
     deal.eligibility?.card_required === 'not_required' ? ' (بدون بطاقة بنكية)' : '';
   const studentNote =
     deal.eligibility?.student_status === 'required' ? ' — مخصص للطلاب' : '';
-  return `تمت مراجعة العرض وتأكيد فعاليته من المصدر الرسمي${cardNote}${studentNote}.`;
+  if (type === 'verified') {
+    const reviewed = deal.review?.reviewed_on;
+    return `تمت مراجعة العرض والتحقق منه من المصدر الرسمي${
+      reviewed ? ` (${reviewed})` : ''
+    }${cardNote}${studentNote}.`;
+  }
+  return `العرض مُدرج كنشط وفق البيانات المسجّلة؛ حالة التوثيق غير مثبتة بعد${cardNote}${studentNote}.`;
 }
 
 export function buildChangelogEntries(deals: Deal[]): ChangelogEntry[] {

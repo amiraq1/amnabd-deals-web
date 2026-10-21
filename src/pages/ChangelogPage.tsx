@@ -25,6 +25,12 @@ const BADGE_STYLES: Record<
     className: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300',
     Icon: CheckCircle2,
   },
+  active: {
+    labelAr: 'نشط',
+    labelEn: 'Active',
+    className: 'border-slate-600 bg-slate-800/60 text-slate-300',
+    Icon: CheckCircle2,
+  },
   ending_soon: {
     labelAr: '⏳ ينتهي قريبًا',
     labelEn: '⏳ Ending Soon',
@@ -53,6 +59,7 @@ export default function ChangelogPage({
   const filterTabs: { value: 'all' | ChangelogEventType; labelAr: string; labelEn: string }[] = [
     { value: 'all', labelAr: 'جميع التحديثات', labelEn: 'All Updates' },
     { value: 'verified', labelAr: 'عروض مؤكّدة', labelEn: 'Verified' },
+    { value: 'active', labelAr: 'نشطة', labelEn: 'Active' },
     { value: 'ending_soon', labelAr: 'تنتهي قريبًا', labelEn: 'Ending Soon' },
     { value: 'expired', labelAr: 'انتهت مؤخرًا', labelEn: 'Recently Expired' },
   ];

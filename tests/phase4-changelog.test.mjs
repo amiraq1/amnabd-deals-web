@@ -25,8 +25,17 @@ const {
 test('getChangelogEventType accurately reflects deal status', () => {
   assert.equal(getChangelogEventType({ status: 'expired' }), 'expired');
   assert.equal(getChangelogEventType({ status: 'ending_soon' }), 'ending_soon');
-  assert.equal(getChangelogEventType({ status: 'active' }), 'verified');
-  assert.equal(getChangelogEventType({}), 'verified');
+  // H-11: an active deal is only "verified" when the status says so.
+  assert.equal(getChangelogEventType({ status: 'active' }), 'active');
+  assert.equal(getChangelogEventType({}), 'active');
+  assert.equal(
+    getChangelogEventType({ status: 'active', review: { verification_status: 'verified' } }),
+    'verified'
+  );
+  assert.equal(
+    getChangelogEventType({ status: 'active', review: { verification_status: 'verifying' } }),
+    'active'
+  );
 });
 
 test('buildChangelogSummary produces tailored notes for each event type', () => {
