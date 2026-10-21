@@ -20,18 +20,18 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
   'for-students': {
     slug: 'for-students',
     path: '/for-students',
-    titleAr: 'أفضل عروض وأرصدة الذكاء الاصطناعي للطلاب — موثّقة ومجانية',
+    titleAr: 'أفضل عروض وأرصدة الذكاء الاصطناعي للطلاب — بمصادرها الرسمية',
     titleEn: 'Best Free AI Deals & Cloud Credits for Students',
     headingAr: 'عروض ومنافع الذكاء الاصطناعي المخصصة للطلاب',
     headingEn: 'AI Deals & Cloud Credits for Students',
     descriptionAr:
-      'قائمة موثّقة من المصادر الرسمية بأرصدة وحزم أدوات الذكاء الاصطناعي المجانية المتاحة لطلاب الجامعات والمدارس عبر البريد الأكاديمي أو بطاقة الطالب.',
+      'قائمة من المصادر الرسمية بأرصدة وحزم أدوات الذكاء الاصطناعي المجانية المتاحة لطلاب الجامعات والمدارس عبر البريد الأكاديمي أو بطاقة الطالب.',
     descriptionEn:
-      'Verified free AI credits, compute tiers, and perks officially available for students via academic email or student ID.',
+      'Free AI credits, compute tiers, and perks officially available for students via academic email or student ID.',
     metaDescriptionAr:
-      'دليل موثّق بأفضل أرصدة وأدوات الذكاء الاصطناعي المجانية للطلاب مع شروط القبول وخطوات التفعيل الرسمية.',
+      'دليل بأفضل أرصدة وأدوات الذكاء الاصطناعي المجانية للطلاب مع شروط القبول وخطوات التفعيل الرسمية.',
     metaDescriptionEn:
-      'Curated directory of verified free AI tool perks and cloud credits for students with official requirements.',
+      'Curated directory of free AI tool perks and cloud credits for students with official requirements.',
     badgeLabelAr: 'مخصص للطلاب',
     badgeLabelEn: 'Students Only',
     filter: (deal: Deal) => deal.eligibility?.student_status === 'required',
@@ -46,7 +46,7 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
     descriptionAr:
       'عروض وحزم ذكاء اصطناعي يمكنك تفعيلها والبدء في استخدامها فوراً دون الحاجة لإدخال أي وسيلة دفع أو بطاقة مصرفية.',
     descriptionEn:
-      'Verified AI tool benefits and credits that you can activate immediately with zero credit card or billing details required.',
+      'AI tool benefits and credits that you can activate immediately with zero credit card or billing details required.',
     metaDescriptionAr:
       'تصفح أدوات الذكاء الاصطناعي والأرصدة السحابية المجانية بالكامل التي لا تتطلب بطاقة بنكية أو وسيلة دفع للتفعيل.',
     metaDescriptionEn:
@@ -67,9 +67,9 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
     descriptionEn:
       'Free cloud compute, agentic code editors, and AI coding assistants for developers, engineers, and builders.',
     metaDescriptionAr:
-      'دليل عروض وأرصدة أدوات البرمجة بالذكاء الاصطناعي ووكلاء الكود الموثّقة مع روابط التفعيل المباشرة.',
+      'دليل عروض وأرصدة أدوات البرمجة بالذكاء الاصطناعي ووكلاء الكود مع روابط التفعيل المباشرة.',
     metaDescriptionEn:
-      'Verified directory of free AI coding tools, developer credits, and agentic IDE offers with official links.',
+      'Directory of free AI coding tools, developer credits, and agentic IDE offers with official links.',
     badgeLabelAr: 'برمجة وتطوير',
     badgeLabelEn: 'Coding & Dev',
     filter: (deal: Deal) => {
@@ -100,7 +100,7 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
     metaDescriptionAr:
       'تنبيهات فورية بالعروض والأرصدة المجانية للذكاء الاصطناعي التي تقترب من موعد انتهائها الرسمي.',
     metaDescriptionEn:
-      'Immediate alerts on verified AI perks and cloud compute credits nearing their official expiration date.',
+      'Immediate alerts on AI perks and cloud compute credits nearing their official expiration date.',
     badgeLabelAr: '⏳ ينتهي قريباً',
     badgeLabelEn: '⏳ Ending Soon',
     filter: (deal: Deal) => deal.status === 'ending_soon',

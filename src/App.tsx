@@ -219,7 +219,7 @@ function AppInner() {
       document.title =
         lang === 'ar'
           ? 'AMNABD Deals — دليل عروض أدوات الذكاء الاصطناعي المجانية'
-          : 'AMNABD Deals — Verified AI & Cloud Deals';
+          : 'AMNABD Deals — Free AI & Cloud Deals Directory';
     }
   }, [route.name, route.slug, route.collectionKey, deal, lang, offers.status]);
 

@@ -95,7 +95,7 @@ export default function ChangelogPage({
             <p className="mt-2 text-sm leading-relaxed text-slate-400">
               {lang === 'ar'
                 ? 'متابعة دورية للعروض المضافة، توثيق الشروط من المصادر الرسمية، وتنبيهات التفعيل قبل انتهاء الصلاحية.'
-                : 'Continuous tracking of verified AI perks, official terms updates, and urgent deadline warnings.'}
+                : 'Continuous tracking of AI perks, official terms updates, and urgent deadline warnings.'}
             </p>
           </div>
 

@@ -245,9 +245,9 @@ export function generateRssFeedXml(deals, baseUrl = DEFAULT_SITE_URL) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>عروض وأرصدة الذكاء الاصطناعي الموثّقة — AMNABD Deals</title>
+    <title>عروض وأرصدة الذكاء الاصطناعي — AMNABD Deals</title>
     <link>${escapeHtml(cleanBase)}/</link>
-    <description>أحدث الأرصدة المجانية وأدوات الذكاء الاصطناعي الموثّقة من مصادرها الرسمية</description>
+    <description>أحدث عروض وأرصدة أدوات الذكاء الاصطناعي من مصادرها الرسمية</description>
     <language>ar</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <atom:link href="${escapeHtml(cleanBase)}/feed.xml" rel="self" type="application/rss+xml" />
