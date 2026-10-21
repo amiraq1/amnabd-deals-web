@@ -1,6 +1,6 @@
 # AMNABD Deals
 
-> Arabic-first directory of AI-tool deals, each linked to its official source.
+> Arabic-first directory of AI-tool deals, each with a source link.
 > Terms, eligibility and evidence are recorded per deal where the source states them; each deal page shows what is still unknown.
 
 ## Deals

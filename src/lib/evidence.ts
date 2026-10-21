@@ -18,7 +18,7 @@ export function evidenceStatus(value: unknown): EvidenceStatus {
 }
 export function evidenceLabel(value: unknown, lang: Lang): string {
   const labels = {
-    supported: { ar: 'مدعوم بمصدر رسمي', en: 'Supported by an official source' },
+    supported: { ar: 'مدعوم بمصدر', en: 'Supported by a source' },
     partial: { ar: 'مدعوم جزئيًا', en: 'Partially supported' },
     unsupported: { ar: 'غير مدعوم بالأدلة', en: 'Not supported by evidence' },
     unknown: { ar: 'الدعم بالأدلة غير معلوم', en: 'Evidence support unknown' },

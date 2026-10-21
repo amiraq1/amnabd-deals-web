@@ -149,7 +149,7 @@ export default function CollectionPage({
             <span className="text-slate-600">·</span>
             <span>
               {lang === 'ar'
-                ? 'محدّثة دورياً من المصادر والصفحات الرسمية'
+                ? 'محدّثة دورياً من صفحات الجهات المزوّدة'
                 : 'Regularly updated from official provider sources'}
             </span>
           </div>

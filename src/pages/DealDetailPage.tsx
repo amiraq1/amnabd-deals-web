@@ -131,7 +131,7 @@ export default function DealDetailPage({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-950/40 transition-all hover:bg-emerald-400"
               >
-                <bdi>{lang === 'ar' ? 'المصدر الرسمي' : 'Official Source'}</bdi>
+                <bdi>{lang === 'ar' ? 'رابط المصدر' : 'Source link'}</bdi>
                 <ExternalLink className="h-4 w-4" />
               </a>
             )}
@@ -140,7 +140,7 @@ export default function DealDetailPage({
                 aria-disabled="true"
                 className="inline-flex min-h-11 items-center rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-400"
               >
-                {lang === 'ar' ? 'المصدر الرسمي غير متاح' : 'Official source unavailable'}
+                {lang === 'ar' ? 'رابط المصدر غير متاح' : 'Source link unavailable'}
               </span>
             )}
 
@@ -296,7 +296,7 @@ export default function DealDetailPage({
         <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
           <h3 className="font-heading flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
             <ShieldCheck className="h-4 w-4" />
-            {lang === 'ar' ? 'المصادر الرسمية والأدلة' : 'Official sources and evidence'}
+            {lang === 'ar' ? 'المصادر والأدلة' : 'Sources and evidence'}
           </h3>
           <div className="mt-4 space-y-5">
             {deal.official_sources.map((src, i) => (
@@ -394,7 +394,7 @@ export default function DealDetailPage({
                 rel="noopener noreferrer"
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-md transition-all hover:bg-emerald-400 active:scale-95"
               >
-                <bdi>{lang === 'ar' ? 'المصدر الرسمي' : 'Official Source'}</bdi>
+                <bdi>{lang === 'ar' ? 'رابط المصدر' : 'Source link'}</bdi>
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             ) : (
@@ -403,7 +403,7 @@ export default function DealDetailPage({
                 className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-400"
               >
                 <CircleAlert aria-hidden="true" className="h-4 w-4 shrink-0" />
-                {lang === 'ar' ? 'المصدر الرسمي غير متاح' : 'Official source unavailable'}
+                {lang === 'ar' ? 'رابط المصدر غير متاح' : 'Source link unavailable'}
               </span>
             )}
           </div>

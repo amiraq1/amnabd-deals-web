@@ -92,7 +92,7 @@ export default function ChangelogPage({
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>{lang === 'ar' ? 'سجل المراجعات الرسمية' : 'Official Review Log'}</span>
+              <span>{lang === 'ar' ? 'سجل المراجعات' : 'Review Log'}</span>
             </div>
             <h1 className="font-heading mt-3 text-2xl font-extrabold text-white sm:text-3xl">
               {lang === 'ar'
@@ -101,7 +101,7 @@ export default function ChangelogPage({
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-slate-400">
               {lang === 'ar'
-                ? 'متابعة دورية للعروض المضافة، توثيق الشروط من المصادر الرسمية، وتنبيهات التفعيل قبل انتهاء الصلاحية.'
+                ? 'متابعة دورية للعروض المضافة، عرض الشروط من مصادرها، وتنبيهات التفعيل قبل انتهاء الصلاحية.'
                 : 'Continuous tracking of AI perks, official terms updates, and urgent deadline warnings.'}
             </p>
           </div>

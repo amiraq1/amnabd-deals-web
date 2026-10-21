@@ -164,7 +164,7 @@ export function buildDealSeo(input: unknown, baseUrl = DEFAULT_SITE_URL): DealSe
   const notes: string[] = [];
   if (facts.studentsOnly) notes.push('مخصص للطلاب.');
   if (facts.noCard) notes.push('بدون بطاقة ائتمانية.');
-  if (facts.verified) notes.push('موثّق من المصدر الرسمي.');
+  if (facts.verified) notes.push('موثّق من المصدر.');
   const description = notes.length > 0 ? `${summary} ${notes.join(' ')}` : summary;
 
   const jsonLd: Record<string, unknown> = {

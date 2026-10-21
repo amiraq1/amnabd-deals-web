@@ -20,16 +20,16 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
   'for-students': {
     slug: 'for-students',
     path: '/for-students',
-    titleAr: 'أفضل عروض وأرصدة الذكاء الاصطناعي للطلاب — بمصادرها الرسمية',
+    titleAr: 'أفضل عروض وأرصدة الذكاء الاصطناعي للطلاب — مع روابط مصادرها',
     titleEn: 'Best Free AI Deals & Cloud Credits for Students',
     headingAr: 'عروض ومنافع الذكاء الاصطناعي المخصصة للطلاب',
     headingEn: 'AI Deals & Cloud Credits for Students',
     descriptionAr:
-      'قائمة من المصادر الرسمية بأرصدة وحزم أدوات الذكاء الاصطناعي المجانية المتاحة لطلاب الجامعات والمدارس عبر البريد الأكاديمي أو بطاقة الطالب.',
+      'قائمة بروابط مصادرها لأرصدة وحزم أدوات الذكاء الاصطناعي المجانية المتاحة لطلاب الجامعات والمدارس عبر البريد الأكاديمي أو بطاقة الطالب.',
     descriptionEn:
       'Free AI credits, compute tiers, and perks officially available for students via academic email or student ID.',
     metaDescriptionAr:
-      'دليل بأفضل أرصدة وأدوات الذكاء الاصطناعي المجانية للطلاب مع شروط القبول وخطوات التفعيل الرسمية.',
+      'دليل بأفضل أرصدة وأدوات الذكاء الاصطناعي المجانية للطلاب مع شروط القبول وخطوات التفعيل.',
     metaDescriptionEn:
       'Curated directory of free AI tool perks and cloud credits for students with official requirements.',
     badgeLabelAr: 'مخصص للطلاب',
@@ -94,11 +94,11 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
     headingAr: 'عروض تنتهي قريباً — سارع بالتفعيل قبل الإغلاق',
     headingEn: 'AI Deals Ending Soon — Claim Before Expiry',
     descriptionAr:
-      'فرص وأرصدة مجانية محدودة الوقت في أيامها الأخيرة وفق المصادر الرسمية. سارع بالتسجيل والتفعيل قبل انقضاء الموعد النهائي.',
+      'فرص وأرصدة مجانية محدودة الوقت في أيامها الأخيرة وفق ما تسجّله البيانات. سارع بالتسجيل والتفعيل قبل انقضاء الموعد النهائي.',
     descriptionEn:
       'Time-limited free AI perks and promotional credits in their final days. Claim now before deadline closes.',
     metaDescriptionAr:
-      'تنبيهات فورية بالعروض والأرصدة المجانية للذكاء الاصطناعي التي تقترب من موعد انتهائها الرسمي.',
+      'تنبيهات فورية بالعروض والأرصدة المجانية للذكاء الاصطناعي التي تقترب من موعد انتهائها المسجّل.',
     metaDescriptionEn:
       'Immediate alerts on AI perks and cloud compute credits nearing their official expiration date.',
     badgeLabelAr: '⏳ ينتهي قريباً',

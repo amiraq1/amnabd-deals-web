@@ -24,7 +24,7 @@ export const REPORT_REASON_OPTIONS: { value: ReportReason; label: string; labelE
   { value: 'expired', label: 'انتهى العرض', labelEn: 'Offer expired' },
   { value: 'card_changed', label: 'أصبح يطلب بطاقة بنكية', labelEn: 'Credit card now required' },
   { value: 'terms_changed', label: 'تغيّرت القيمة أو الشروط', labelEn: 'Value or terms changed' },
-  { value: 'broken_link', label: 'الرابط الرسمي لا يعمل', labelEn: 'Official link broken' },
+  { value: 'broken_link', label: 'رابط المصدر لا يعمل', labelEn: 'Source link broken' },
 ];
 
 function getReportedMap(): Record<string, number> {

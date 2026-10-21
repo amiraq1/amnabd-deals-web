@@ -218,7 +218,7 @@ export default function DealCard({ deal, onOpen }: DealCardProps) {
             <span>{isAr ? 'المصدر' : 'Source'}</span>
             <ExternalLink className="h-3 w-3" aria-hidden="true" />
             <span className="sr-only">
-              {isAr ? `الرسمي لعرض ${displayName} (يفتح في نافذة جديدة)` : `for ${displayName} (opens in a new tab)`}
+              {isAr ? `لرابط مصدر عرض ${displayName} (يفتح في نافذة جديدة)` : `for ${displayName} (opens in a new tab)`}
             </span>
           </a>
         )}

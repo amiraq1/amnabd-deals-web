@@ -36,7 +36,7 @@ export function buildChangelogSummary(deal: Deal, type: ChangelogEventType): str
   if (type === 'ending_soon') {
     return deal.ends_at
       ? `العرض يقترب من موعد انتهائه (${deal.ends_at}) — يُنصح بالتفعيل قبل الإغلاق.`
-      : 'العرض في أيامه الأخيرة وفق المصدر الرسمي.';
+      : 'العرض في أيامه الأخيرة وفق المصدر.';
   }
   const cardNote =
     deal.eligibility?.card_required === 'not_required' ? ' (بدون بطاقة بنكية)' : '';
@@ -44,7 +44,7 @@ export function buildChangelogSummary(deal: Deal, type: ChangelogEventType): str
     deal.eligibility?.student_status === 'required' ? ' — مخصص للطلاب' : '';
   if (type === 'verified') {
     const reviewed = deal.review?.reviewed_on;
-    return `تمت مراجعة العرض والتحقق منه من المصدر الرسمي${
+    return `تمت مراجعة العرض والتحقق منه من المصدر${
       reviewed ? ` (${reviewed})` : ''
     }${cardNote}${studentNote}.`;
   }

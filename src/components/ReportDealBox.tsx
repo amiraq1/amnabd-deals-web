@@ -32,7 +32,7 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
         <Check className="h-4 w-4 shrink-0 text-emerald-400" />
         <span>
           {lang === 'ar'
-            ? 'شكرًا لك! تم تسجيل ملاحظتك حول هذا العرض وستتم مراجعته وتحديثه من المصدر الرسمي.'
+            ? 'شكرًا لك! تم تسجيل ملاحظتك حول هذا العرض وستتم مراجعته وتحديثه من رابط المصدر.'
             : 'Thank you! Your note has been recorded and will be reviewed against official sources.'}
         </span>
       </div>
@@ -145,7 +145,7 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
               onChange={(e) => setNote(e.target.value)}
               placeholder={
                 lang === 'ar'
-                  ? 'ملاحظة إضافية أو رابط التحديث الرسمي (اختياري)...'
+                  ? 'ملاحظة إضافية أو رابط التحديث (اختياري)...'
                   : 'Optional additional note or official update link...'
               }
               className="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 outline-none transition focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/20"

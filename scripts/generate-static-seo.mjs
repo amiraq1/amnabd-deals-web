@@ -68,7 +68,7 @@ export function buildDealOgSvg(deal, facts = dealFacts(deal)) {
   if (facts.openToAll) tags.push('متاح للجميع');
 
   const verifiedText = facts.verified
-    ? `موثّق من المصدر الرسمي${facts.reviewedOn ? ` · آخر مراجعة ${facts.reviewedOn}` : ''}`
+    ? `موثّق من المصدر${facts.reviewedOn ? ` · آخر مراجعة ${facts.reviewedOn}` : ''}`
     : '';
 
   const titleY = headline ? 250 : 300;
@@ -96,7 +96,7 @@ export function buildDealOgSvg(deal, facts = dealFacts(deal)) {
   const verifiedSvg = facts.verified
     ? `  <g transform="translate(820, 96)">
     <rect x="0" y="0" width="276" height="46" rx="23" fill="#064e3b" stroke="#10b981" stroke-width="1.5" />
-    <text x="138" y="30" fill="#6ee7b7" font-family="Cairo, Tajawal, sans-serif" font-size="18" font-weight="700" text-anchor="middle" direction="rtl">✓ عرض موثّق رسميًا</text>
+    <text x="138" y="30" fill="#6ee7b7" font-family="Cairo, Tajawal, sans-serif" font-size="18" font-weight="700" text-anchor="middle" direction="rtl">✓ عرض موثّق</text>
   </g>`
     : '';
 
@@ -247,7 +247,7 @@ export function generateRssFeedXml(deals, baseUrl = DEFAULT_SITE_URL) {
   <channel>
     <title>عروض وأرصدة الذكاء الاصطناعي — AMNABD Deals</title>
     <link>${escapeHtml(cleanBase)}/</link>
-    <description>أحدث عروض وأرصدة أدوات الذكاء الاصطناعي من مصادرها الرسمية</description>
+    <description>أحدث عروض وأرصدة أدوات الذكاء الاصطناعي مع روابط مصادرها</description>
     <language>ar</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <atom:link href="${escapeHtml(cleanBase)}/feed.xml" rel="self" type="application/rss+xml" />
