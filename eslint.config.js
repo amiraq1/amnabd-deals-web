@@ -5,7 +5,8 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  // Build output and vendored bundles are never linted.
+  { ignores: ['dist', 'dist-ssr', 'node_modules'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -23,6 +24,27 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+    },
+  },
+  // Build/QA tooling: plain ESM scripts under scripts/ and tests/.
+  {
+    extends: [js.configs.recommended],
+    files: ['**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: globals.node,
+    },
+  },
+  // Optional browser QA harnesses (CommonJS, not part of `npm test`).
+  // They run in Node but evaluate page-side snippets, so browser globals apply.
+  {
+    extends: [js.configs.recommended],
+    files: ['**/*.cjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+      globals: { ...globals.node, ...globals.browser },
     },
   },
 );

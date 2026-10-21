@@ -642,6 +642,7 @@ export async function runStaticSeoGeneration({
     writeFileSync(join(aggDir, 'index.html'), injectSeoIntoHtml(baseHtml, aggSeo), 'utf8');
     generatedAggCount += 1;
   }
+  console.log(`[SEO] صفحات المجموعات الثابتة: ${generatedAggCount}`);
 
   // 2. تجهيز مجلد صور OG ومحرّك التحويل
   const ogDir = join(distDir, 'og');

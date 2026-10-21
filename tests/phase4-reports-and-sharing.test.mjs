@@ -6,7 +6,6 @@ import { pathToFileURL } from 'node:url';
 const {
   REPORT_REASON_OPTIONS,
   hasRecentlyReported,
-  markDealAsReported,
   submitDealReport,
 } = await import(
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/dealReports.js'))
