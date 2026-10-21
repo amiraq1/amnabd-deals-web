@@ -147,6 +147,9 @@ function checkSiteFiles(report, distDir, deals) {
 function siteTextOf(rel, raw) {
   if (rel === 'feed.xml') return raw.split('<item>')[0];
   if (rel === 'llms.txt') return raw.split(/^- \[/m)[0];
+  // A sitemap is identifiers only: "/deal/deepseek-flash-1017-free" is a slug,
+  // not a claim that the offer is free.
+  if (rel === 'sitemap.xml') return raw.replace(/<loc>[^<]*<\/loc>/g, '');
 
   const withoutJsonLd = raw.replace(
     /<script[^>]*application\/ld\+json[^>]*>[\s\S]*?<\/script>/gi,
