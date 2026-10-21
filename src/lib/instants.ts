@@ -55,9 +55,16 @@ export function parseInstant(value: unknown): number | null {
 
 /**
  * When a recorded day is really over. A date-only value carries no hour and no
- * timezone, so it cannot end at 23:59 in some arbitrary zone: it is treated as
- * finished only after 12:00 UTC of the following day, by which time the date has
- * passed everywhere on earth. An explicit instant is compared exactly.
+ * timezone, so it cannot end at 23:59 in some arbitrary zone.
+ *
+ * Product decision (documented, not incidental): the day ends at 12:00 UTC of
+ * the following day. The civil day is last to finish at UTC-12, where
+ * D 23:59:59 == D+1 11:59:59Z, so 12:00:00Z is exactly one second after the
+ * last second of that day anywhere on earth. The choice is "one second after
+ * the day is over everywhere", not a timezone workaround: 23:59 local would
+ * depend on the visitor's device, and 00:00Z would end the day while half the
+ * planet is still inside it. An explicit instant bypasses this entirely and is
+ * compared to the millisecond.
  */
 export function dayEndInstant(value: unknown): number | null {
   const day = parseCalendarDate(value);

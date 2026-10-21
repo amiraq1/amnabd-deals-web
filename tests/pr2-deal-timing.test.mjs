@@ -98,6 +98,18 @@ test('PR-2: a date-only ends_at expires after 12:00 UTC of the next day, in ever
   assert.equal(justExpired.offer.reason, 'ends_at');
 });
 
+test('PR-2: date-only expiry follows the UTC-12 civil-day boundary', () => {
+  // 2026-10-21 23:59:59 at UTC-12 (the last zone to leave the day)
+  // equals 2026-10-22T11:59:59Z.
+  const lastCivilSecond = Date.parse('2026-10-22T11:59:59Z');
+
+  const boundary = offerExpiryInstant('2026-10-21');
+
+  assert.equal(boundary, Date.parse('2026-10-22T12:00:00Z'));
+  // Exactly one second after the day is over everywhere — not a two-hour margin.
+  assert.equal(boundary - lastCivilSecond, 1000);
+});
+
 test('PR-2: "ending soon" comes from ends_at within the window, not from the deadline', () => {
   const ref = at('2026-10-21T12:00:00Z');
   const soon = getTimingState({ status: 'active', ends_at: '2026-10-31T00:00:00Z' }, ref);
