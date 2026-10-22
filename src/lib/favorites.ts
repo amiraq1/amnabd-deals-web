@@ -1,5 +1,8 @@
 export const FAVORITES_STORAGE_KEY = 'amnabd-favorites';
 export const FAVORITES_EVENT = 'amnabd:favorites-changed';
+// The list lived under this key before `amnabd-favorites` existed; the saved
+// deals module still writes it. Reading it is a one-way compatibility bridge.
+export const LEGACY_FAVORITES_STORAGE_KEY = 'amnabd_saved_deals_v1';
 
 // Module-level in-memory state in case storage is unavailable or writes fail
 let memoryFavorites: string[] = [];
@@ -41,6 +44,11 @@ export function getFavorites(override?: Storage | null): string[] {
   let raw: string | null = null;
   try {
     raw = storage.getItem(FAVORITES_STORAGE_KEY);
+    // A visitor whose list predates the new key has it only under the legacy
+    // one. Without this read they see an empty page and their first toggle
+    // overwrites the list they had. Reading never writes, so nothing migrates
+    // until the visitor actually changes something.
+    if (raw === null) raw = storage.getItem(LEGACY_FAVORITES_STORAGE_KEY);
   } catch {
     // localStorage.getItem threw (storage unavailable / restricted)
     memoryOnly = true;
@@ -89,7 +97,7 @@ export function saveFavorites(slugs: string[], override?: Storage | null): boole
     storage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(sanitized));
     if (override === undefined) {
       try {
-        storage.setItem('amnabd_saved_deals_v1', JSON.stringify(sanitized));
+        storage.setItem(LEGACY_FAVORITES_STORAGE_KEY, JSON.stringify(sanitized));
         window.dispatchEvent(new CustomEvent('amnabd:saved-deals-changed'));
       } catch {
         /* ignore */
