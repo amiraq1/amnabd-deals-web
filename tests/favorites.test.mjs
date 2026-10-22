@@ -57,6 +57,51 @@ test('initial read on empty storage returns empty array []', () => {
   assert.deepEqual(getFavorites(storage), []);
 });
 
+test('a list stored only under the legacy key is read and survives the first toggle', () => {
+  const storage = createMockStorage({
+    amnabd_saved_deals_v1: JSON.stringify(['legacy-a', 'legacy-b']),
+  });
+  // Before the fallback this returned [] and the next toggle wrote a one-item
+  // list over the visitor's existing favorites.
+  assert.deepEqual(getFavorites(storage), ['legacy-a', 'legacy-b']);
+
+  toggleFavoriteSlug('new-c', storage);
+  assert.deepEqual(getFavorites(storage), ['legacy-a', 'legacy-b', 'new-c']);
+  assert.deepEqual(JSON.parse(storage.getItem(FAVORITES_STORAGE_KEY)), [
+    'legacy-a',
+    'legacy-b',
+    'new-c',
+  ]);
+});
+
+test('a corrupt new key stays empty rather than resurrecting legacy data', () => {
+  const storage = createMockStorage({
+    'amnabd-favorites': '{not json',
+    amnabd_saved_deals_v1: JSON.stringify(['legacy-a']),
+  });
+  assert.deepEqual(getFavorites(storage), []);
+});
+
+test('removing the last favorite writes "[]" and does not resurrect the legacy list', () => {
+  const storage = createMockStorage({
+    amnabd_saved_deals_v1: JSON.stringify(['legacy-a']),
+  });
+  // The legacy list is visible before the visitor changes anything.
+  assert.deepEqual(getFavorites(storage), ['legacy-a']);
+
+  toggleFavoriteSlug('legacy-a', storage);
+
+  // The empty list must be an explicit "[]" under the new key, never a deleted
+  // key: a missing key would fall back to the legacy list on the next read.
+  assert.equal(storage.getItem(FAVORITES_STORAGE_KEY), '[]');
+  assert.equal(storage.getItem('amnabd_saved_deals_v1'), JSON.stringify(['legacy-a']));
+  assert.deepEqual(getFavorites(storage), []);
+
+  // Simulate a reload: module memory is reset, storage is not.
+  _resetFavoritesMemoryFallback();
+  assert.deepEqual(getFavorites(storage), []);
+});
+
 test('toggleFavorite adds slug when absent and removes when present', () => {
   const storage = createMockStorage();
   assert.equal(isSlugFavorite('claude-3-5', storage), false);
