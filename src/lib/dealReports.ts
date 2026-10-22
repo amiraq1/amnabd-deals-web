@@ -22,7 +22,10 @@ export interface SubmitReportResult {
   mode: 'supabase' | 'local_fallback' | 'blocked_bot' | 'unconfigured';
 }
 
-const REPORT_STORAGE_KEY = 'ai_deals_reported_slugs_v1';
+// F-04: renamed from `ai_deals_reported_slugs_v1` to match the project-wide
+// `amnabd_*` namespace. getReportedMap() migrates existing data on first read.
+const REPORT_STORAGE_KEY = 'amnabd_reported_slugs_v1';
+const LEGACY_REPORT_STORAGE_KEY = 'ai_deals_reported_slugs_v1';
 const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours per deal
 
 export const REPORT_REASON_OPTIONS: { value: ReportReason; label: string; labelEn: string }[] = [
@@ -35,6 +38,13 @@ export const REPORT_REASON_OPTIONS: { value: ReportReason; label: string; labelE
 function getReportedMap(): Record<string, number> {
   if (typeof window === 'undefined') return {};
   try {
+    // F-04: one-time migration — move data from the old key on first read
+    // so existing visitors do not lose their 24-hour cooldown state.
+    const legacyRaw = window.localStorage.getItem(LEGACY_REPORT_STORAGE_KEY);
+    if (legacyRaw !== null) {
+      window.localStorage.setItem(REPORT_STORAGE_KEY, legacyRaw);
+      window.localStorage.removeItem(LEGACY_REPORT_STORAGE_KEY);
+    }
     const raw = window.localStorage.getItem(REPORT_STORAGE_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
@@ -93,12 +103,19 @@ export async function submitDealReport(
   if (supabaseUrl && supabaseKey) {
     const endpoint = `${supabaseUrl.replace(/\/+$/, '')}/rest/v1/deal_reports`;
     try {
+      // F-01: mirror supabase.ts — omit Authorization for publishable keys.
+      // PostgREST validates Bearer as a JWT; a non-JWT publishable key causes
+      // 401 even when the correct `apikey` header is also present.
+      const authHeader: Record<string, string> = supabaseKey.startsWith('sb_publishable_')
+        ? {}
+        : { Authorization: `Bearer ${supabaseKey}` };
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
+          ...authHeader,
           Prefer: 'return=minimal',
         },
         body: JSON.stringify({
