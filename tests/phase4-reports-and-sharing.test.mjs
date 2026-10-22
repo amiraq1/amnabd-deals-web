@@ -1,12 +1,11 @@
 import assert from 'node:assert/strict';
-import { test, beforeEach } from 'node:test';
+import { test, beforeEach, afterEach } from 'node:test';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const {
   REPORT_REASON_OPTIONS,
   hasRecentlyReported,
-  markDealAsReported,
   submitDealReport,
 } = await import(
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/dealReports.js'))
@@ -38,6 +37,26 @@ beforeEach(() => {
   mockStorage.clear();
 });
 
+// The report path only counts as successful when a backend stored the row, so
+// these tests drive the transport explicitly instead of relying on the absence
+// of configuration.
+const originalFetch = globalThis.fetch;
+
+function withBackend(response) {
+  process.env.VITE_SUPABASE_URL = 'https://report-fixture.supabase.co';
+  process.env.VITE_SUPABASE_ANON_KEY = 'sb_publishable_REPORT_FIXTURE';
+  globalThis.fetch = async () => {
+    if (response instanceof Error) throw response;
+    return response;
+  };
+}
+
+afterEach(() => {
+  delete process.env.VITE_SUPABASE_URL;
+  delete process.env.VITE_SUPABASE_ANON_KEY;
+  globalThis.fetch = originalFetch;
+});
+
 test('REPORT_REASON_OPTIONS defines exactly 4 quick report reasons', () => {
   assert.equal(REPORT_REASON_OPTIONS.length, 4);
   const values = REPORT_REASON_OPTIONS.map((opt) => opt.value);
@@ -67,7 +86,35 @@ test('submitDealReport rejects empty or invalid deal slug', async () => {
   );
 });
 
-test('submitDealReport successfully reports and activates 24h cooldown', async () => {
+test('submitDealReport reports failure when no backend is configured', async () => {
+  const slug = 'unconfigured-deal';
+  const result = await submitDealReport({ dealSlug: slug, reason: 'expired' });
+  assert.equal(result.ok, false);
+  assert.equal(result.mode, 'unconfigured');
+  // Nothing was stored, so the deal must not enter the 24h cooldown.
+  assert.equal(hasRecentlyReported(slug), false);
+});
+
+test('submitDealReport reports failure when the server rejects the write', async () => {
+  withBackend({ ok: false, status: 500 });
+  const slug = 'rejected-deal';
+  const result = await submitDealReport({ dealSlug: slug, reason: 'terms_changed' });
+  assert.equal(result.ok, false);
+  assert.equal(result.mode, 'supabase');
+  assert.equal(hasRecentlyReported(slug), false);
+});
+
+test('submitDealReport reports failure when the request throws', async () => {
+  withBackend(new Error('network down'));
+  const slug = 'network-failure-deal';
+  const result = await submitDealReport({ dealSlug: slug, reason: 'broken_link' });
+  assert.equal(result.ok, false);
+  assert.equal(result.mode, 'supabase');
+  assert.equal(hasRecentlyReported(slug), false);
+});
+
+test('submitDealReport marks the deal only after the server stores the report', async () => {
+  withBackend({ ok: true, status: 201 });
   const slug = 'bolt-builders-week';
   assert.equal(hasRecentlyReported(slug), false);
 
@@ -78,10 +125,10 @@ test('submitDealReport successfully reports and activates 24h cooldown', async (
   });
 
   assert.equal(res1.ok, true);
-  assert.equal(res1.mode, 'local_fallback');
+  assert.equal(res1.mode, 'supabase');
   assert.equal(hasRecentlyReported(slug), true);
 
-  // Second submission triggers cooldown
+  // Second submission triggers the cooldown without another request.
   const res2 = await submitDealReport({
     dealSlug: slug,
     reason: 'expired',

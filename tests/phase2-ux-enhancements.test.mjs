@@ -23,27 +23,29 @@ test('getDealNumericValue handles k and m suffixes and currency symbols', () => 
   assert.equal(getDealNumericValue({ headline_value: '100 USD' }), 100);
 });
 
-test('getDealNumericValue ignores duration text without currency symbols', () => {
-  assert.equal(getDealNumericValue({ headline_value: '3 أشهر مجانية' }), 0);
-  assert.equal(getDealNumericValue({ headline_value: 'مجاني للطلاب' }), 0);
+test('getDealNumericValue returns null when no credit amount is recorded', () => {
+  assert.equal(getDealNumericValue({ headline_value: '3 أشهر مجانية' }), null);
+  assert.equal(getDealNumericValue({ headline_value: 'مجاني للطلاب' }), null);
+  assert.equal(getDealNumericValue({}), null);
 });
 
-test('getDealNumericValue calculates savings from regular_price / original_price', () => {
-  const dealWithOriginal = {
-    pricing: {
-      original_price: 60,
-      offer_price: 10,
-    },
-  };
-  assert.equal(getDealNumericValue(dealWithOriginal), 50);
+test('getDealNumericValue does not turn a price cut into a free balance', () => {
+  // A discounted paid plan is not a credit. Sorting it by `regular - offer`
+  // advertised savings the record never granted (audit C-01).
+  assert.equal(getDealNumericValue({ pricing: { original_price: 60, offer_price: 10 } }), null);
+  assert.equal(getDealNumericValue({ pricing: { original_price: 120, offer_price: 0 } }), null);
+  assert.equal(getDealNumericValue({ pricing: { regular_price: 500, offer_price: 100 } }), null);
+});
 
-  const dealFree = {
-    pricing: {
-      original_price: 120,
-      offer_price: 0,
-    },
-  };
-  assert.equal(getDealNumericValue(dealFree), 120);
+test('sortDeals highest_value puts a deal with no proven value last', () => {
+  const deals = [
+    { id: 'discount', pricing: { original_price: 1000, offer_price: 0 }, status: 'active' },
+    { id: 'credit', headline_value: '$50 رصيد', status: 'active' },
+  ];
+  assert.deepEqual(
+    sortDeals(deals, 'highest_value', ref).map((d) => d.id),
+    ['credit', 'discount']
+  );
 });
 
 test('sortDeals highest_value orders from largest to smallest value and puts expired last', () => {

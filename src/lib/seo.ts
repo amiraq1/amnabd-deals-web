@@ -1,117 +1,17 @@
-import type { Deal } from '@/types';
-import { getDealDisplayName } from './dealMetadata.js';
-import { getDealNumericValue } from './dealSort.js';
+import type { DealSeoMetadata } from './seoFacts.js';
 
-export interface DealSeoMetadata {
-  title: string;
-  description: string;
-  canonicalUrl: string;
-  ogImageUrl: string;
-  jsonLd: Record<string, unknown>;
-}
-
-export const DEFAULT_SITE_URL = 'https://amnabd.com';
-
-export function getAvailabilitySchema(status?: Deal['status']): string {
-  switch (status) {
-    case 'ending_soon':
-      return 'https://schema.org/LimitedAvailability';
-    case 'expired':
-      return 'https://schema.org/SoldOut';
-    case 'active':
-    default:
-      return 'https://schema.org/InStock';
-  }
-}
-
-export function buildDealSeo(deal: Deal, baseUrl = DEFAULT_SITE_URL): DealSeoMetadata {
-  const cleanBase = baseUrl.replace(/\/+$/, '');
-  const canonicalUrl = `${cleanBase}/deal/${deal.slug}`;
-  const ogImageUrl = `${cleanBase}/og/${deal.slug}.png`;
-
-  const displayName = getDealDisplayName(deal);
-  const valueText = deal.headline_value ? ` (${deal.headline_value})` : '';
-  const title = `${displayName}${valueText} — عروض وأرصدة الذكاء الاصطناعي`;
-
-  const eligibilityNote =
-    deal.eligibility?.student_status === 'required' ? ' مخصص للطلاب.' : '';
-  const cardNote =
-    deal.eligibility?.card_required === 'not_required' ? ' بدون بطاقة ائتمانية.' : '';
-
-  const summary = deal.description_ar || deal.description_en || displayName;
-  const description = `${summary}${eligibilityNote}${cardNote} موثّق ومُراجَع من المصدر الرسمي.`;
-
-  const numericValue = getDealNumericValue(deal);
-
-  const jsonLd: Record<string, unknown> = {
-    '@context': 'https://schema.org',
-    '@type': 'Offer',
-    name: displayName,
-    description,
-    url: canonicalUrl,
-    availability: getAvailabilitySchema(deal.status),
-    price: deal.pricing?.offer_price ?? 0,
-    priceCurrency: deal.pricing?.currency ?? 'USD',
-    ...(deal.ends_at ? { priceValidUntil: deal.ends_at } : {}),
-    ...(deal.review?.reviewed_on ? { dateModified: deal.review.reviewed_on } : {}),
-    itemOffered: {
-      '@type': 'SoftwareApplication',
-      name: displayName,
-      applicationCategory: 'DeveloperApplication',
-      ...(numericValue > 0
-        ? {
-            offers: {
-              '@type': 'Offer',
-              description: deal.headline_value ?? `Value up to $${numericValue}`,
-            },
-          }
-        : {}),
-    },
-  };
-
-  return {
-    title,
-    description,
-    canonicalUrl,
-    ogImageUrl,
-    jsonLd,
-  };
-}
-
-export function generateSitemapXml(deals: Deal[], baseUrl = DEFAULT_SITE_URL): string {
-  const cleanBase = baseUrl.replace(/\/+$/, '');
-  const latestReview = deals
-    .map((d) => d.review?.reviewed_on)
-    .filter((d): d is string => typeof d === 'string' && d.length > 0)
-    .sort()
-    .reverse()[0];
-
-  const urls: string[] = [
-    `  <url>
-    <loc>${cleanBase}/</loc>${latestReview ? `\n    <lastmod>${latestReview}</lastmod>` : ''}
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>`,
-  ];
-
-  for (const deal of deals) {
-    const priority = deal.status === 'expired' ? '0.4' : '0.8';
-    const lastmod = deal.review?.reviewed_on
-      ? `\n    <lastmod>${deal.review.reviewed_on}</lastmod>`
-      : '';
-
-    urls.push(`  <url>
-    <loc>${cleanBase}/deal/${deal.slug}</loc>${lastmod}
-    <changefreq>weekly</changefreq>
-    <priority>${priority}</priority>
-  </url>`);
-  }
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join('\n')}
-</urlset>`;
-}
+// The claim logic itself lives in `seoFacts.ts` so the build-time generator and
+// the browser cannot drift apart. This module only applies it to the document.
+export {
+  DEFAULT_SITE_URL,
+  buildDealSeo,
+  dealFacts,
+  dealDisplayName,
+  getAvailabilitySchema,
+  generateSitemapXml,
+  nonEmptyAggregations,
+} from './seoFacts.js';
+export type { DealFacts, DealSeoMetadata } from './seoFacts.js';
 
 function upsertMeta(
   selector: string,

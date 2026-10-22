@@ -1,4 +1,5 @@
 import type { Deal } from '@/types';
+import { getTimingState } from './dealTiming.js';
 
 export interface AggregationConfig {
   slug: string;
@@ -20,18 +21,18 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
   'for-students': {
     slug: 'for-students',
     path: '/for-students',
-    titleAr: 'أفضل عروض وأرصدة الذكاء الاصطناعي للطلاب — موثّقة ومجانية',
+    titleAr: 'أفضل عروض وأرصدة الذكاء الاصطناعي للطلاب — مع روابط مصادرها',
     titleEn: 'Best Free AI Deals & Cloud Credits for Students',
     headingAr: 'عروض ومنافع الذكاء الاصطناعي المخصصة للطلاب',
     headingEn: 'AI Deals & Cloud Credits for Students',
     descriptionAr:
-      'قائمة موثّقة من المصادر الرسمية بأرصدة وحزم أدوات الذكاء الاصطناعي المجانية المتاحة لطلاب الجامعات والمدارس عبر البريد الأكاديمي أو بطاقة الطالب.',
+      'قائمة بروابط مصادرها لأرصدة وحزم أدوات الذكاء الاصطناعي المتاحة لطلاب الجامعات والمدارس عبر البريد الأكاديمي أو بطاقة الطالب.',
     descriptionEn:
-      'Verified free AI credits, compute tiers, and perks officially available for students via academic email or student ID.',
+      'AI credits, compute tiers, and perks available for students via academic email or student ID, each with a source link.',
     metaDescriptionAr:
-      'دليل موثّق بأفضل أرصدة وأدوات الذكاء الاصطناعي المجانية للطلاب مع شروط القبول وخطوات التفعيل الرسمية.',
+      'دليل بأفضل أرصدة وأدوات الذكاء الاصطناعي للطلاب مع شروط القبول وخطوات التفعيل.',
     metaDescriptionEn:
-      'Curated directory of verified free AI tool perks and cloud credits for students with official requirements.',
+      'Curated directory of AI tool perks and cloud credits for students, with the requirements each source states.',
     badgeLabelAr: 'مخصص للطلاب',
     badgeLabelEn: 'Students Only',
     filter: (deal: Deal) => deal.eligibility?.student_status === 'required',
@@ -39,18 +40,18 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
   'no-credit-card': {
     slug: 'no-credit-card',
     path: '/no-credit-card',
-    titleAr: 'عروض ذكاء اصطناعي مجانية بدون بطاقة بنكية (No Credit Card)',
+    titleAr: 'عروض ذكاء اصطناعي بدون بطاقة بنكية (No Credit Card)',
     titleEn: 'Free AI Deals Without Credit Card (No Card Required)',
-    headingAr: 'أدوات وأرصدة ذكاء اصطناعي مجانية بدون بطاقة بنكية',
+    headingAr: 'أدوات وأرصدة ذكاء اصطناعي بدون بطاقة بنكية',
     headingEn: 'Free AI Tools & Credits Without Credit Card',
     descriptionAr:
       'عروض وحزم ذكاء اصطناعي يمكنك تفعيلها والبدء في استخدامها فوراً دون الحاجة لإدخال أي وسيلة دفع أو بطاقة مصرفية.',
     descriptionEn:
-      'Verified AI tool benefits and credits that you can activate immediately with zero credit card or billing details required.',
+      'AI tool benefits and credits that you can activate immediately with zero credit card or billing details required.',
     metaDescriptionAr:
-      'تصفح أدوات الذكاء الاصطناعي والأرصدة السحابية المجانية بالكامل التي لا تتطلب بطاقة بنكية أو وسيلة دفع للتفعيل.',
+      'تصفح أدوات الذكاء الاصطناعي والأرصدة السحابية التي لا تتطلب بطاقة بنكية أو وسيلة دفع للتفعيل.',
     metaDescriptionEn:
-      'Explore free AI tools and cloud credits with zero credit card or payment method required.',
+      'Explore AI tools and cloud credits with zero credit card or payment method required.',
     badgeLabelAr: 'بدون بطاقة بنكية',
     badgeLabelEn: 'No Card Required',
     filter: (deal: Deal) => deal.eligibility?.card_required === 'not_required',
@@ -63,13 +64,13 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
     headingAr: 'أدوات ومحررات ووكلاء البرمجة بالذكاء الاصطناعي',
     headingEn: 'AI Coding Tools, IDEs & Developer Agents',
     descriptionAr:
-      'أرصدة سحابية، محررات كود ذكية، ومساعدات تطوير مدعومة بنماذج الذكاء الاصطناعي المتقدمة مجاناً للمبرمجين والمطورين.',
+      'أرصدة سحابية، محررات كود ذكية، ومساعدات تطوير مدعومة بنماذج الذكاء الاصطناعي المتقدمة للمبرمجين والمطورين.',
     descriptionEn:
-      'Free cloud compute, agentic code editors, and AI coding assistants for developers, engineers, and builders.',
+      'Cloud compute, agentic code editors, and AI coding assistants for developers, engineers, and builders.',
     metaDescriptionAr:
-      'دليل عروض وأرصدة أدوات البرمجة بالذكاء الاصطناعي ووكلاء الكود الموثّقة مع روابط التفعيل المباشرة.',
+      'دليل عروض وأرصدة أدوات البرمجة بالذكاء الاصطناعي ووكلاء الكود مع روابط التفعيل المباشرة.',
     metaDescriptionEn:
-      'Verified directory of free AI coding tools, developer credits, and agentic IDE offers with official links.',
+      'Directory of AI coding tools, developer credits, and agentic IDE offers with source links.',
     badgeLabelAr: 'برمجة وتطوير',
     badgeLabelEn: 'Coding & Dev',
     filter: (deal: Deal) => {
@@ -94,16 +95,18 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
     headingAr: 'عروض تنتهي قريباً — سارع بالتفعيل قبل الإغلاق',
     headingEn: 'AI Deals Ending Soon — Claim Before Expiry',
     descriptionAr:
-      'فرص وأرصدة مجانية محدودة الوقت في أيامها الأخيرة وفق المصادر الرسمية. سارع بالتسجيل والتفعيل قبل انقضاء الموعد النهائي.',
+      'فرص وأرصدة محدودة الوقت في أيامها الأخيرة وفق ما تسجّله البيانات. سارع بالتسجيل والتفعيل قبل انقضاء الموعد النهائي.',
     descriptionEn:
-      'Time-limited free AI perks and promotional credits in their final days. Claim now before deadline closes.',
+      'Time-limited AI perks and promotional credits in their final days. Claim now before deadline closes.',
     metaDescriptionAr:
-      'تنبيهات فورية بالعروض والأرصدة المجانية للذكاء الاصطناعي التي تقترب من موعد انتهائها الرسمي.',
+      'تنبيهات فورية بالعروض والأرصدة للذكاء الاصطناعي التي تقترب من موعد انتهائها المسجّل.',
     metaDescriptionEn:
-      'Immediate alerts on verified AI perks and cloud compute credits nearing their official expiration date.',
+      'Immediate alerts on AI perks and cloud compute credits nearing their recorded expiration date.',
     badgeLabelAr: '⏳ ينتهي قريباً',
     badgeLabelEn: '⏳ Ending Soon',
-    filter: (deal: Deal) => deal.status === 'ending_soon',
+    // Same model as the card and the sort: an explicit flag or an ends_at inside
+    // the window. A registration deadline never qualifies an offer here.
+    filter: (deal: Deal) => getTimingState(deal, new Date()).offer.state === 'ending_soon',
   },
 };
 

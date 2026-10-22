@@ -25,6 +25,12 @@ const BADGE_STYLES: Record<
     className: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300',
     Icon: CheckCircle2,
   },
+  active: {
+    labelAr: 'نشط',
+    labelEn: 'Active',
+    className: 'border-slate-600 bg-slate-800/60 text-slate-300',
+    Icon: CheckCircle2,
+  },
   ending_soon: {
     labelAr: '⏳ ينتهي قريبًا',
     labelEn: '⏳ Ending Soon',
@@ -53,6 +59,7 @@ export default function ChangelogPage({
   const filterTabs: { value: 'all' | ChangelogEventType; labelAr: string; labelEn: string }[] = [
     { value: 'all', labelAr: 'جميع التحديثات', labelEn: 'All Updates' },
     { value: 'verified', labelAr: 'عروض مؤكّدة', labelEn: 'Verified' },
+    { value: 'active', labelAr: 'نشطة', labelEn: 'Active' },
     { value: 'ending_soon', labelAr: 'تنتهي قريبًا', labelEn: 'Ending Soon' },
     { value: 'expired', labelAr: 'انتهت مؤخرًا', labelEn: 'Recently Expired' },
   ];
@@ -85,7 +92,7 @@ export default function ChangelogPage({
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>{lang === 'ar' ? 'سجل المراجعات الرسمية' : 'Official Review Log'}</span>
+              <span>{lang === 'ar' ? 'سجل المراجعات' : 'Review Log'}</span>
             </div>
             <h1 className="font-heading mt-3 text-2xl font-extrabold text-white sm:text-3xl">
               {lang === 'ar'
@@ -94,8 +101,8 @@ export default function ChangelogPage({
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-slate-400">
               {lang === 'ar'
-                ? 'متابعة دورية للعروض المضافة، توثيق الشروط من المصادر الرسمية، وتنبيهات التفعيل قبل انتهاء الصلاحية.'
-                : 'Continuous tracking of verified AI perks, official terms updates, and urgent deadline warnings.'}
+                ? 'متابعة دورية للعروض المضافة، عرض الشروط من مصادرها، وتنبيهات التفعيل قبل انتهاء الصلاحية.'
+                : 'Continuous tracking of AI perks, official terms updates, and urgent deadline warnings.'}
             </p>
           </div>
 

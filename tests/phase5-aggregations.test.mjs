@@ -134,12 +134,33 @@ test('buildAggregationSeo generates structured ItemList schema and canonical URL
   assert.equal(seo.jsonLd.itemListElement[0].url, 'https://amnabd.com/deal/copilot-student');
 });
 
-test('generateSitemapXml includes all 4 collection pages with priority 0.9', () => {
-  const sitemap = generateSitemapXml([], 'https://amnabd.com');
+test('generateSitemapXml lists only collections that contain a deal', () => {
+  // C-01: an empty collection page would advertise deals that do not exist.
+  const empty = generateSitemapXml([], 'https://amnabd.com');
+  assert.equal(empty.includes('<loc>https://amnabd.com/for-students</loc>'), false);
+  assert.equal(empty.includes('<loc>https://amnabd.com/no-credit-card</loc>'), false);
+  assert.equal(empty.includes('<loc>https://amnabd.com/coding</loc>'), false);
+  assert.equal(empty.includes('<loc>https://amnabd.com/ending-soon</loc>'), false);
 
-  assert.ok(sitemap.includes('<loc>https://amnabd.com/for-students</loc>'));
-  assert.ok(sitemap.includes('<loc>https://amnabd.com/no-credit-card</loc>'));
-  assert.ok(sitemap.includes('<loc>https://amnabd.com/coding</loc>'));
-  assert.ok(sitemap.includes('<loc>https://amnabd.com/ending-soon</loc>'));
-  assert.ok(sitemap.includes('<priority>0.9</priority>'));
+  const populated = generateSitemapXml(
+    [
+      {
+        id: '1',
+        slug: 'figma',
+        status: 'active',
+        eligibility: { student_status: 'required', card_required: 'required' },
+      },
+      {
+        id: '2',
+        slug: 'zed',
+        status: 'ending_soon',
+        eligibility: { student_status: 'required', card_required: 'required' },
+      },
+    ],
+    'https://amnabd.com'
+  );
+  assert.ok(populated.includes('<loc>https://amnabd.com/for-students</loc>'));
+  assert.ok(populated.includes('<loc>https://amnabd.com/ending-soon</loc>'));
+  assert.ok(populated.includes('<priority>0.9</priority>'));
+  assert.equal(populated.includes('<loc>https://amnabd.com/no-credit-card</loc>'), false);
 });

@@ -1,7 +1,7 @@
 # AMNABD Deals
 
-> Arabic-first directory of verified free AI-tool deals for students and developers.
-> Every deal is verified against its official source, with terms, eligibility and evidence documented in Arabic and English.
+> Arabic-first directory of AI-tool deals, each with a source link.
+> Terms, eligibility and evidence are recorded per deal where the source states them; each deal page shows what is still unknown.
 
 ## Deals
 

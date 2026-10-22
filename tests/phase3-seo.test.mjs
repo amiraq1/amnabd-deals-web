@@ -15,7 +15,9 @@ test('getAvailabilitySchema maps deal statuses correctly to schema.org', () => {
   assert.equal(getAvailabilitySchema('active'), 'https://schema.org/InStock');
   assert.equal(getAvailabilitySchema('ending_soon'), 'https://schema.org/LimitedAvailability');
   assert.equal(getAvailabilitySchema('expired'), 'https://schema.org/SoldOut');
-  assert.equal(getAvailabilitySchema(undefined), 'https://schema.org/InStock');
+  // L-04: a missing or unverified status is not an availability claim.
+  assert.equal(getAvailabilitySchema(undefined), null);
+  assert.equal(getAvailabilitySchema('verifying'), null);
 });
 
 test('buildDealSeo produces valid metadata, canonical URL, and JSON-LD schema', () => {

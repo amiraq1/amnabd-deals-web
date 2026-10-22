@@ -1,4 +1,5 @@
 import type { Lang } from '@/types';
+import type { OfferTiming } from './dealTiming.js';
 export type EvidenceStatus = 'supported' | 'partial' | 'unsupported' | 'unknown';
 
 export function evidenceStatus(value: unknown): EvidenceStatus {
@@ -18,7 +19,7 @@ export function evidenceStatus(value: unknown): EvidenceStatus {
 }
 export function evidenceLabel(value: unknown, lang: Lang): string {
   const labels = {
-    supported: { ar: 'مدعوم بمصدر رسمي', en: 'Supported by an official source' },
+    supported: { ar: 'مدعوم بمصدر', en: 'Supported by a source' },
     partial: { ar: 'مدعوم جزئيًا', en: 'Partially supported' },
     unsupported: { ar: 'غير مدعوم بالأدلة', en: 'Not supported by evidence' },
     unknown: { ar: 'الدعم بالأدلة غير معلوم', en: 'Evidence support unknown' },
@@ -37,4 +38,26 @@ export function offerStatusLabel(value: unknown, lang: Lang): string {
     default:
       return lang === 'ar' ? 'غير معلوم' : 'Unknown';
   }
+}
+
+/**
+ * The detail page printed `review.offer_status` on its own, so a deal whose
+ * recorded `ends_at` had already passed still read "available as reviewed"
+ * (H-02). The computed timing wins; the raw field is only the fallback for
+ * states the timing model does not classify (e.g. `paused`).
+ */
+export function offerTimingLabel(timing: OfferTiming, fallbackStatus: unknown, lang: Lang): string {
+  if (timing.state === 'expired') {
+    return timing.reason === 'ends_at'
+      ? lang === 'ar'
+        ? 'انتهى حسب تاريخ الانتهاء المسجّل'
+        : 'Ended per the recorded end date'
+      : lang === 'ar'
+        ? 'منتهٍ وفق المراجعة'
+        : 'Ended as reviewed';
+  }
+  if (timing.state === 'ending_soon') {
+    return lang === 'ar' ? 'ينتهي قريبًا' : 'Ending soon';
+  }
+  return offerStatusLabel(fallbackStatus, lang);
 }

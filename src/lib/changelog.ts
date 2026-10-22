@@ -1,7 +1,8 @@
 import type { Deal } from '@/types';
 import { getDealDisplayName } from './dealMetadata.js';
+import { getTimingState } from './dealTiming.js';
 
-export type ChangelogEventType = 'verified' | 'ending_soon' | 'expired';
+export type ChangelogEventType = 'verified' | 'active' | 'ending_soon' | 'expired';
 
 export interface ChangelogEntry {
   id: string;
@@ -21,10 +22,16 @@ export interface ChangelogGroup {
   entries: ChangelogEntry[];
 }
 
-export function getChangelogEventType(deal: Deal): ChangelogEventType {
-  if (deal.status === 'expired') return 'expired';
-  if (deal.status === 'ending_soon') return 'ending_soon';
-  return 'verified';
+// "verified" is a claim, so it requires the explicit status. An active deal
+// without that field is listed as active — never as verified (audit H-11).
+export function getChangelogEventType(
+  deal: Deal,
+  referenceNow: Date = new Date()
+): ChangelogEventType {
+  const { offer } = getTimingState(deal, referenceNow);
+  if (offer.state === 'expired') return 'expired';
+  if (offer.state === 'ending_soon') return 'ending_soon';
+  return deal.review?.verification_status === 'verified' ? 'verified' : 'active';
 }
 
 export function buildChangelogSummary(deal: Deal, type: ChangelogEventType): string {
@@ -34,13 +41,19 @@ export function buildChangelogSummary(deal: Deal, type: ChangelogEventType): str
   if (type === 'ending_soon') {
     return deal.ends_at
       ? `العرض يقترب من موعد انتهائه (${deal.ends_at}) — يُنصح بالتفعيل قبل الإغلاق.`
-      : 'العرض في أيامه الأخيرة وفق المصدر الرسمي.';
+      : 'العرض في أيامه الأخيرة وفق المصدر.';
   }
   const cardNote =
     deal.eligibility?.card_required === 'not_required' ? ' (بدون بطاقة بنكية)' : '';
   const studentNote =
     deal.eligibility?.student_status === 'required' ? ' — مخصص للطلاب' : '';
-  return `تمت مراجعة العرض وتأكيد فعاليته من المصدر الرسمي${cardNote}${studentNote}.`;
+  if (type === 'verified') {
+    const reviewed = deal.review?.reviewed_on;
+    return `تمت مراجعة العرض والتحقق منه من المصدر${
+      reviewed ? ` (${reviewed})` : ''
+    }${cardNote}${studentNote}.`;
+  }
+  return `العرض مُدرج كنشط وفق البيانات المسجّلة؛ حالة التوثيق غير مثبتة بعد${cardNote}${studentNote}.`;
 }
 
 export function buildChangelogEntries(deals: Deal[]): ChangelogEntry[] {

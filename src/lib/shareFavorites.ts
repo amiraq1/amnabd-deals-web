@@ -48,7 +48,7 @@ export function formatFavoritesAsText(
   });
 
   const shareUrl = buildSharedFavoritesUrl(set, origin);
-  return `قائمتي المختارة لعروض وأرصدة الذكاء الاصطناعي المجانية الموثّقة:\n\n${lines.join(
+  return `قائمتي المختارة لعروض وأرصدة الذكاء الاصطناعي المجانية:\n\n${lines.join(
     '\n\n'
   )}\n\nرابط القائمة الكاملة:\n${shareUrl}`;
 }

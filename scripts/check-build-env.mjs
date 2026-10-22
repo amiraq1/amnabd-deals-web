@@ -35,7 +35,9 @@ try {
         cwd: root,
         env: { ...process.env, ...baseline, ...override },
         encoding: 'utf8',
-        timeout: 60000,
+        // A cold, cache-less runner needs well over a minute for the one full
+        // build case; a shorter timeout turns a slow machine into a red gate.
+        timeout: 180000,
       }
     );
     if (result.error) throw result.error;

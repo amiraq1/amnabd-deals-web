@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { loadConfig, loadDeals, loadGuides } from '@/lib/loadResources';
-import { extractHashSearch, normalizeLegacyHashRoute, parseLocationRoute, routeHash, type Route } from '@/lib/routes';
+import {
+  extractHashSearch,
+  filterSearchFromLocation,
+  normalizeLegacyHashRoute,
+  parseLocationRoute,
+  resolveLocationChange,
+  routeHash,
+  type Route,
+} from '@/lib/routes';
 import {
   buildDiscoveryHash,
   DEFAULT_FILTER_STATE,
@@ -52,7 +60,8 @@ function AppInner() {
     [deals]
   );
   const [rawFilters, setRawFilters] = useState<FilterState>(() =>
-    parseFilterState(extractHashSearch(window.location.hash))
+    // H-01: the query string is authoritative; the hash is the legacy fallback.
+    parseFilterState(filterSearchFromLocation(window.location.search, window.location.hash))
   );
   const filterState = useMemo(
     () =>
@@ -65,6 +74,9 @@ function AppInner() {
   const routeRef = useRef(route);
   const lastDiscoveryHash = useRef(route.name === 'home' ? window.location.hash || '#/' : '#/');
   const lastAppliedHash = useRef(window.location.hash || '#/');
+  const lastAppliedSearch = useRef(
+    filterSearchFromLocation(window.location.search, window.location.hash)
+  );
   const timer = useRef<number | null>(null);
   const cancelPending = useCallback(() => {
     const pending = timer.current !== null;
@@ -78,8 +90,9 @@ function AppInner() {
     routeRef.current = next;
     setRoute(next);
     lastAppliedHash.current = hash || '#/';
+    lastAppliedSearch.current = filterSearchFromLocation(window.location.search, hash);
     if (next.name === 'home') {
-      const parsed = parseFilterState(extractHashSearch(hash));
+      const parsed = parseFilterState(filterSearchFromLocation(window.location.search, hash));
       filtersRef.current = parsed;
       setRawFilters(parsed);
       lastDiscoveryHash.current = hash || '#/';
@@ -93,6 +106,13 @@ function AppInner() {
       }
       if (preserveDraft) {
         lastAppliedHash.current = hash;
+        // This path skips applyLocation, so normalizeLegacyHashRoute has not run
+        // yet and `window.location.search` may still hold the previous query
+        // (e.g. arriving with ?q=old and then typing). What becomes live after
+        // normalization is the query carried by the route hash.
+        lastAppliedSearch.current = hash.startsWith('#/')
+          ? extractHashSearch(hash)
+          : filterSearchFromLocation(window.location.search, hash);
         lastDiscoveryHash.current = hash;
       } else applyLocation(hash);
     },
@@ -101,9 +121,18 @@ function AppInner() {
   useEffect(() => {
     const onLocationChange = () => {
       const hadPending = cancelPending();
-      const hash = window.location.hash || '#/';
-      if (!hadPending && hash === lastAppliedHash.current) return;
-      applyLocation(hash);
+      const decision = resolveLocationChange({
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash,
+        lastAppliedHash: lastAppliedHash.current,
+        lastAppliedSearch: lastAppliedSearch.current,
+        hadPending,
+      });
+      // H-10: an in-page anchor (#main-content) is not a navigation — leave the
+      // filters, the sort and the scroll position exactly as they are.
+      if (!decision.apply) return;
+      applyLocation(window.location.hash || '#/');
       window.scrollTo({ top: 0 });
     };
     window.addEventListener('popstate', onLocationChange);
@@ -218,8 +247,8 @@ function AppInner() {
     } else {
       document.title =
         lang === 'ar'
-          ? 'AMNABD Deals — دليل عروض أدوات الذكاء الاصطناعي المجانية'
-          : 'AMNABD Deals — Verified AI & Cloud Deals';
+          ? 'AMNABD Deals — دليل عروض الذكاء الاصطناعي والسحابة'
+          : 'AMNABD Deals — AI & Cloud Deals Directory';
     }
   }, [route.name, route.slug, route.collectionKey, deal, lang, offers.status]);
 

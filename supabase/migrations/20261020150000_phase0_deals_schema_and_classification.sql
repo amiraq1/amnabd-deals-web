@@ -30,7 +30,10 @@ ALTER TABLE deals ADD COLUMN IF NOT EXISTS name text;
 ALTER TABLE deals ADD COLUMN IF NOT EXISTS headline_value text;
 ALTER TABLE deals ADD COLUMN IF NOT EXISTS key_condition text;
 ALTER TABLE deals ADD COLUMN IF NOT EXISTS use_cases text[] DEFAULT '{}'::text[];
-ALTER TABLE deals ADD COLUMN IF NOT EXISTS status text DEFAULT 'active';
+-- A new row must not claim availability before anyone reviewed it. The default
+-- is `verifying`, not `active`: `getAvailabilitySchema('active')` emits
+-- schema.org/InStock, and that is a public claim search engines may cache.
+ALTER TABLE deals ADD COLUMN IF NOT EXISTS status text DEFAULT 'verifying';
 ALTER TABLE deals ADD COLUMN IF NOT EXISTS ends_at timestamptz;
 
 -- 1. Google Antigravity

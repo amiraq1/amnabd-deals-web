@@ -7,12 +7,17 @@ export function normalizeArabic(text: string): string {
   if (typeof text !== 'string') return '';
   return text
     .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    // Persian (Extended Arabic-Indic) digits ۰-۹, same treatment as ٠-٩.
+    .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
     .replace(/[\u0640\p{M}]/gu, '')
     .replace(/[\u0622\u0623\u0625\u0627]/g, '\u0627')
     .replace(/\u0649/g, '\u064A')
     .replace(/\u0629/g, '\u0647')
     .replace(/\u0624/g, '\u0648')
     .replace(/\u0626/g, '\u064A')
+    // Persian letterforms produced by some keyboards: ک (U+06A9), ی (U+06CC).
+    .replace(/\u06A9/g, '\u0643')
+    .replace(/\u06CC/g, '\u064A')
     .toLowerCase()
     .replace(/\s+/gu, ' ')
     .trim();

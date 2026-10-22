@@ -15,7 +15,7 @@ export default function Footer() {
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-400">
               {lang === 'ar'
-                ? 'يجمع هذا الموقع معلومات عامة عن عروض أدوات الذكاء الاصطناعي كما تظهر في صفحاتها الرسمية. لا نضمن استمرار أي عرض أو انطباق شروطه عليك، ولا نتحمل مسؤولية أي استخدام. تحقق من الشروط الحالية لدى الجهة الرسمية قبل التسجيل أو الاستخدام المدفوع.'
+                ? 'يجمع هذا الموقع معلومات عامة عن عروض أدوات الذكاء الاصطناعي كما تظهر في صفحات الجهات المزوّدة. لا نضمن استمرار أي عرض أو انطباق شروطه عليك، ولا نتحمل مسؤولية أي استخدام. تحقق من الشروط الحالية لدى الجهة المزوّدة قبل التسجيل أو الاستخدام المدفوع.'
                 : 'This site aggregates public information about AI tool offers as shown on their official pages. We do not guarantee that any offer is ongoing or that its terms apply to you, and we accept no liability for any use. Verify current terms with the official provider before registering or using paid services.'}
             </p>
           </div>
@@ -25,7 +25,7 @@ export default function Footer() {
             </p>
             <p className="mt-1">
               {lang === 'ar'
-                ? 'دليل مراجعي بسرية — البيانات من المصادر الرسمية'
+                ? 'دليل مراجعي بسرية — البيانات من صفحات الجهات المزوّدة'
                 : 'A review-first directory — data from official sources'}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">

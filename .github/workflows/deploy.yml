@@ -1,22 +1,44 @@
-name: Deploy to GitHub Pages
+name: Verify & Deploy
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
+# Least privilege by default; the deploy job escalates for Pages only.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  # Gate: every change (PR or main) must typecheck, lint and pass tests.
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      # Proves the public-key guard still rejects private/malformed config.
+      # Synthetic fixtures only — no production secrets involved.
+      - run: npm run test:build-env
+
+  build:
+    needs: verify
+    # Builds on pull requests too, so `verify-dist` gates the claims before
+    # merge. Publishing stays gated below.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,15 +48,26 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # PRs from forks never receive repository secrets, so fall back to the
+          # public fixtures `test:build-env` already uses. Only the deploy job
+          # publishes, and it never runs on a pull request.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://audit-fixture.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001' }}
+      # Fails the build if dist/ publishes a claim the catalog cannot prove.
+      - run: node scripts/verify-dist.mjs
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: dist
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

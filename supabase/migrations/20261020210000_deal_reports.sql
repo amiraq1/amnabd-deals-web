@@ -16,6 +16,9 @@ alter table public.deal_reports enable row level security;
 
 -- Policy: Allow anonymous users and authenticated users to insert reports only.
 -- Reading or modifying reports is restricted to administrative/service roles.
+-- Dropped first so re-running this migration is safe (create policy has no
+-- IF NOT EXISTS form and fails with 42710 on a second run).
+drop policy if exists "Allow anonymous insert on deal_reports" on public.deal_reports;
 create policy "Allow anonymous insert on deal_reports"
   on public.deal_reports
   for insert
