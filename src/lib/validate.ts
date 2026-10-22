@@ -1,5 +1,6 @@
 import { isValidSlug } from './routes.js';
 import { applicantType, requirementState, truthState } from './eligibility.js';
+import { parseInstant } from './instants.js';
 import type {
   Benefit,
   Claim,
@@ -197,6 +198,13 @@ function parseEndsAt(value: unknown, ctx: Context): string | null | undefined {
   return deadlineDate(value, ctx);
 }
 
+function parseCreatedAt(value: unknown, ctx: Context): string | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (typeof value === 'string' && parseInstant(value) !== null) return value;
+  changed(ctx);
+  return undefined;
+}
+
 function parseDeal(input: unknown, ctx: Context): Deal | null {
   const row = object(input);
   const id = requiredText(get(row, 'id'));
@@ -223,6 +231,7 @@ function parseDeal(input: unknown, ctx: Context): Deal | null {
     use_cases: parseUseCases(get(row, 'use_cases'), ctx),
     status: parseDealStatus(get(row, 'status')),
     ends_at: parseEndsAt(get(row, 'ends_at'), ctx),
+    created_at: parseCreatedAt(get(row, 'created_at'), ctx),
     // Reuse an actual supplied name if only one language is present; no translation is inferred.
     name_ar: ar ?? en ?? '',
     name_en: en ?? ar ?? '',

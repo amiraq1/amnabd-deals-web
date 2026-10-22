@@ -361,28 +361,14 @@ export default function HomePage({
     [activeDeals, filterState.applicant, filterState.card, endingSoon, lang, onFilterChange, referenceNow]
   );
 
-  // "Reviewed this week" section: strictly hidden when any filter/search is active
-  const newThisWeek = useMemo(() => {
-    if (hasAnyActiveFilter) return [];
-    const now = Date.now();
-    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  // The spotlight is a prefix of the same list, never a separate review-date sort.
+  const newestDeals = useMemo(
+    () => (hasAnyActiveFilter ? [] : sorted.slice(0, 3)),
+    [sorted, hasAnyActiveFilter]
+  );
 
-    return activeDeals
-      .filter((d) => {
-        if (!d.review?.reviewed_on) return false;
-        const reviewed = new Date(d.review.reviewed_on).getTime();
-        return !Number.isNaN(reviewed) && reviewed >= weekAgo && reviewed <= now;
-      })
-      .sort((a, b) => {
-        const aRev = new Date(a.review.reviewed_on).getTime();
-        const bRev = new Date(b.review.reviewed_on).getTime();
-        return bRev - aRev;
-      })
-      .slice(0, 3);
-  }, [activeDeals, hasAnyActiveFilter]);
-
-  // عروض «هذا الأسبوع» تظهر في قسمها فقط ولا تتكرر في القائمة العامة تحتها.
-  const newSlugs = useMemo(() => new Set(newThisWeek.map((d) => d.slug)), [newThisWeek]);
+  // أحدث العروض تظهر في قسمها فقط وتستكمل القائمة الترتيب نفسه دون تكرار.
+  const newSlugs = useMemo(() => new Set(newestDeals.map((d) => d.slug)), [newestDeals]);
   const listed = useMemo(
     () => (newSlugs.size === 0 ? sorted : sorted.filter((d) => !newSlugs.has(d.slug))),
     [sorted, newSlugs]
@@ -493,7 +479,7 @@ export default function HomePage({
   ]);
 
   const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-    { value: 'default', label: lang === 'ar' ? 'الافتراضي' : 'Default' },
+    { value: 'default', label: lang === 'ar' ? 'الأحدث إضافةً' : 'Newest added' },
     { value: 'reviewed', label: lang === 'ar' ? 'الأحدث مراجعة' : 'Recently reviewed' },
     { value: 'ending_soon', label: lang === 'ar' ? 'الأقرب انتهاءً' : 'Ending soon' },
     { value: 'highest_value', label: lang === 'ar' ? 'الأعلى قيمة' : 'Highest value' },
@@ -1040,22 +1026,22 @@ export default function HomePage({
         )}
       </div>
 
-      {/* 3. "Reviewed & Verified This Week" Section (Hidden when any filter is active) */}
-      {newThisWeek.length > 0 && (
+      {/* 3. Newest additions (hidden when any filter or explicit sort is active) */}
+      {newestDeals.length > 0 && (
         <section className="mt-8 rounded-2xl border border-emerald-500/30 bg-emerald-950/15 p-5">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-emerald-400" />
               <h2 className="text-sm font-bold text-emerald-300">
-                {lang === 'ar' ? 'مُراجَع ومؤكَّد هذا الأسبوع' : 'Reviewed & Confirmed This Week'}
+                {lang === 'ar' ? 'أحدث العروض المضافة' : 'Newest additions'}
               </h2>
             </div>
             <span className="text-xs text-slate-400">
-              {lang === 'ar' ? 'أحدث 3 عروض تم التحقق منها' : 'Top 3 newly verified deals'}
+              {lang === 'ar' ? 'الأحدث أولًا حسب تاريخ الإضافة' : 'Newest first by date added'}
             </span>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {newThisWeek.map((deal) => (
+            {newestDeals.map((deal) => (
               <DealCard
                 key={`new-${deal.slug}`}
                 deal={deal}

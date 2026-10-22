@@ -8,7 +8,12 @@ function diagnostic(rejectedRows: number, normalizedFields: number) {
 }
 
 export async function loadDeals(signal: AbortSignal) {
-  const response = await getSupabase().from('deals').select('*').order('id').abortSignal(signal);
+  const response = await getSupabase()
+    .from('deals')
+    .select('*')
+    .order('created_at', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: true })
+    .abortSignal(signal);
   if (response.error) throw new ResourceError('network');
   const result = validateDeals(response.data);
   diagnostic(result.rejectedRows, result.normalizedFields);

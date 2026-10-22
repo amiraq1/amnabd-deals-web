@@ -100,7 +100,25 @@ export function sortDeals(
   referenceNow: Date
 ): Deal[] {
   referenceMs(referenceNow);
-  if (sortBy === 'default') return [...deals];
+  if (sortBy === 'default') {
+    // loadDeals supplies created_at DESC, id ASC. Keep that stable tie order
+    // (including sub-millisecond precision) and never use review dates as age.
+    return deals
+      .map((deal, originalIndex) => ({
+        deal,
+        originalIndex,
+        created: parseInstant(deal.created_at),
+      }))
+      .sort((a, b) => {
+        if (a.created !== b.created) {
+          if (a.created === null) return 1;
+          if (b.created === null) return -1;
+          return b.created - a.created;
+        }
+        return a.originalIndex - b.originalIndex;
+      })
+      .map((row) => row.deal);
+  }
 
   const decorated = deals.map((deal, originalIndex) => ({
     deal,
