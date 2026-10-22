@@ -124,14 +124,16 @@ export function migrateLegacyHashLocation(location: LegacyLocation): string | nu
   const hashParams = new URLSearchParams(extractHashSearch(hash));
   const merged = new URLSearchParams();
 
-  // Everything that is not a filter survives untouched.
+  // `append`, not `set`: `?q=Alpha&q=Beta` means "Alpha" to `parseFilterState`
+  // (first value wins), and collapsing the pair would silently change what the
+  // shared link asks for. Duplicates and their order are preserved.
   for (const [key, value] of searchParams) {
-    if (!(FILTER_KEYS as readonly string[]).includes(key)) merged.set(key, value);
+    if (!(FILTER_KEYS as readonly string[]).includes(key)) merged.append(key, value);
   }
   // Filters come from the modern query when it has any, otherwise from the hash.
   const filterSource = hasFilterParams(location.search) ? searchParams : hashParams;
   for (const [key, value] of filterSource) {
-    if ((FILTER_KEYS as readonly string[]).includes(key)) merged.set(key, value);
+    if ((FILTER_KEYS as readonly string[]).includes(key)) merged.append(key, value);
   }
 
   const query = merged.toString();

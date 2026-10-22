@@ -62,6 +62,16 @@ test('A01: a legacy hash link becomes a path URL exactly once', () => {
     migrateLegacyHashLocation({ pathname: '/', search: '?list=alpha', hash: '#/?q=Alpha' }),
     '/?list=alpha&q=Alpha'
   );
+  // Duplicates keep their order and their meaning: `parseFilterState` reads the
+  // first value, so collapsing `q=Alpha&q=Beta` into one would change the query.
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '?q=Alpha&q=Beta', hash: '#/' }),
+    '/?q=Alpha&q=Beta'
+  );
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '?list=a&list=b', hash: '#/?q=Alpha' }),
+    '/?list=a&list=b&q=Alpha'
+  );
 });
 
 test('A01: an in-page anchor is not a navigation', () => {

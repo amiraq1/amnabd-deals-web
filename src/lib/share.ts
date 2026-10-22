@@ -1,14 +1,5 @@
 import { isValidSlug, routePath } from './routes.js';
 
-const ROUTE_TAIL = /^(.*?)(?:\/(?:deal\/[^/]+|guide|favorites|changelog|for-students|no-credit-card|coding|ending-soon))?$/;
-
-/** The directory the app is served from, so a subdirectory deploy still works. */
-function hostingBase(pathname: string): string {
-  const clean = pathname.replace(/\/+$/, '');
-  const match = clean.match(ROUTE_TAIL);
-  return `${match?.[1] ?? ''}/`;
-}
-
 export function buildDealLink(pageUrl: string, slug: string): string | null {
   if (!isValidSlug(slug)) return null;
   try {
@@ -17,8 +8,12 @@ export function buildDealLink(pageUrl: string, slug: string): string | null {
     const url = new URL(pageUrl);
     if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return null;
     // A01: the shared link is the page's own path, not a `#/deal/…` hash.
-    // Preserve the host and any subdirectory; drop tracking queries.
-    url.pathname = hostingBase(url.pathname) + path.replace(/^\//, '');
+    //
+    // The path is absolute on purpose. Deriving a "hosting base" from the
+    // current pathname guessed wrong for every non-route page (`/404` became
+    // `/404/deal/x`), and a subdirectory deploy needs the router and the build
+    // `base` configured for it anyway — not an inference made here.
+    url.pathname = path;
     url.search = '';
     url.hash = '';
     return url.href;
