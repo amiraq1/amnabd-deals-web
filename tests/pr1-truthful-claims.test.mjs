@@ -150,6 +150,9 @@ test('C-01: the OG card does not assert eligibility or verification it cannot pr
   const bare = staticSeo.buildDealOgSvg({ slug: 'docker', name: 'Docker' });
   assert.doesNotMatch(bare, /متاح للجميع/);
   assert.doesNotMatch(bare, /موثّق/);
+  // Silence is not the fix either: with no proven eligibility the card must
+  // send the reader to the terms rather than let them assume they qualify.
+  assert.match(bare, /راجع الشروط/);
 
   const proven = staticSeo.buildDealOgSvg({
     slug: 'open',
@@ -165,6 +168,18 @@ test('C-01: the OG card does not assert eligibility or verification it cannot pr
   });
   assert.match(proven, /متاح للجميع/);
   assert.match(proven, /موثّق/);
+  assert.doesNotMatch(proven, /راجع الشروط/);
+});
+
+test('C-01: a card with a proven restriction states it instead of "check the terms"', () => {
+  const students = staticSeo.buildDealOgSvg({
+    slug: 'kiro-students',
+    name: 'Kiro',
+    eligibility: { student_status: 'required' },
+  });
+  assert.match(students, /مخصص للطلاب/);
+  assert.doesNotMatch(students, /راجع الشروط/);
+  assert.doesNotMatch(students, /متاح للجميع/);
 });
 
 // --- C-01: the catalog adapter -------------------------------------------

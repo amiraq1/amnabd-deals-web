@@ -66,6 +66,10 @@ export function buildDealOgSvg(deal, facts = dealFacts(deal)) {
   if (facts.studentsOnly) tags.push('مخصص للطلاب');
   if (facts.noCard) tags.push('بدون بطاقة بنكية');
   if (facts.openToAll) tags.push('متاح للجميع');
+  // Eligibility is never assumed. When the record does not prove open access,
+  // the card sends the reader to the terms instead of implying everyone
+  // qualifies — the C-01 failure was exactly this assumption.
+  if (!facts.openToAll && !facts.studentsOnly) tags.push('الأهلية: راجع الشروط');
 
   const verifiedText = facts.verified
     ? `موثّق من المصدر${facts.reviewedOn ? ` · آخر مراجعة ${facts.reviewedOn}` : ''}`
