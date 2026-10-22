@@ -9,10 +9,16 @@ import { pathToFileURL } from 'node:url';
 const load = (rel) =>
   import(pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, `src/lib/${rel}.js`)).href);
 
-const { routeUrl, migrateLegacyHashLocation, resolveLocationChange } = await load('routes');
+const {
+  routeUrl,
+  migrateLegacyHashLocation,
+  resolveLocationChange,
+  isHashOnlyLocationChange,
+} = await load('routes');
 const { buildDiscoverySearch, DEFAULT_FILTER_STATE } = await load('filterState');
 const { routeMetadata } = await load('metadata');
 const { buildDealSeo } = await load('seoFacts');
+const { buildDealLink } = await load('share');
 
 const at = (overrides) => ({
   pathname: '/',
@@ -51,6 +57,19 @@ test('A01: a legacy hash link becomes a path URL exactly once', () => {
     migrateLegacyHashLocation({ pathname: '/', search: '?q=modern', hash: '#/?q=old' }),
     '/?q=modern'
   );
+  // A shared favourites list is not a filter: it must survive the migration.
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '?list=alpha', hash: '#/?q=Alpha' }),
+    '/?list=alpha&q=Alpha'
+  );
+});
+
+test('A01: an in-page anchor is not a navigation', () => {
+  // Chromium fires `popstate` for `#main-content`. Treating it as a navigation
+  // cancelled a debounced filter write and reverted the search box.
+  assert.equal(isHashOnlyLocationChange('/', '?q=Alpha', '/', 'q=Alpha'), true);
+  assert.equal(isHashOnlyLocationChange('/', '?q=Alpha', '/', 'q=Beta'), false);
+  assert.equal(isHashOnlyLocationChange('/deal/alpha', '', '/', ''), false);
 });
 
 test('A01: navigating home from a deal page is a real location change', () => {
@@ -127,7 +146,30 @@ test('A12: every route carries its own canonical', () => {
 });
 
 test('A12: an unknown deal does not claim the previous deal canonical', () => {
-  const missing = routeMetadata({ name: 'deal', slug: 'gone' }, 'ar', null);
+  // Still loading: the page exists, so it keeps its own canonical.
+  const loading = routeMetadata({ name: 'deal', slug: 'gone' }, 'ar', null, undefined, false);
+  assert.equal(loading.canonicalUrl, 'https://amnabd.com/deal/gone');
+  assert.doesNotMatch(loading.title, /404/);
+
+  // Confirmed missing: 404 copy and a 404 canonical, not the home page's.
+  const missing = routeMetadata({ name: 'deal', slug: 'gone' }, 'ar', null, undefined, true);
   assert.equal(missing.canonicalUrl, 'https://amnabd.com/404');
+  assert.match(missing.title, /غير موجود/);
   assert.equal(missing.jsonLd['@type'], 'WebSite');
+});
+
+test('A12: the home title names the site once', () => {
+  const home = routeMetadata({ name: 'home' }, 'en');
+  const occurrences = home.title.split('AMNABD Deals').length - 1;
+  assert.equal(occurrences, 1);
+});
+
+test('A01: a shared deal link is the page path, not a hash', () => {
+  assert.equal(buildDealLink('https://amnabd.com/', 'alpha'), 'https://amnabd.com/deal/alpha');
+  // Tracking queries are dropped, the host is preserved.
+  assert.equal(
+    buildDealLink('https://amnabd.com/?utm=x', 'alpha'),
+    'https://amnabd.com/deal/alpha'
+  );
+  assert.equal(buildDealLink('https://amnabd.com/', 'not a slug!'), null);
 });

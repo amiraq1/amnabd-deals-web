@@ -104,10 +104,15 @@ export interface LegacyLocation {
   hash: string;
 }
 
+const FILTER_KEYS = ['q', 'category', 'uncategorized', 'applicant', 'card', 'sort'] as const;
+
 /**
  * A pre-A01 link put the route and its filters in the hash (`/#/deal/x?q=…`).
  * This converts one of those into the path-based URL exactly once, before the
  * first render, so nothing downstream has to know the hash ever existed.
+ *
+ * Non-filter parameters already in `search` (`list=` is the shared favourites
+ * list) are carried over: the hash only contributes the route and the filters.
  * Returns `null` when the location is already modern.
  */
 export function migrateLegacyHashLocation(location: LegacyLocation): string | null {
@@ -115,10 +120,22 @@ export function migrateLegacyHashLocation(location: LegacyLocation): string | nu
   if (!hash.startsWith('#/')) return null;
 
   const route = parseHash(hash);
-  const hashSearch = extractHashSearch(hash);
-  // A filter query already in `search` wins; the hash only fills the gap.
-  const search = hasFilterParams(location.search) ? location.search : `?${hashSearch}`;
-  return routeUrl(route, search);
+  const searchParams = new URLSearchParams(location.search.replace(/^\?/, ''));
+  const hashParams = new URLSearchParams(extractHashSearch(hash));
+  const merged = new URLSearchParams();
+
+  // Everything that is not a filter survives untouched.
+  for (const [key, value] of searchParams) {
+    if (!(FILTER_KEYS as readonly string[]).includes(key)) merged.set(key, value);
+  }
+  // Filters come from the modern query when it has any, otherwise from the hash.
+  const filterSource = hasFilterParams(location.search) ? searchParams : hashParams;
+  for (const [key, value] of filterSource) {
+    if ((FILTER_KEYS as readonly string[]).includes(key)) merged.set(key, value);
+  }
+
+  const query = merged.toString();
+  return routeUrl(route, query ? `?${query}` : '');
 }
 
 /** The route a pathname describes. Legacy hash input is migrated before this. */
@@ -126,13 +143,29 @@ export function parseLocationRoute(pathname: string): Route {
   return parseHash(pathname);
 }
 
-const FILTER_KEYS = ['q', 'category', 'uncategorized', 'applicant', 'card', 'sort'] as const;
-
 /** True when the query string carries at least one filter key (not `list=`). */
 export function hasFilterParams(search: string): boolean {
   if (!search) return false;
   const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
   return FILTER_KEYS.some((key) => params.has(key));
+}
+
+/**
+ * An in-page anchor (`#main-content`) does fire `popstate` in Chromium. It
+ * changes only the hash, so it must not be treated as a navigation: cancelling
+ * a debounced filter write here reverted the search box to the previous query
+ * (A01 regression).
+ */
+export function isHashOnlyLocationChange(
+  pathname: string,
+  search: string,
+  lastAppliedPath: string | undefined,
+  lastAppliedSearch: string | undefined
+): boolean {
+  return (
+    pathname === (lastAppliedPath ?? '/') &&
+    (search ?? '').replace(/^\?/, '') === (lastAppliedSearch ?? '')
+  );
 }
 
 /**

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { loadConfig, loadDeals, loadGuides } from '@/lib/loadResources';
 import {
+  isHashOnlyLocationChange,
   parseHash,
   resolveLocationChange,
   routeUrl,
@@ -111,6 +112,18 @@ function AppInner() {
   );
   useEffect(() => {
     const onLocationChange = () => {
+      // A01 regression: an in-page anchor fires `popstate` too. It changes only
+      // the hash, so it must not cancel a debounced filter write — doing that
+      // reverted the search box to the previous query.
+      if (
+        isHashOnlyLocationChange(
+          window.location.pathname,
+          window.location.search,
+          lastAppliedPath.current,
+          lastAppliedSearch.current
+        )
+      )
+        return;
       const hadPending = cancelPending();
       const decision = resolveLocationChange({
         pathname: window.location.pathname,
@@ -205,8 +218,11 @@ function AppInner() {
   // of leaving the deal's behind.
   useEffect(() => {
     const dealSeo = deal ? buildDealSeo(deal) : null;
-    applyDocumentMetadata(routeMetadata(route, lang, dealSeo));
-  }, [route, deal, lang]);
+    // A deal page has two empty states: still loading (keep its own canonical)
+    // and confirmed missing (404 copy).
+    const dealMissing = route.name === 'deal' && offers.status === 'ready' && !deal;
+    applyDocumentMetadata(routeMetadata(route, lang, dealSeo, undefined, dealMissing));
+  }, [route, deal, lang, offers.status]);
 
   let content: JSX.Element;
   if (route.name === 'notfound')

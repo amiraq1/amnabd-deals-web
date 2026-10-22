@@ -40,6 +40,14 @@ const HOME_COPY: RouteCopy = {
   },
 };
 
+const NOT_FOUND_COPY: RouteCopy = {
+  title: { ar: 'الصفحة غير موجودة (404)', en: 'Page Not Found (404)' },
+  description: {
+    ar: 'الرابط المطلوب غير موجود في هذا الدليل.',
+    en: 'The requested link does not exist in this directory.',
+  },
+};
+
 const COPY: Record<string, RouteCopy> = {
   home: HOME_COPY,
   guide: {
@@ -74,31 +82,50 @@ const COPY: Record<string, RouteCopy> = {
 
 /**
  * Complete metadata for a route. `dealSeo` is the already-built deal metadata
- * when the deal is known; without it the deal route falls back to the 404
- * copy, because an unknown deal has no canonical of its own to claim.
+ * when the deal is known. `dealMissing` separates the two ways a deal page has
+ * no metadata: still loading (the page exists, keep its own canonical) and
+ * confirmed missing (404 copy, canonical `/404`).
  */
 export function routeMetadata(
   route: Route,
   lang: Lang,
   dealSeo: DealSeoMetadata | null = null,
-  baseUrl: string = DEFAULT_SITE_URL
+  baseUrl: string = DEFAULT_SITE_URL,
+  dealMissing = false
 ): RouteMetadata {
   const base = siteBase(baseUrl);
   const ogImageUrl = `${base}/og-image.png`;
 
-  if (route.name === 'deal' && dealSeo) {
+  if (route.name === 'deal') {
+    if (dealSeo) {
+      return {
+        title: dealSeo.title,
+        description: dealSeo.description,
+        canonicalUrl: dealSeo.canonicalUrl,
+        ogImageUrl: dealSeo.ogImageUrl,
+        jsonLd: dealSeo.jsonLd,
+      };
+    }
+    const canonicalUrl = dealMissing ? `${base}/404` : `${base}${routePath(route)}`;
+    const copy = dealMissing ? NOT_FOUND_COPY : null;
     return {
-      title: dealSeo.title,
-      description: dealSeo.description,
-      canonicalUrl: dealSeo.canonicalUrl,
-      ogImageUrl: dealSeo.ogImageUrl,
-      jsonLd: dealSeo.jsonLd,
+      title: copy ? `${copy.title[lang]} — ${SUFFIX}` : SUFFIX,
+      description: copy ? copy.description[lang] : lang === 'ar' ? 'جارٍ تحميل هذا العرض.' : 'Loading this deal.',
+      canonicalUrl,
+      ogImageUrl,
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: SUFFIX, url: canonicalUrl },
     };
   }
 
+  const isNotFound = route.name === 'notfound';
   const key = route.name === 'collection' ? 'home' : route.name;
-  const copy = COPY[key] ?? HOME_COPY;
-  const path = route.name === 'deal' || route.name === 'notfound' ? '/404' : routePath(route);
+  const copy = isNotFound ? NOT_FOUND_COPY : (COPY[key] ?? HOME_COPY);
+  const path = isNotFound ? '/404' : routePath(route);
+  // The home title already names the site; suffixing it again would read
+  // "AMNABD Deals — … — AMNABD Deals".
+  const title = copy.title[lang].includes(SUFFIX)
+    ? copy.title[lang]
+    : `${copy.title[lang]} — ${SUFFIX}`;
 
   if (route.name === 'collection' && route.collectionKey) {
     const agg = getAggregationConfig(route.collectionKey);
@@ -119,7 +146,7 @@ export function routeMetadata(
   }
 
   return {
-    title: `${copy.title[lang]} — ${SUFFIX}`,
+    title,
     description: copy.description[lang],
     canonicalUrl: `${base}${path}`,
     ogImageUrl,

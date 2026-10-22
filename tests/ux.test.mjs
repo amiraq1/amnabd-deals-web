@@ -120,15 +120,20 @@ test('UX additional benefits handles Arabic grammar and zero/single total', () =
   assert.equal(extraBenefitsLabel(NaN, 'en'), null);
 });
 test('UX share URL is canonical for slug, preserves subdirectory, removes query', () => {
+  // A01: the shared link is the page path, not a hash, and a subdirectory
+  // deploy keeps its prefix.
   assert.equal(
     buildDealLink('https://amnabd.com/?tracking=x#/deal/old', 'offer'),
-    'https://amnabd.com/#/deal/offer'
+    'https://amnabd.com/deal/offer'
   );
   assert.equal(
     buildDealLink('https://example.org/amnabd-deals-web/?x=y#/', 'نبض'),
-    'https://example.org/amnabd-deals-web/#/deal/%D9%86%D8%A8%D8%B6'
+    'https://example.org/amnabd-deals-web/deal/%D9%86%D8%A8%D8%B6'
   );
-  assert.equal(buildDealLink('https://amnabd.com/', '%2F'), 'https://amnabd.com/#/deal/%252F');
+  assert.equal(
+    buildDealLink('https://amnabd.com/', '%2F'),
+    'https://amnabd.com/deal/%252F'
+  );
 });
 test('UX share rejects invalid schemes, credentials and invalid slugs', () => {
   for (const url of [
