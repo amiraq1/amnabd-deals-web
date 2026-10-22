@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, X, SlidersHorizontal, Inbox, Share2, Check, Bookmark, Sparkles, Clock } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Inbox, Share2, Check, Bookmark, Sparkles, Clock, GraduationCap, CreditCard, ArrowUpLeft, ArrowUpRight } from 'lucide-react';
 import type { Deal, FilterState, SiteConfig, SortOption } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { buildDealCorpus, categoryOptions, matchesCategory, matchesCorpus } from '@/lib/discovery';
@@ -608,7 +608,7 @@ export default function HomePage({
 
       {/* 1. Hero Section with Interactive Prompts & Stats */}
       <section className="animate-fade-up">
-        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6 sm:p-8">
+        <div className="discovery-hero relative grid gap-6 overflow-hidden rounded-3xl border border-emerald-500/20 bg-slate-900/60 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-10">
           <div
             className="pointer-events-none absolute -top-24 end-[-10%] h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl"
             aria-hidden
@@ -617,7 +617,11 @@ export default function HomePage({
             className="pointer-events-none absolute -bottom-24 start-[-5%] h-56 w-56 rounded-full bg-gold/5 blur-3xl"
             aria-hidden
           />
-          <div className="relative max-w-3xl">
+          <div className="relative min-w-0">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/5 px-3 py-1.5 text-xs font-medium text-emerald-300">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              {lang === 'ar' ? 'اكتشف ما يناسب فكرتك القادمة' : 'Discover your next advantage'}
+            </p>
             <h1 className="font-heading text-2xl font-extrabold leading-tight text-white sm:text-3xl">
               {pick({
                 ar: overview.title ?? 'أرصدة وأدوات ذكاء اصطناعي مع روابط مصادرها',
@@ -696,6 +700,40 @@ export default function HomePage({
                 </div>
               </div>
             )}
+          </div>
+          <div className="relative min-w-0 rounded-2xl border border-slate-700/50 bg-slate-950/50 p-3 sm:p-4">
+            <h2 className="px-1 text-sm font-semibold text-white">
+              {lang === 'ar' ? 'ابدأ بما يناسبك' : 'Find your starting point'}
+            </h2>
+            <p className="mb-3 mt-1 px-1 text-xs leading-relaxed text-slate-400">
+              {lang === 'ar' ? 'اختصارات لتصفية العروض حسب احتياجك' : 'Quick paths to offers that fit your needs'}
+            </p>
+            <div className="grid grid-cols-3 gap-2 lg:grid-cols-1" role="group" aria-label={lang === 'ar' ? 'فلاتر سريعة' : 'Quick filters'}>
+              {quickFilterOptions.map((qf) => {
+                const Icon = qf.key === 'student' ? GraduationCap : qf.key === 'noCard' ? CreditCard : Clock;
+                const Arrow = lang === 'ar' ? ArrowUpLeft : ArrowUpRight;
+                return (
+                  <button
+                    key={qf.key}
+                    type="button"
+                    aria-pressed={qf.isActive}
+                    disabled={qf.count === 0 && !qf.isActive}
+                    onClick={qf.onToggle}
+                    className={`discovery-path relative flex min-h-16 flex-col items-center gap-2 rounded-xl border px-2 py-3 text-center transition-colors lg:flex-row lg:gap-3 lg:p-3 lg:text-start ${qf.isActive
+                      ? 'border-emerald-400/60 bg-emerald-500/10 text-emerald-200'
+                      : 'border-slate-800 bg-slate-900/70 text-slate-200 hover:border-emerald-500/40 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40'
+                    }`}
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-400/10 bg-emerald-400/5 text-emerald-300">
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1 text-xs font-semibold">{qf.label}</span>
+                    <span className="rounded-md bg-slate-950/60 px-2 py-1 text-xs tabular-nums text-slate-300">{qf.count}</span>
+                    {qf.isActive ? <Check className="absolute end-1 top-1 h-3.5 w-3.5 text-emerald-300 lg:static lg:shrink-0" aria-hidden="true" /> : <Arrow className="hidden h-3.5 w-3.5 shrink-0 text-slate-500 lg:block" aria-hidden="true" />}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -962,29 +1000,8 @@ export default function HomePage({
           ))}
         </div>
 
-        {/* Quick Filter Chips & Sort Controls */}
+        {/* Sort controls; quick paths live in the discovery hero above. */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/60 pt-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {quickFilterOptions.map((qf) => (
-              <button
-                key={qf.key}
-                type="button"
-                aria-pressed={qf.isActive}
-                disabled={qf.count === 0 && !qf.isActive}
-                onClick={qf.onToggle}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${qf.isActive
-                    ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300 font-semibold'
-                    : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 disabled:cursor-not-allowed disabled:opacity-40'
-                  }`}
-              >
-                <span>{qf.label}</span>
-                <span className="rounded bg-slate-950/60 px-1.5 py-0.5 text-[11px] text-slate-400">
-                  {qf.count}
-                </span>
-              </button>
-            ))}
-          </div>
-
           <div className="flex items-center gap-2 ms-auto">
             <label htmlFor="deal-sort" className="text-xs text-slate-400">
               {lang === 'ar' ? 'الترتيب:' : 'Sort:'}

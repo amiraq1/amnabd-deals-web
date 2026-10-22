@@ -96,3 +96,37 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Original, dependency-free adaptation of 21st.dev's Bento / Spotlight ideas.
+   No animation loop or pointer listeners; links and save buttons stay untouched. */
+.discovery-hero {
+  background-image: radial-gradient(ellipse at 85% 0%, rgba(16, 185, 129, 0.11), transparent 58%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.95));
+}
+
+.deal-spotlight {
+  isolation: isolate;
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.065), transparent 65%);
+}
+
+.deal-spotlight::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 50% 0%, rgba(52, 211, 153, 0.14), transparent 70%);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.deal-spotlight:focus-within::before {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .deal-spotlight:hover::before {
+    opacity: 1;
+  }
+}

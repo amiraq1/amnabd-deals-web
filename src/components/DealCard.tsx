@@ -94,7 +94,7 @@ export default function DealCard({ deal, onOpen }: DealCardProps) {
 
   return (
     <article
-      className={`group relative flex flex-col justify-between rounded-2xl border bg-slate-900/60 p-5 transition-colors focus-within:border-emerald-500/60 hover:bg-slate-900/90 ${
+      className={`deal-spotlight group relative flex flex-col justify-between rounded-2xl border bg-slate-900/60 p-5 transition-colors focus-within:border-emerald-500/60 hover:bg-slate-900/90 ${
         expired ? 'border-slate-800/60 opacity-70' : 'border-slate-800/80 hover:border-slate-700'
       }`}
     >
