@@ -62,14 +62,14 @@ export function deadlineTierLabel(
       return lang === 'ar' ? 'موعد التسجيل: غير معلوم' : 'Registration deadline: Unknown';
   }
 }
-export function getDealNumericValue(deal: Deal): number {
-  // 1. من المنفعة الأولى إن وجدت
+export function getDealNumericValue(deal: Deal): number | null {
+  // 1. The first recorded benefit amount is an explicit credit figure.
   const benefitValue = deal.benefits?.[0]?.amount?.value;
   if (typeof benefitValue === 'number' && benefitValue > 0) {
     return benefitValue;
   }
 
-  // 2. من headline_value مع دعم الفواصل والاختصارات (مثل $1,000 أو $100k)
+  // 2. A headline that states an amount ("$1,000", "$100k") is explicit too.
   if (deal.headline_value) {
     const match = deal.headline_value.match(
       /(?:\$|USD|رصيد|بقيمة)\s*(\d[\d,.]*)\s*([kKmM])?|(\d[\d,.]*)\s*([kKmM])?\s*(?:\$|دولار|USD)/i
@@ -88,16 +88,10 @@ export function getDealNumericValue(deal: Deal): number {
     }
   }
 
-  // 3. حساب مقدار التوفير من السعر الأصلي وسعر العرض
-  const regular =
-    (deal.pricing as { regular_price?: number | null } | undefined)?.regular_price ??
-    deal.pricing?.original_price;
-  const offer = deal.pricing?.offer_price;
-  if (typeof regular === 'number' && regular > 0) {
-    return typeof offer === 'number' ? Math.max(0, regular - offer) : regular;
-  }
-
-  return 0;
+  // A discount is not a credit. `regular - offer` reported a paid price cut as
+  // a free balance (audit C-01), so a deal with no recorded credit value has
+  // no number to sort by.
+  return null;
 }
 
 export function sortDeals(
@@ -125,8 +119,15 @@ export function sortDeals(
 
     switch (sortBy) {
       case 'highest_value': {
-        const diff = getDealNumericValue(b.deal) - getDealNumericValue(a.deal);
-        if (diff !== 0) return diff;
+        // A deal with no proven credit value sorts after every deal that has
+        // one, instead of being treated as a zero-value offer.
+        const av = getDealNumericValue(a.deal);
+        const bv = getDealNumericValue(b.deal);
+        if (av !== bv) {
+          if (av === null) return 1;
+          if (bv === null) return -1;
+          return bv - av;
+        }
         break;
       }
 

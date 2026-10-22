@@ -189,6 +189,16 @@ test('UX Phase 2: Arabic normalization handles digits, tatweel, hamzas and diacr
   assert.equal(normalizeArabic('نــــبــــض'), 'نبض');
 });
 
+test('UX Phase 2: Arabic normalization folds Persian digits and letterforms', () => {
+  // Persian keyboards emit ۰-۹ (U+06F0-06F9), ک (U+06A9) and ی (U+06CC);
+  // without folding they never match the Arabic spelling of the same word.
+  assert.equal(normalizeArabic('سال ۲۰۲۶'), 'سال 2026');
+  assert.equal(normalizeArabic('کتاب'), 'كتاب');
+  assert.equal(normalizeArabic('یومی'), 'يومي');
+  // The folded form matches a query typed with Arabic letters.
+  assert.equal(matchesQuery('کتاب الذكاء', 'كتاب'), true);
+});
+
 test('UX Phase 2: Technical normalization preserves c++, c#, .net and generates compact variants', () => {
   assert.deepEqual(extractTokens('C++ and C# with .NET'), ['c++', 'and', 'c#', 'with', '.net']);
   assert.deepEqual(tokenVariants('c++'), ['c++']);

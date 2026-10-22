@@ -35,8 +35,8 @@ jobs:
 
   build:
     needs: verify
-    # Pull requests are verified, but never built with deploy secrets or published.
-    if: github.event_name != 'pull_request'
+    # Builds on pull requests too, so `verify-dist` gates the claims before
+    # merge. Publishing stays gated below.
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -48,16 +48,21 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # PRs from forks never receive repository secrets, so fall back to the
+          # public fixtures `test:build-env` already uses. Only the deploy job
+          # publishes, and it never runs on a pull request.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://audit-fixture.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001' }}
       # Fails the build if dist/ publishes a claim the catalog cannot prove.
       - run: node scripts/verify-dist.mjs
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: dist
 
   deploy:
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
