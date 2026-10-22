@@ -7,7 +7,7 @@ const { AGGREGATIONS, AGGREGATION_KEYS, getAggregationConfig } = await import(
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/aggregations.js'))
 );
 
-const { parseLocationRoute, routeHash, routePath } = await import(
+const { parseLocationRoute, routeHash, routePath, migrateLegacyHashLocation } = await import(
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/routes.js'))
 );
 
@@ -95,15 +95,15 @@ test('routes.ts supports collection routes cleanly and via legacy hash', () => {
     collectionKey: 'ending-soon',
   });
 
-  // Legacy hash routes
-  assert.deepEqual(parseLocationRoute('/', '#/for-students'), {
-    name: 'collection',
-    collectionKey: 'for-students',
-  });
-  assert.deepEqual(parseLocationRoute('#/coding'), {
-    name: 'collection',
-    collectionKey: 'coding',
-  });
+  // Legacy hash routes migrate to their path form once, at boot.
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '', hash: '#/for-students' }),
+    '/for-students'
+  );
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '', hash: '#/coding' }),
+    '/coding'
+  );
 
   // routePath and routeHash
   assert.equal(

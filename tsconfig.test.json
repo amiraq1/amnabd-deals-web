@@ -11,6 +11,7 @@
     "src/lib/eligibility.ts",
     "src/lib/tristate.ts",
     "src/lib/routes.ts",
+    "src/lib/metadata.ts",
     "src/lib/environment.ts",
     "src/lib/resource.ts",
     "src/lib/languageStorage.ts",

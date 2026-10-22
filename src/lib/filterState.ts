@@ -93,3 +93,12 @@ export function buildDiscoveryHash(state: FilterState): string {
   const search = serializeFilterState(state);
   return search ? `#/?${search}` : '#/';
 }
+
+/**
+ * The filter query as it appears in the address bar (A01). The home route is
+ * `/`, so the filters are `/?q=…` — no hash involved.
+ */
+export function buildDiscoverySearch(state: FilterState): string {
+  const search = serializeFilterState(state);
+  return search ? `?${search}` : '';
+}

@@ -1,15 +1,21 @@
-import { isValidSlug, routeHash } from './routes.js';
+import { isValidSlug, routePath } from './routes.js';
 
 export function buildDealLink(pageUrl: string, slug: string): string | null {
   if (!isValidSlug(slug)) return null;
   try {
-    const hash = routeHash({ name: 'deal', slug });
-    if (hash === '#/404') return null;
+    const path = routePath({ name: 'deal', slug });
+    if (path === '/404') return null;
     const url = new URL(pageUrl);
     if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return null;
-    // Preserve custom-domain/subdirectory hosting; don't share tracking or other queries.
+    // A01: the shared link is the page's own path, not a `#/deal/…` hash.
+    //
+    // The path is absolute on purpose. Deriving a "hosting base" from the
+    // current pathname guessed wrong for every non-route page (`/404` became
+    // `/404/deal/x`), and a subdirectory deploy needs the router and the build
+    // `base` configured for it anyway — not an inference made here.
+    url.pathname = path;
     url.search = '';
-    url.hash = hash;
+    url.hash = '';
     return url.href;
   } catch {
     return null;

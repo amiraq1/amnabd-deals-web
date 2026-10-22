@@ -28,7 +28,7 @@ function upsertMeta(
   el.setAttribute('content', content);
 }
 
-export function applyDealSeoToDocument(seo: DealSeoMetadata): void {
+export function applyDocumentMetadata(seo: DealSeoMetadata): void {
   if (typeof document === 'undefined') return;
 
   document.title = seo.title;
@@ -62,3 +62,7 @@ export function applyDealSeoToDocument(seo: DealSeoMetadata): void {
   }
   script.textContent = JSON.stringify(seo.jsonLd);
 }
+
+// Kept for callers that only deal with the deal page; the formatter in
+// `metadata.ts` is what every route goes through now.
+export const applyDealSeoToDocument = applyDocumentMetadata;

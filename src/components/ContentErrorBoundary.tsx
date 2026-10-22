@@ -38,7 +38,9 @@ export default class ContentErrorBoundary extends Component<Props, State> {
             ? 'تعذر عرض هذا المحتوى. يمكنك العودة إلى العروض أو إعادة تحميل الصفحة.'
             : 'This content could not be displayed. Return to deals or reload the page.'}
         </p>
-        <a className="mt-4 inline-block text-emerald-400 underline" href="#/">
+        {/* A full load, not a hash link: after a crash the router state cannot
+            be trusted, and `/` is served as a real file. */}
+        <a className="mt-4 inline-block text-emerald-400 underline" href="/">
           {ar ? 'العودة إلى العروض' : 'Return to deals'}
         </a>
         <button

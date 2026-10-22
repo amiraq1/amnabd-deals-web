@@ -7,9 +7,8 @@ const { buildDealSeo, getAvailabilitySchema, generateSitemapXml } = await import
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/seo.js'))
 );
 
-const { routePath, parseLocationRoute, parseHash, routeHash } = await import(
-  pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/routes.js'))
-);
+const { routePath, parseLocationRoute, parseHash, routeHash, migrateLegacyHashLocation } =
+  await import(pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/routes.js')));
 
 test('getAvailabilitySchema maps deal statuses correctly to schema.org', () => {
   assert.equal(getAvailabilitySchema('active'), 'https://schema.org/InStock');
@@ -98,17 +97,31 @@ test('generateSitemapXml builds valid XML with prioritization and dates', () => 
   assert.match(xml, /<priority>0\.4<\/priority>/);
 });
 
-test('routes.ts supports both clean paths and legacy hash routes', () => {
+test('routes.ts supports clean paths and migrates legacy hash routes once', () => {
   assert.equal(routePath({ name: 'home' }), '/');
   assert.equal(routePath({ name: 'deal', slug: 'bolt' }), '/deal/bolt');
   assert.equal(routePath({ name: 'guide' }), '/guide');
   assert.equal(routePath({ name: 'favorites' }), '/favorites');
 
   assert.deepEqual(parseLocationRoute('/deal/bolt'), { name: 'deal', slug: 'bolt' });
-  assert.deepEqual(parseLocationRoute('/', '#/deal/bolt'), { name: 'deal', slug: 'bolt' });
   assert.deepEqual(parseLocationRoute('/guide'), { name: 'guide' });
   assert.deepEqual(parseLocationRoute('/favorites'), { name: 'favorites' });
   assert.deepEqual(parseLocationRoute('/'), { name: 'home' });
+
+  // A01: a pre-existing hash link becomes the path-based URL once, at boot.
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '', hash: '#/deal/bolt' }),
+    '/deal/bolt'
+  );
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '', hash: '#/?q=alpha' }),
+    '/?q=alpha'
+  );
+  // Already modern: nothing to migrate.
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/deal/bolt', search: '', hash: '' }),
+    null
+  );
 
   // Legacy routeHash & parseHash still 100% functional
   assert.equal(routeHash({ name: 'deal', slug: 'bolt' }), '#/deal/bolt');
