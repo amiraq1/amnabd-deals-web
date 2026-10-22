@@ -2,16 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { loadConfig, loadDeals, loadGuides } from '@/lib/loadResources';
 import {
-  extractHashSearch,
-  filterSearchFromLocation,
-  normalizeLegacyHashRoute,
-  parseLocationRoute,
+  parseHash,
   resolveLocationChange,
-  routeHash,
+  routeUrl,
   type Route,
 } from '@/lib/routes';
 import {
-  buildDiscoveryHash,
+  buildDiscoverySearch,
   DEFAULT_FILTER_STATE,
   parseFilterState,
   validateFilterState,
@@ -32,14 +29,14 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import FavoritesPage from '@/pages/FavoritesPage';
 import ChangelogPage from '@/pages/ChangelogPage';
 import CollectionPage from '@/pages/CollectionPage';
-import { getAggregationConfig } from '@/lib/aggregations';
+import { buildDealSeo, applyDocumentMetadata } from '@/lib/seo';
+import { routeMetadata } from '@/lib/metadata';
 
 function AppInner() {
   const { lang } = useLanguage();
-  normalizeLegacyHashRoute();
-  const [route, setRoute] = useState<Route>(() =>
-    parseLocationRoute(window.location.pathname, window.location.hash)
-  );
+  // A01: `pathname` + `search` are the only source of truth. The legacy hash
+  // was migrated once in main.tsx, before this component ever mounted.
+  const [route, setRoute] = useState<Route>(() => parseHash(window.location.pathname));
   // Each resource settles independently. Language is presentation state and is
   // deliberately not a dependency of any data request.
   const offers = useResource(loadDeals);
@@ -60,8 +57,8 @@ function AppInner() {
     [deals]
   );
   const [rawFilters, setRawFilters] = useState<FilterState>(() =>
-    // H-01: the query string is authoritative; the hash is the legacy fallback.
-    parseFilterState(filterSearchFromLocation(window.location.search, window.location.hash))
+    // H-01: the query string is the filter state.
+    parseFilterState(window.location.search)
   );
   const filterState = useMemo(
     () =>
@@ -72,11 +69,10 @@ function AppInner() {
   const categoriesRef = useRef<ReadonlySet<string> | undefined>(undefined);
   categoriesRef.current = offers.status === 'ready' ? validCategoryKeys : undefined;
   const routeRef = useRef(route);
-  const lastDiscoveryHash = useRef(route.name === 'home' ? window.location.hash || '#/' : '#/');
-  const lastAppliedHash = useRef(window.location.hash || '#/');
-  const lastAppliedSearch = useRef(
-    filterSearchFromLocation(window.location.search, window.location.hash)
-  );
+  const currentUrl = () => window.location.pathname + window.location.search;
+  const lastDiscoveryUrl = useRef(route.name === 'home' ? currentUrl() : '/');
+  const lastAppliedPath = useRef(window.location.pathname);
+  const lastAppliedSearch = useRef(window.location.search.replace(/^\?/, ''));
   const timer = useRef<number | null>(null);
   const cancelPending = useCallback(() => {
     const pending = timer.current !== null;
@@ -84,37 +80,32 @@ function AppInner() {
     timer.current = null;
     return pending;
   }, []);
-  const applyLocation = useCallback((hash: string) => {
-    normalizeLegacyHashRoute();
-    const next = parseLocationRoute(window.location.pathname, hash);
+  const applyLocation = useCallback(() => {
+    const next = parseHash(window.location.pathname);
     routeRef.current = next;
     setRoute(next);
-    lastAppliedHash.current = hash || '#/';
-    lastAppliedSearch.current = filterSearchFromLocation(window.location.search, hash);
+    lastAppliedPath.current = window.location.pathname;
+    lastAppliedSearch.current = window.location.search.replace(/^\?/, '');
     if (next.name === 'home') {
-      const parsed = parseFilterState(filterSearchFromLocation(window.location.search, hash));
+      const parsed = parseFilterState(window.location.search);
       filtersRef.current = parsed;
       setRawFilters(parsed);
-      lastDiscoveryHash.current = hash || '#/';
+      lastDiscoveryUrl.current = currentUrl();
     }
   }, []);
   const writeLocation = useCallback(
-    (hash: string, method: 'push' | 'replace', preserveDraft = false) => {
-      if ((window.location.hash || '#/') !== hash) {
-        if (method === 'push') window.history.pushState(null, '', hash);
-        else window.history.replaceState(window.history.state, '', hash);
+    (url: string, method: 'push' | 'replace', preserveDraft = false) => {
+      // A01: the whole address is compared, not just the hash. Navigating home
+      // from `/deal/alpha` used to be skipped because the hash was already `#/`.
+      if (currentUrl() !== url) {
+        if (method === 'push') window.history.pushState(null, '', url);
+        else window.history.replaceState(window.history.state, '', url);
       }
       if (preserveDraft) {
-        lastAppliedHash.current = hash;
-        // This path skips applyLocation, so normalizeLegacyHashRoute has not run
-        // yet and `window.location.search` may still hold the previous query
-        // (e.g. arriving with ?q=old and then typing). What becomes live after
-        // normalization is the query carried by the route hash.
-        lastAppliedSearch.current = hash.startsWith('#/')
-          ? extractHashSearch(hash)
-          : filterSearchFromLocation(window.location.search, hash);
-        lastDiscoveryHash.current = hash;
-      } else applyLocation(hash);
+        lastAppliedPath.current = window.location.pathname;
+        lastAppliedSearch.current = window.location.search.replace(/^\?/, '');
+        lastDiscoveryUrl.current = currentUrl();
+      } else applyLocation();
     },
     [applyLocation]
   );
@@ -124,39 +115,41 @@ function AppInner() {
       const decision = resolveLocationChange({
         pathname: window.location.pathname,
         search: window.location.search,
-        hash: window.location.hash,
-        lastAppliedHash: lastAppliedHash.current,
+        lastAppliedPath: lastAppliedPath.current,
         lastAppliedSearch: lastAppliedSearch.current,
         hadPending,
       });
-      // H-10: an in-page anchor (#main-content) is not a navigation — leave the
-      // filters, the sort and the scroll position exactly as they are.
       if (!decision.apply) return;
-      applyLocation(window.location.hash || '#/');
+      applyLocation();
       window.scrollTo({ top: 0 });
     };
+    // Only `popstate` navigates. An in-page anchor (`#main-content`) fires
+    // `hashchange`, not `popstate`, so the skip link leaves the filters and the
+    // scroll position exactly as they are (H-10).
     window.addEventListener('popstate', onLocationChange);
-    window.addEventListener('hashchange', onLocationChange);
     return () => {
       cancelPending();
       window.removeEventListener('popstate', onLocationChange);
-      window.removeEventListener('hashchange', onLocationChange);
     };
   }, [applyLocation, cancelPending]);
 
-  const currentDiscoveryHash = useCallback(
-    () => buildDiscoveryHash(validateFilterState(filtersRef.current, categoriesRef.current)),
+  const currentDiscoverySearch = useCallback(
+    () => buildDiscoverySearch(validateFilterState(filtersRef.current, categoriesRef.current)),
     []
+  );
+  const currentDiscoveryUrl = useCallback(
+    () => routeUrl({ name: 'home' }, currentDiscoverySearch()),
+    [currentDiscoverySearch]
   );
   const flushDiscovery = useCallback(() => {
     cancelPending();
-    if (routeRef.current.name === 'home') writeLocation(currentDiscoveryHash(), 'replace');
-  }, [cancelPending, currentDiscoveryHash, writeLocation]);
+    if (routeRef.current.name === 'home') writeLocation(currentDiscoveryUrl(), 'replace');
+  }, [cancelPending, currentDiscoveryUrl, writeLocation]);
   const navigate = useCallback(
     (next: Route) => {
       flushDiscovery();
-      const hash = next.name === 'home' ? lastDiscoveryHash.current : routeHash(next);
-      writeLocation(hash, 'push');
+      const url = next.name === 'home' ? lastDiscoveryUrl.current : routeUrl(next);
+      writeLocation(url, 'push');
       window.scrollTo({ top: 0 });
     },
     [flushDiscovery, writeLocation]
@@ -169,8 +162,8 @@ function AppInner() {
       const next = { ...previous, ...update };
       delete next.invalidCategory;
       delete next.filterError;
-      const hash = buildDiscoveryHash(next);
-      const parsed = parseFilterState(extractHashSearch(hash));
+      const search = buildDiscoverySearch(next);
+      const parsed = parseFilterState(search);
       if ('q' in update && typeof update.q === 'string')
         parsed.q = Array.from(update.q.replace(/[\p{Cc}]/gu, ' '))
           .slice(0, 120)
@@ -180,25 +173,24 @@ function AppInner() {
       if (method === 'replace')
         timer.current = window.setTimeout(() => {
           timer.current = null;
-          if (routeRef.current.name === 'home') writeLocation(hash, 'replace', true);
+          if (routeRef.current.name === 'home')
+            writeLocation(routeUrl({ name: 'home' }, search), 'replace', true);
         }, 250);
-      else writeLocation(hash, 'push');
+      else writeLocation(routeUrl({ name: 'home' }, search), 'push');
     },
     [cancelPending, writeLocation]
   );
   const handleResetFilters = useCallback(() => {
     cancelPending();
     filtersRef.current = { ...DEFAULT_FILTER_STATE };
-    writeLocation('#/', 'push');
+    writeLocation('/', 'push');
   }, [cancelPending, writeLocation]);
   const getSearchLink = useCallback(() => {
     cancelPending();
-    writeLocation(currentDiscoveryHash(), 'replace', true);
-    const url = new URL(window.location.href);
-    url.search = '';
-    url.hash = currentDiscoveryHash();
-    return url.href;
-  }, [cancelPending, currentDiscoveryHash, writeLocation]);
+    const url = currentDiscoveryUrl();
+    writeLocation(url, 'replace', true);
+    return new URL(url, window.location.origin).href;
+  }, [cancelPending, currentDiscoveryUrl, writeLocation]);
   const onOpenDeal = useCallback((slug: string) => navigate({ name: 'deal', slug }), [navigate]);
   const onBackFromDeal = useCallback(() => navigate({ name: 'home' }), [navigate]);
 
@@ -208,49 +200,13 @@ function AppInner() {
   for (const row of deals) guideNames[row.slug] = { ar: row.name_ar, en: row.name_en };
   const omitted = (offers.data?.omitted ?? 0) + (guides.data?.omitted ?? 0);
 
+  // A12: every route resolves through one formatter. Leaving a deal page puts
+  // the destination's canonical, description, OG tags and JSON-LD back, instead
+  // of leaving the deal's behind.
   useEffect(() => {
-    if (route.name === 'deal') {
-      if (deal) {
-        const dealName = lang === 'ar' ? deal.name_ar : deal.name_en;
-        document.title = `${dealName} — AMNABD Deals`;
-      } else if (offers.status === 'ready') {
-        document.title =
-          lang === 'ar'
-            ? 'العرض غير موجود — AMNABD Deals'
-            : 'Deal Not Found — AMNABD Deals';
-      }
-    } else if (route.name === 'guide') {
-      document.title =
-        lang === 'ar'
-          ? 'دليل الاستخدام والشروط — AMNABD Deals'
-          : 'Usage Guide & Terms — AMNABD Deals';
-    } else if (route.name === 'favorites') {
-      document.title =
-        lang === 'ar'
-          ? 'مفضلتي — AMNABD Deals'
-          : 'My Favorites — AMNABD Deals';
-    } else if (route.name === 'changelog') {
-      document.title =
-        lang === 'ar'
-          ? 'سجل التغييرات وتحديثات العروض — AMNABD Deals'
-          : 'Changelog & Deal Updates — AMNABD Deals';
-    } else if (route.name === 'collection' && route.collectionKey) {
-      const agg = getAggregationConfig(route.collectionKey);
-      document.title = agg
-        ? `${lang === 'ar' ? agg.titleAr : agg.titleEn} — AMNABD Deals`
-        : 'AMNABD Deals';
-    } else if (route.name === 'notfound') {
-      document.title =
-        lang === 'ar'
-          ? 'الصفحة غير موجودة (404) — AMNABD Deals'
-          : 'Page Not Found (404) — AMNABD Deals';
-    } else {
-      document.title =
-        lang === 'ar'
-          ? 'AMNABD Deals — دليل عروض الذكاء الاصطناعي والسحابة'
-          : 'AMNABD Deals — AI & Cloud Deals Directory';
-    }
-  }, [route.name, route.slug, route.collectionKey, deal, lang, offers.status]);
+    const dealSeo = deal ? buildDealSeo(deal) : null;
+    applyDocumentMetadata(routeMetadata(route, lang, dealSeo));
+  }, [route, deal, lang]);
 
   let content: JSX.Element;
   if (route.name === 'notfound')

@@ -12,7 +12,7 @@ const {
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/changelog.js'))
 );
 
-const { parseLocationRoute, routeHash, routePath } = await import(
+const { parseLocationRoute, routeHash, routePath, migrateLegacyHashLocation } = await import(
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/routes.js'))
 );
 
@@ -99,8 +99,12 @@ test('buildChangelogEntries extracts and sorts entries chronologically descendin
 
 test('routes module supports changelog page', () => {
   assert.deepEqual(parseLocationRoute('/changelog'), { name: 'changelog' });
-  assert.deepEqual(parseLocationRoute('/', '#/changelog'), { name: 'changelog' });
-  assert.deepEqual(parseLocationRoute('#/changelog'), { name: 'changelog' });
+  // A01: the legacy hash form is migrated to the path, then parsed as a path.
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '', hash: '#/changelog' }),
+    '/changelog'
+  );
+  assert.deepEqual(parseLocationRoute('/changelog'), { name: 'changelog' });
   assert.equal(routeHash({ name: 'changelog' }), '#/changelog');
   assert.equal(routePath({ name: 'changelog' }), '/changelog');
 });

@@ -84,19 +84,45 @@ export function routePath(route: Route): string {
   return '/404';
 }
 
-export function normalizeLegacyHashRoute(): void {
-  if (typeof window === 'undefined') return;
-  const { hash, search } = window.location;
-  if (hash.startsWith('#/')) {
-    const cleanPath = hash.slice(1);
-    window.history.replaceState(null, '', `${cleanPath}${search}`);
-  }
+/**
+ * One URL for a route plus its filter query (A01).
+ *
+ * The path is the address of the page — GitHub Pages serves a real file for
+ * each one — so navigation writes `pathname` and filters live in `search`.
+ * Nothing in the app writes a `#/` hash any more; the hash survives only as an
+ * input for links shared before this change.
+ */
+export function routeUrl(route: Route, search = ''): string {
+  const path = routePath(route);
+  const query = search.replace(/^\?/, '');
+  return query ? `${path}?${query}` : path;
 }
 
-export function parseLocationRoute(pathname: string, hash = ''): Route {
-  if (hash && hash.startsWith('#/')) {
-    return parseHash(hash);
-  }
+export interface LegacyLocation {
+  pathname: string;
+  search: string;
+  hash: string;
+}
+
+/**
+ * A pre-A01 link put the route and its filters in the hash (`/#/deal/x?q=…`).
+ * This converts one of those into the path-based URL exactly once, before the
+ * first render, so nothing downstream has to know the hash ever existed.
+ * Returns `null` when the location is already modern.
+ */
+export function migrateLegacyHashLocation(location: LegacyLocation): string | null {
+  const hash = typeof location.hash === 'string' ? location.hash : '';
+  if (!hash.startsWith('#/')) return null;
+
+  const route = parseHash(hash);
+  const hashSearch = extractHashSearch(hash);
+  // A filter query already in `search` wins; the hash only fills the gap.
+  const search = hasFilterParams(location.search) ? location.search : `?${hashSearch}`;
+  return routeUrl(route, search);
+}
+
+/** The route a pathname describes. Legacy hash input is migrated before this. */
+export function parseLocationRoute(pathname: string): Route {
   return parseHash(pathname);
 }
 
@@ -135,9 +161,9 @@ export function isInPageHash(hash: string): boolean {
 export interface LocationChangeInput {
   pathname: string;
   search: string;
-  hash: string;
-  lastAppliedHash: string;
-  /** Filter query of the last applied location; `popstate` can change only this. */
+  /** Pathname of the last applied location, e.g. `/deal/alpha`. */
+  lastAppliedPath?: string;
+  /** Filter query of the last applied location. */
   lastAppliedSearch?: string;
   hadPending: boolean;
 }
@@ -149,29 +175,22 @@ export interface LocationChange {
 }
 
 /**
- * Pure decision for a `popstate`/`hashchange` event, so back/forward can be
- * tested without a browser.
+ * Pure decision for a `popstate`, so back/forward can be tested without a
+ * browser (A01).
  *
- * Back/forward between two filtered links changes `location.search` without
- * touching the hash, so comparing the hash alone would skip the update. Both
- * the route hash and the filter query are compared.
+ * The pathname and the query are the only things compared, because they are
+ * the only things the app writes. A location with an in-page anchor
+ * (`#main-content`) is not a navigation: `popstate` never fires for it, and if
+ * one arrives it leaves the pathname unchanged, so it resolves to "do not
+ * apply" without a special case.
  */
 export function resolveLocationChange(input: LocationChangeInput): LocationChange {
-  const hash = typeof input.hash === 'string' ? input.hash : '';
-  // Computed once and returned on every path, so callers can read the current
-  // query even when the decision is "do not apply".
-  const filterSearch = filterSearchFromLocation(input.search, hash);
-  if (isInPageHash(hash)) {
-    return { apply: false, route: parseHash(input.pathname), filterSearch };
-  }
-  const hashChanged = (hash || '#/') !== input.lastAppliedHash;
+  const pathname = typeof input.pathname === 'string' ? input.pathname : '/';
+  const filterSearch = (input.search ?? '').replace(/^\?/, '');
+  const pathChanged = pathname !== (input.lastAppliedPath ?? '/');
   const searchChanged = filterSearch !== (input.lastAppliedSearch ?? '');
-  if (!input.hadPending && !hashChanged && !searchChanged) {
-    return { apply: false, route: parseHash(input.pathname), filterSearch };
+  if (!input.hadPending && !pathChanged && !searchChanged) {
+    return { apply: false, route: parseHash(pathname), filterSearch };
   }
-  return {
-    apply: true,
-    route: parseLocationRoute(input.pathname, hash),
-    filterSearch,
-  };
+  return { apply: true, route: parseHash(pathname), filterSearch };
 }

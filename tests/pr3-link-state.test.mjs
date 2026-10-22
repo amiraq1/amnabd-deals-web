@@ -67,8 +67,7 @@ test('PR-3: only non-route hashes count as in-page anchors', () => {
 const at = (overrides) => ({
   pathname: '/',
   search: '',
-  hash: '#/',
-  lastAppliedHash: '#/',
+  lastAppliedPath: '/',
   lastAppliedSearch: '',
   hadPending: false,
   ...overrides,
@@ -128,29 +127,38 @@ test('PR-3: the decision always reports the current filter query', () => {
   // `filterSearch` is the live query, not a placeholder, even when nothing is
   // applied — so a caller never has to re-derive it from the location.
   const unchanged = resolveLocationChange(
-    at({ search: '?q=alpha', lastAppliedHash: '#/', lastAppliedSearch: 'q=alpha' })
+    at({ search: '?q=alpha', lastAppliedPath: '/', lastAppliedSearch: 'q=alpha' })
   );
   assert.equal(unchanged.apply, false);
   assert.equal(unchanged.filterSearch, 'q=alpha');
 
-  const anchored = resolveLocationChange(
-    at({ search: '?q=alpha&sort=deadline', hash: '#main-content' })
+  // A01: navigating from a deal page back to the filtered home page is a real
+  // change even when the query is identical, because the path changed.
+  const backHome = resolveLocationChange(
+    at({
+      pathname: '/',
+      search: '?q=alpha',
+      lastAppliedPath: '/deal/alpha',
+      lastAppliedSearch: 'q=alpha',
+    })
   );
-  assert.equal(anchored.apply, false);
-  assert.equal(anchored.filterSearch, 'q=alpha&sort=deadline');
-
-  // A legacy hash with no modern query reports the hash's query.
-  const legacy = resolveLocationChange(at({ search: '', hash: '#/?q=alpha' }));
-  assert.equal(legacy.apply, true);
-  assert.equal(legacy.filterSearch, 'q=alpha');
+  assert.equal(backHome.apply, true);
+  assert.equal(backHome.route.name, 'home');
+  assert.equal(backHome.filterSearch, 'q=alpha');
 });
 
 test('PR-3: the skip link changes nothing about the search', () => {
   const before = resolveLocationChange(
-    at({ search: '?q=deepgram&sort=deadline', lastAppliedHash: '', lastAppliedSearch: '' })
+    at({ search: '?q=deepgram&sort=deadline', lastAppliedPath: '/', lastAppliedSearch: '' })
   );
+  // An in-page anchor never fires `popstate`, so the app is never asked to
+  // re-route. If an identical location is evaluated anyway, it is inert.
   const afterSkip = resolveLocationChange(
-    at({ search: '?q=deepgram&sort=deadline', hash: '#main-content' })
+    at({
+      search: '?q=deepgram&sort=deadline',
+      lastAppliedPath: '/',
+      lastAppliedSearch: 'q=deepgram&sort=deadline',
+    })
   );
   assert.equal(before.apply, true);
   assert.equal(afterSkip.apply, false);
@@ -158,7 +166,7 @@ test('PR-3: the skip link changes nothing about the search', () => {
   assert.equal(afterSkip.filterSearch, 'q=deepgram&sort=deadline');
 
   // And the filters read straight from the location are untouched.
-  const live = filters(filterSearchFromLocation('?q=deepgram&sort=deadline', '#main-content'));
+  const live = filters('?q=deepgram&sort=deadline');
   assert.equal(live.q, 'deepgram');
   assert.equal(live.sort, 'deadline');
 });

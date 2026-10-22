@@ -21,7 +21,6 @@ import DealIcon from '@/components/DealIcon';
 import ScrollToTop from '@/components/ScrollToTop';
 import FavoriteButton from '@/components/FavoriteButton';
 import ReportDealBox from '@/components/ReportDealBox';
-import { buildDealSeo, applyDealSeoToDocument } from '@/lib/seo';
 import { getActivationGuide } from '@/content/activationGuides';
 import { ActivationGuide } from '@/components/ActivationGuide';
 
@@ -66,10 +65,8 @@ export default function DealDetailPage({
     };
   }, []);
 
-  useEffect(() => {
-    const seo = buildDealSeo(deal);
-    applyDealSeoToDocument(seo);
-  }, [deal]);
+  // The document metadata for this route is applied once in App.tsx (A12), so
+  // leaving the page restores the destination's canonical and JSON-LD.
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash === '#how-to-activate') {
