@@ -14,7 +14,12 @@ export interface DealReportPayload {
 export interface SubmitReportResult {
   ok: boolean;
   alreadyReported?: boolean;
-  mode: 'supabase' | 'local_fallback' | 'blocked_bot';
+  /**
+   * `unconfigured` means no backend is wired up, so the report was never
+   * delivered. It is a failure, not a local success: telling the reader
+   * "thank you, recorded" when nothing was stored is the bug this models.
+   */
+  mode: 'supabase' | 'local_fallback' | 'blocked_bot' | 'unconfigured';
 }
 
 const REPORT_STORAGE_KEY = 'ai_deals_reported_slugs_v1';
@@ -86,8 +91,8 @@ export async function submitDealReport(
   const supabaseKey = metaEnv?.VITE_SUPABASE_ANON_KEY || nodeEnv?.VITE_SUPABASE_ANON_KEY;
 
   if (supabaseUrl && supabaseKey) {
+    const endpoint = `${supabaseUrl.replace(/\/+$/, '')}/rest/v1/deal_reports`;
     try {
-      const endpoint = `${supabaseUrl.replace(/\/+$/, '')}/rest/v1/deal_reports`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -103,20 +108,21 @@ export async function submitDealReport(
         }),
       });
 
+      // Only a 2xx means the row exists. A rejected write is a failure the
+      // reader has to see, so it must not mark the deal as reported.
       if (!response.ok) {
-        throw new Error(`فشل إرسال البلاغ (${response.status})`);
+        return { ok: false, mode: 'supabase' };
       }
 
       markDealAsReported(cleanSlug);
       return { ok: true, mode: 'supabase' };
     } catch {
-      // If network fails, gracefully save locally
-      markDealAsReported(cleanSlug);
-      return { ok: true, mode: 'local_fallback' };
+      // Network failure, timeout or DNS: nothing was stored.
+      return { ok: false, mode: 'supabase' };
     }
   }
 
-  // Development / test fallback when Supabase keys are not active
-  markDealAsReported(cleanSlug);
-  return { ok: true, mode: 'local_fallback' };
+  // No backend configured: the report has nowhere to go. Claiming success here
+  // would be the same false thank-you, just without a request.
+  return { ok: false, mode: 'unconfigured' };
 }

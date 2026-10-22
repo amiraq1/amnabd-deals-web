@@ -45,12 +45,26 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
     setErrorMsg(null);
 
     try {
-      await submitDealReport({
+      const result = await submitDealReport({
         dealSlug,
         reason: selectedReason,
         note,
         honeypot,
       });
+      // Only a stored report earns the confirmation. Anything else keeps the
+      // form open with an explicit error, because "thank you" would be false.
+      if (!result.ok) {
+        setErrorMsg(
+          result.mode === 'unconfigured'
+            ? lang === 'ar'
+              ? 'خدمة استقبال البلاغات غير مُهيّأة حاليًا، لذلك لم يُسجَّل بلاغك. يرجى المحاولة لاحقًا.'
+              : 'Report intake is not configured, so your report was not recorded. Please try again later.'
+            : lang === 'ar'
+              ? 'تعذّر إرسال البلاغ، ولم يُسجَّل بلاغك. يرجى المحاولة لاحقًا.'
+              : 'The report could not be sent and was not recorded. Please try again later.'
+        );
+        return;
+      }
       setSubmitted(true);
       setIsOpen(false);
     } catch {

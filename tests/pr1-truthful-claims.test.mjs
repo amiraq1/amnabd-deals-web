@@ -11,7 +11,10 @@ import { test } from 'node:test';
 const built = (rel) => pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, rel));
 
 const { safeUrl, isSafeUrl } = await import(built('src/lib/safeUrl.js'));
-const { getDealHeadlineValue } = await import(built('src/lib/dealMetadata.js'));
+const { getDealHeadlineValue, getDealKeyCondition } = await import(
+  built('src/lib/dealMetadata.js')
+);
+const { offerTimingLabel } = await import(built('src/lib/evidence.js'));
 const { buildDealSeo, dealFacts, getAvailabilitySchema, generateSitemapXml } = await import(
   built('src/lib/seoFacts.js')
 );
@@ -64,6 +67,47 @@ test('H-04: no headline is invented when the record has no value', () => {
     getDealHeadlineValue({ slug: 'x', name_ar: 'x', name_en: 'x', headline_value: '200$' }),
     '200$'
   );
+});
+
+test('H-04: a zero amount is not a benefit and produces no headline', () => {
+  const zero = {
+    slug: 'x',
+    name_ar: 'x',
+    name_en: 'x',
+    benefits: [{ type: 'credits', amount: { value: 0, currency: 'USD', unit: '$' } }],
+  };
+  // "0$ رصيد مجاني" announced a credit the record does not grant.
+  assert.equal(getDealHeadlineValue(zero, 'ar'), null);
+  assert.equal(getDealHeadlineValue(zero, 'en'), null);
+});
+
+test('C-01: a required card is stated, not left to be assumed', () => {
+  assert.equal(
+    getDealKeyCondition({ slug: 'x', eligibility: { card_required: 'required' } }, 'ar'),
+    'تتطلب بطاقة ائتمان'
+  );
+  assert.equal(
+    getDealKeyCondition({ slug: 'x', eligibility: { card_required: 'required' } }, 'en'),
+    'Credit card required'
+  );
+  // Unknown stays silent rather than implying either answer.
+  assert.equal(getDealKeyCondition({ slug: 'x', eligibility: {} }, 'ar'), null);
+});
+
+test('H-02: the detail page label follows the computed timing, not raw offer_status', () => {
+  const expiredByDate = { state: 'expired', reason: 'ends_at', endsAt: '2026-01-01', expiresAt: 0, daysLeft: -1 };
+  assert.equal(offerTimingLabel(expiredByDate, 'active', 'ar'), 'انتهى حسب تاريخ الانتهاء المسجّل');
+  assert.equal(offerTimingLabel(expiredByDate, 'active', 'en'), 'Ended per the recorded end date');
+
+  const expiredByStatus = { state: 'expired', reason: 'status', endsAt: null, expiresAt: null, daysLeft: null };
+  assert.equal(offerTimingLabel(expiredByStatus, 'active', 'ar'), 'منتهٍ وفق المراجعة');
+
+  const endingSoon = { state: 'ending_soon', reason: 'ends_at', endsAt: '2026-01-01', expiresAt: 0, daysLeft: 3 };
+  assert.equal(offerTimingLabel(endingSoon, 'active', 'ar'), 'ينتهي قريبًا');
+
+  // States the timing model does not classify still fall back to the record.
+  const unknown = { state: 'unknown', reason: null, endsAt: null, expiresAt: null, daysLeft: null };
+  assert.equal(offerTimingLabel(unknown, 'paused', 'ar'), 'متوقف مؤقتًا وفق المراجعة');
 });
 
 // --- L-04 -----------------------------------------------------------------

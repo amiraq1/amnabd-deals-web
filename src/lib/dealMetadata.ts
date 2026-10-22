@@ -111,10 +111,13 @@ export function getDealHeadlineValue(deal: Deal, lang: 'ar' | 'en' = 'ar'): stri
     return deal.headline_value.trim();
   }
   const benefit = deal.benefits?.[0];
-  if (benefit?.amount?.value !== null && benefit?.amount?.value !== undefined) {
-    const unit = benefit.amount.unit || (benefit.amount.currency === 'USD' ? '$' : '');
-    const val = benefit.amount.value;
-    if (benefit.amount.currency === 'USD') {
+  const amount = benefit?.amount;
+  // A zero amount is not a benefit. Rendering "0$ رصيد مجاني" announced a
+  // credit the record does not grant, so absent or zero means no headline.
+  if (typeof amount?.value === 'number' && Number.isFinite(amount.value) && amount.value > 0) {
+    const unit = amount.unit || (amount.currency === 'USD' ? '$' : '');
+    const val = amount.value;
+    if (amount.currency === 'USD') {
       return `${val}$ ${lang === 'ar' ? 'رصيد مجاني' : 'free credit'}`;
     }
     return `${val} ${unit}`;
@@ -132,6 +135,11 @@ export function getDealKeyCondition(deal: Deal, lang: 'ar' | 'en' = 'ar'): strin
   }
   if (deal.eligibility?.card_required === 'not_required') {
     return lang === 'ar' ? 'بدون بطاقة ائتمان' : 'No credit card';
+  }
+  // A required card is a condition the reader must see. Staying silent about
+  // it read as "no card needed", which was the C-01 complaint.
+  if (deal.eligibility?.card_required === 'required') {
+    return lang === 'ar' ? 'تتطلب بطاقة ائتمان' : 'Credit card required';
   }
   if (deal.eligibility?.student_status === 'required') {
     return lang === 'ar' ? 'للطلاب والجامعيين' : 'Students only';

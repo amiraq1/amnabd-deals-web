@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import CopyDealLink from '@/components/CopyDealLink';
 import EvidenceBadge from '@/components/EvidenceBadge';
-import { offerStatusLabel } from '@/lib/evidence';
+import { offerTimingLabel } from '@/lib/evidence';
 import { Sparkles, ExternalLink, FileText, ShieldCheck, CircleAlert } from 'lucide-react';
 import type { Deal, UsageGuide } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
@@ -16,6 +16,7 @@ import { requirementLabel } from '@/lib/tristate';
 import { safeUrl, resolveDealOfficialUrl } from '@/lib/safeUrl';
 import InfoBanner from '@/components/InfoBanner';
 import { getDealDisplayName } from '@/lib/dealMetadata';
+import { getTimingState } from '@/lib/dealTiming';
 import DealIcon from '@/components/DealIcon';
 import ScrollToTop from '@/components/ScrollToTop';
 import FavoriteButton from '@/components/FavoriteButton';
@@ -83,6 +84,10 @@ export default function DealDetailPage({
   }, [deal.slug]);
 
   const e = deal.eligibility;
+  // One timing model (PR-2). A recorded `ends_at` in the past expires the
+  // offer even when the raw review status still reads "active", so the page
+  // must not print `offer_status` on its own.
+  const timing = getTimingState(deal, new Date());
   const unknownCount = deal.review.unknown_fields.length;
   const activationGuide = getActivationGuide(deal.slug);
 
@@ -338,7 +343,7 @@ export default function DealDetailPage({
             {' · '}
             {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
             <span className="text-slate-300">
-              {offerStatusLabel(deal.review.offer_status, lang)}
+              {offerTimingLabel(timing.offer, deal.review.offer_status, lang)}
             </span>
           </p>
         </section>
