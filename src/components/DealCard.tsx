@@ -13,6 +13,7 @@ import { resolveDealOfficialUrl } from '@/lib/safeUrl';
 import { getDealDisplayName, getDealHeadlineValue, getDealKeyCondition } from '@/lib/dealMetadata';
 import { getTimingState } from '@/lib/dealTiming';
 import { isVerifiedReview } from '@/lib/verification';
+import { countryAvailability } from '@/lib/countryAvailability';
 import { routeUrl } from '@/lib/routes';
 import { languageSearchForLocation } from '@/lib/languageStorage';
 import DealIcon from '@/components/DealIcon';
@@ -20,6 +21,7 @@ import FavoriteButton from '@/components/FavoriteButton';
 
 export interface DealCardProps {
   deal: Deal;
+  country?: string;
   onOpen?: (slug: string) => void;
   // الخصائص التالية أبقيتها للتوافق مع الاستدعاءات الحالية، وهي غير مستخدمة داخل البطاقة.
   index?: number;
@@ -61,6 +63,7 @@ function isRecentlyReviewed(reviewedOn?: string | null, createdAt?: string | nul
 
 export default function DealCard({
   deal,
+  country,
   onOpen,
   isComparisonSelected = false,
   comparisonDisabled = false,
@@ -89,6 +92,7 @@ export default function DealCard({
 
   const noCard = deal.eligibility.card_required === 'not_required';
   const studentsOnly = deal.eligibility.applicant_type === 'student';
+  const countryStatus = country?.trim() ? countryAvailability(deal, country) : null;
 
   const languageQuery = languageSearchForLocation('', lang, window.location.search);
   const href = routeUrl({ name: 'deal', slug: deal.slug }, languageQuery);
@@ -209,6 +213,34 @@ export default function DealCard({
               </li>
             )}
           </ul>
+        )}
+
+        {countryStatus && country && (
+          <p
+            className={`mt-3 inline-flex flex-wrap items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium ${
+              countryStatus === 'supported'
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                : countryStatus === 'excluded'
+                  ? 'border-rose-500/30 bg-rose-500/10 text-rose-200'
+                  : 'border-slate-700 bg-slate-800/70 text-slate-300'
+            }`}
+          >
+            <span>{isAr ? 'في' : 'In'}</span>
+            <span dir="auto">{country}</span>
+            <span>
+              {countryStatus === 'supported'
+                ? isAr
+                  ? 'مثبت بالمصدر'
+                  : 'confirmed by source'
+                : countryStatus === 'excluded'
+                  ? isAr
+                    ? 'مستثنى صراحةً'
+                    : 'explicitly excluded'
+                  : isAr
+                    ? 'غير مثبت'
+                    : 'not verified'}
+            </span>
+          </p>
         )}
 
         {/* The registration deadline is reported as itself, never as "the offer ends". */}

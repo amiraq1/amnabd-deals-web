@@ -1,4 +1,10 @@
-import type { ApplicantFilter, CardFilter, FilterState, SortOption } from '@/types';
+import type {
+  ApplicantFilter,
+  CardFilter,
+  CountryAvailabilityFilter,
+  FilterState,
+  SortOption,
+} from '@/types';
 import { categoryKey } from './discovery.js';
 
 export const DEFAULT_FILTER_STATE: Readonly<FilterState> = Object.freeze({
@@ -8,10 +14,18 @@ export const DEFAULT_FILTER_STATE: Readonly<FilterState> = Object.freeze({
   categoryValidation: 'valid',
   applicant: 'all',
   card: 'all',
+  country: '',
+  countryStatus: 'all',
   sort: 'default',
 });
 const APPLICANTS = new Set<ApplicantFilter>(['all', 'student', 'any']);
 const CARDS = new Set<CardFilter>(['all', 'not_required']);
+const COUNTRY_STATUSES = new Set<CountryAvailabilityFilter>([
+  'all',
+  'supported',
+  'unknown',
+  'excluded',
+]);
 const SORTS = new Set<SortOption>([
   'default',
   'reviewed',
@@ -19,9 +33,16 @@ const SORTS = new Set<SortOption>([
   'ending_soon',
   'highest_value',
 ]);
+
 export function cleanQuery(value: string): string {
   return Array.from(value.replace(/[\p{Cc}]/gu, ' ').trim())
     .slice(0, 120)
+    .join('');
+}
+
+export function cleanCountry(value: string): string {
+  return Array.from(value.replace(/[\p{Cc}]/gu, ' ').replace(/\s+/gu, ' ').trim())
+    .slice(0, 80)
     .join('');
 }
 
@@ -30,6 +51,9 @@ export function validateFilterState(
   validCategories?: ReadonlySet<string>
 ): FilterState {
   const next = { ...state };
+  next.country = cleanCountry(typeof state.country === 'string' ? state.country : '');
+  if (!COUNTRY_STATUSES.has(next.countryStatus) || !next.country)
+    next.countryStatus = 'all';
   if (state.filterError === 'conflict' || state.filterError === 'uncategorized') {
     next.category = null;
     next.uncategorized = false;
@@ -66,6 +90,10 @@ export function parseFilterState(
   const applicant = params.get('applicant');
   const card = params.get('card');
   const sort = params.get('sort');
+  result.country = cleanCountry(params.get('country') ?? '');
+  const countryStatus = params.get('country_status');
+  if (result.country && COUNTRY_STATUSES.has(countryStatus as CountryAvailabilityFilter))
+    result.countryStatus = countryStatus as CountryAvailabilityFilter;
   if (APPLICANTS.has(applicant as ApplicantFilter)) result.applicant = applicant as ApplicantFilter;
   if (CARDS.has(card as CardFilter)) result.card = card as CardFilter;
   if (SORTS.has(sort as SortOption)) result.sort = sort as SortOption;
@@ -86,9 +114,16 @@ export function serializeFilterState(state: FilterState): string {
   if (APPLICANTS.has(state.applicant) && state.applicant !== 'all')
     params.set('applicant', state.applicant);
   if (CARDS.has(state.card) && state.card !== 'all') params.set('card', state.card);
+  const country = cleanCountry(state.country);
+  if (country) {
+    params.set('country', country);
+    if (COUNTRY_STATUSES.has(state.countryStatus) && state.countryStatus !== 'all')
+      params.set('country_status', state.countryStatus);
+  }
   if (SORTS.has(state.sort) && state.sort !== 'default') params.set('sort', state.sort);
   return params.toString();
 }
+
 export function buildDiscoveryHash(state: FilterState): string {
   const search = serializeFilterState(state);
   return search ? `#/?${search}` : '#/';

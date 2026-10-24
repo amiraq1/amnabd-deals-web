@@ -15,6 +15,7 @@ export type SortOption =
   | 'highest_value';
 export type ApplicantFilter = 'all' | 'student' | 'any';
 export type CardFilter = 'all' | 'not_required';
+export type CountryAvailabilityFilter = 'all' | 'supported' | 'unknown' | 'excluded';
 
 export interface FilterState {
   q: string;
@@ -24,6 +25,8 @@ export interface FilterState {
   filterError?: 'category' | 'uncategorized' | 'conflict';
   applicant: ApplicantFilter;
   card: CardFilter;
+  country: string;
+  countryStatus: CountryAvailabilityFilter;
   sort: SortOption;
   invalidCategory?: string;
 }

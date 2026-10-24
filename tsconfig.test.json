@@ -28,6 +28,7 @@
     "src/lib/savedDeals.ts",
     "src/lib/favorites.ts",
     "src/lib/safeUrl.ts",
+    "src/lib/countryAvailability.ts",
     "src/lib/dealMetadata.ts",
     "src/lib/seo.ts",
     "src/lib/seoFacts.ts",

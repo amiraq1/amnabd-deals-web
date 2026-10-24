@@ -10,6 +10,7 @@ import { isVerifiedReview } from '@/lib/verification';
 import { tristateLabel } from '@/lib/tristate';
 import { classifyDeadline, deadlineTierLabel, sortDeals } from '@/lib/dealSort';
 import { getTimingState } from '@/lib/dealTiming';
+import { countryAvailability } from '@/lib/countryAvailability';
 import { copyLink } from '@/lib/share';
 import { DEFAULT_FILTER_STATE, cleanQuery } from '@/lib/filterState';
 import DealCard from '@/components/DealCard';
@@ -139,6 +140,8 @@ export default function HomePage({
     filterState.uncategorized,
     filterState.applicant,
     filterState.card,
+    filterState.country,
+    filterState.countryStatus,
     filterState.sort,
   ]);
 
@@ -161,6 +164,19 @@ export default function HomePage({
 
   const queryGroups = useMemo(() => compileQuery(filterState.q), [filterState.q]);
   const categories = useMemo(() => categoryOptions(deals, lang), [deals, lang]);
+  const countryOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          deals.flatMap((deal) =>
+            (deal.eligibility?.countries?.values ?? []).filter(
+              (value): value is string => typeof value === 'string' && value.trim() !== ''
+            )
+          )
+        )
+      ).sort((a, b) => a.localeCompare(b, 'en')),
+    [deals]
+  );
 
   const validSavedCount = useMemo(
     () =>
@@ -253,6 +269,8 @@ export default function HomePage({
         useCases?: string[];
         applicant?: 'all' | 'student' | 'any';
         card?: 'all' | 'not_required';
+        country?: string;
+        countryStatus?: FilterState['countryStatus'];
         endingSoon?: boolean;
         saved?: boolean;
       }
@@ -264,6 +282,10 @@ export default function HomePage({
       const useCases = overrides?.useCases !== undefined ? overrides.useCases : selectedUseCases;
       const applicant = overrides?.applicant !== undefined ? overrides.applicant : filterState.applicant;
       const card = overrides?.card !== undefined ? overrides.card : filterState.card;
+      const country = overrides?.country !== undefined ? overrides.country : filterState.country;
+      const countryStatus = overrides?.countryStatus !== undefined
+        ? overrides.countryStatus
+        : filterState.countryStatus;
       const isEndingSoon = overrides?.endingSoon !== undefined ? overrides.endingSoon : endingSoon;
       const saved = overrides?.saved !== undefined ? overrides.saved : savedOnly;
 
@@ -271,6 +293,12 @@ export default function HomePage({
       if (uncategorized && !matchesCategory(deal.category.value, '')) return false;
       if (category !== null && !matchesCategory(deal.category?.value, category)) return false;
       if (!matchesEligibility(deal.eligibility, applicant, card)) return false;
+      if (
+        country.trim() &&
+        countryStatus !== 'all' &&
+        countryAvailability(deal, country) !== countryStatus
+      )
+        return false;
       if (isEndingSoon && getTimingState(deal, referenceNow).offer.state !== 'ending_soon')
         return false;
 
@@ -293,6 +321,8 @@ export default function HomePage({
       filterState.uncategorized,
       filterState.applicant,
       filterState.card,
+      filterState.country,
+      filterState.countryStatus,
       selectedUseCases,
       endingSoon,
       savedOnly,
@@ -316,6 +346,8 @@ export default function HomePage({
     savedOnly ||
     filterState.applicant !== 'all' ||
     filterState.card !== 'all' ||
+    Boolean(filterState.country.trim()) ||
+    filterState.countryStatus !== 'all' ||
     filterState.category !== null ||
     filterState.uncategorized ||
     Boolean(filterState.filterError) ||
@@ -422,6 +454,17 @@ export default function HomePage({
       }
     }
 
+    if (filterState.country && filterState.countryStatus !== 'all') {
+      const count = deals.filter((d) => matchesAllCriteria(d, { countryStatus: 'all' })).length;
+      if (count > 0) {
+        candidates.push({
+          label: lang === 'ar' ? 'حالة البلد المحدد' : 'Selected country status',
+          count,
+          clear: () => onFilterChange({ countryStatus: 'all' }, 'push'),
+        });
+      }
+    }
+
     if (selectedUseCases.length > 0) {
       const count = deals.filter((d) => matchesAllCriteria(d, { useCases: [] })).length;
       if (count > 0) {
@@ -478,6 +521,8 @@ export default function HomePage({
     endingSoon,
     filterState.applicant,
     filterState.card,
+    filterState.country,
+    filterState.countryStatus,
     filterState.category,
     filterState.q,
     selectedUseCases,
@@ -901,6 +946,55 @@ export default function HomePage({
               </select>
             </div>
 
+            <div className="flex min-w-[13rem] flex-1 flex-wrap items-center gap-2">
+              <label htmlFor="country-input" className="text-xs text-slate-400">
+                {lang === 'ar' ? 'البلد (اختيار يدوي):' : 'Country (choose manually):'}
+              </label>
+              <input
+                id="country-input"
+                type="text"
+                list="recorded-country-options"
+                value={filterState.country}
+                maxLength={80}
+                autoComplete="off"
+                dir="auto"
+                onChange={(event) => onFilterChange({ country: event.target.value }, 'replace')}
+                placeholder={lang === 'ar' ? 'مثال: العراق' : 'Example: Iraq'}
+                aria-describedby="country-evidence-note"
+                className="min-w-36 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-200 outline-none transition-colors placeholder:text-slate-500 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+              />
+              <datalist id="recorded-country-options">
+                {countryOptions.map((country) => <option key={country} value={country} />)}
+              </datalist>
+              <select
+                id="country-status-select"
+                value={filterState.countryStatus}
+                disabled={!filterState.country.trim()}
+                onChange={(event) =>
+                  onFilterChange(
+                    { countryStatus: event.target.value as FilterState['countryStatus'] },
+                    'push'
+                  )
+                }
+                aria-label={lang === 'ar' ? 'حالة توفر البلد' : 'Country evidence status'}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="all">{lang === 'ar' ? 'كل الحالات' : 'All states'}</option>
+                <option value="supported">
+                  {lang === 'ar' ? 'مثبت لهذا البلد' : 'Confirmed for this country'}
+                </option>
+                <option value="unknown">{lang === 'ar' ? 'غير مثبت' : 'Not verified'}</option>
+                <option value="excluded">
+                  {lang === 'ar' ? 'مستثنى صراحةً' : 'Explicitly excluded'}
+                </option>
+              </select>
+              <p id="country-evidence-note" className="basis-full text-[11px] leading-relaxed text-slate-500">
+                {lang === 'ar'
+                  ? 'يعتمد التصنيف على حقل بلد ومصدر رسمي مُراجع فقط. غياب قيود البلدان لا يعني أن العرض متاح عالميًا؛ وما لا يثبته المصدر يبقى غير معلوم.'
+                  : 'Classification requires a reviewed country field and an official source. Missing country restrictions do not mean worldwide availability; unsupported cases remain unknown.'}
+              </p>
+            </div>
+
             {hasAnyActiveFilter && (
               <button
                 type="button"
@@ -1071,6 +1165,7 @@ export default function HomePage({
               <DealCard
                 key={`new-${deal.slug}`}
                 deal={deal}
+                country={filterState.country}
                 onOpen={onOpenDeal}
                 isComparisonSelected={comparisonSelection.includes(deal.slug)}
                 comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
@@ -1226,6 +1321,7 @@ export default function HomePage({
                         </p>
                         <DealCard
                           deal={deal}
+                          country={filterState.country}
                           onOpen={onOpenDeal}
                           isComparisonSelected={comparisonSelection.includes(deal.slug)}
                           comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
@@ -1238,6 +1334,7 @@ export default function HomePage({
                     ) : (
                       <DealCard
                         deal={deal}
+                        country={filterState.country}
                         onOpen={onOpenDeal}
                         isComparisonSelected={comparisonSelection.includes(deal.slug)}
                         comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
