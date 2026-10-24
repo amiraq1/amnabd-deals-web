@@ -1,0 +1,13 @@
+{
+  "name": "AMNABD Deals — نبض",
+  "short_name": "AMNABD",
+  "description": "A bilingual, source-linked guide to AI and cloud offers.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

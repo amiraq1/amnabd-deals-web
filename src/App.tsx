@@ -35,9 +35,31 @@ import { routeMetadata } from '@/lib/metadata';
 import { languageSearchForLocation } from '@/lib/languageStorage';
 import { comparisonSearch, parseComparisonSlugs, toggleComparisonSelection } from '@/lib/comparison';
 import ComparisonPage from '@/pages/ComparisonPage';
+import OfflineNotice from '@/components/OfflineNotice';
+import PwaControls from '@/components/PwaControls';
 
 function AppInner() {
   const { lang } = useLanguage();
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const needsFreshLoad = useRef(!navigator.onLine);
+  useEffect(() => {
+    const onOffline = () => {
+      needsFreshLoad.current = true;
+      setIsOnline(false);
+    };
+    const onOnline = () => {
+      // A fresh navigation fetches both the HTML and PostgREST data again.
+      // Do not reveal an in-memory catalog after a disconnected session.
+      if (needsFreshLoad.current) window.location.reload();
+      else setIsOnline(true);
+    };
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
+    return () => {
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
+    };
+  }, []);
   // A01: `pathname` + `search` are the only source of truth. The legacy hash
   // was migrated once in main.tsx, before this component ever mounted.
   const [route, setRoute] = useState<Route>(() => parseHash(window.location.pathname));
@@ -49,9 +71,17 @@ function AppInner() {
   const offers = useResource(loadDeals);
   const guides = useResource(loadGuides);
   const settings = useResource(loadConfig);
-  const deals = useMemo(() => offers.data?.value ?? [], [offers.data?.value]);
-  const guideRows = useMemo(() => guides.data?.value ?? [], [guides.data?.value]);
-  const config = settings.data?.value ?? null;
+  // useResource retains its previous value for diagnostics/retries. Never render
+  // that retained value as the current catalog after a loading/error transition.
+  const deals = useMemo(
+    () => offers.status === 'ready' ? offers.data?.value ?? [] : [],
+    [offers.status, offers.data?.value],
+  );
+  const guideRows = useMemo(
+    () => guides.status === 'ready' ? guides.data?.value ?? [] : [],
+    [guides.status, guides.data?.value],
+  );
+  const config = settings.status === 'ready' ? settings.data?.value ?? null : null;
 
   const { favorites } = useFavorites();
   const validSavedCount = useMemo(
@@ -243,7 +273,9 @@ function AppInner() {
   const guide = deal ? (guideRows.find((row) => row.slug === deal.slug) ?? null) : null;
   const guideNames: Record<string, { ar: string; en: string }> = Object.create(null);
   for (const row of deals) guideNames[row.slug] = { ar: row.name_ar, en: row.name_en };
-  const omitted = (offers.data?.omitted ?? 0) + (guides.data?.omitted ?? 0);
+  const omitted =
+    (offers.status === 'ready' ? offers.data?.omitted ?? 0 : 0) +
+    (guides.status === 'ready' ? guides.data?.omitted ?? 0 : 0);
 
   // A12: every route resolves through one formatter. Leaving a deal page puts
   // the destination's canonical, description, OG tags and JSON-LD back, instead
@@ -257,9 +289,24 @@ function AppInner() {
   }, [route, deal, lang, offers.status]);
 
   let content: JSX.Element;
-  if (route.name === 'notfound')
+  if (!isOnline)
+    content = <OfflineNotice lang={lang} onRetry={() => window.location.reload()} />;
+  else if (route.name === 'notfound')
     content = <NotFoundPage onBack={() => navigate({ name: 'home' })} />;
-  else if (route.name === 'favorites') {
+  else if (offers.status === 'error' && route.name !== 'guide') {
+    // Applies before every deal-dependent route, including details/comparison.
+    content = (
+      <main className="mx-auto max-w-4xl px-4 py-8">
+        <ResourceNotice name="deals" error={offers.error} lang={lang} retry={offers.retry} />
+      </main>
+    );
+  } else if (offers.status === 'loading' && ['favorites', 'changelog', 'collection'].includes(route.name)) {
+    content = (
+      <main className="mx-auto w-full max-w-4xl px-4 py-10" aria-busy="true" aria-label={lang === 'ar' ? 'جارٍ تحميل بيانات العروض' : 'Loading offer data'}>
+        <div className="skeleton h-64 w-full" />
+      </main>
+    );
+  } else if (route.name === 'favorites') {
     content = (
       <FavoritesPage
         deals={deals}
@@ -299,12 +346,6 @@ function AppInner() {
           loading={guides.status === 'loading'}
         />
       );
-  } else if (offers.status === 'error') {
-    content = (
-      <main className="mx-auto max-w-4xl px-4 py-8">
-        <ResourceNotice name="deals" error={offers.error} lang={lang} retry={offers.retry} />
-      </main>
-    );
   } else if (route.name === 'compare') {
     content = offers.status === 'loading' ? (
       <main className="mx-auto max-w-4xl px-4 py-10" aria-busy="true" aria-label={lang === 'ar' ? 'جارٍ تحميل بيانات المقارنة' : 'Loading comparison data'}>
@@ -374,8 +415,9 @@ function AppInner() {
       >
         {lang === 'ar' ? 'تخطي إلى المحتوى الرئيسي' : 'Skip to main content'}
       </a>
-      <Navbar route={route} navigate={navigate} savedCount={validSavedCount} />
-      {comparisonSelection.length === 1 && route.name !== 'home' && route.name !== 'compare' && (
+      <PwaControls lang={lang} />
+      <Navbar route={route} navigate={navigate} savedCount={isOnline ? validSavedCount : 0} />
+      {isOnline && comparisonSelection.length === 1 && route.name !== 'home' && route.name !== 'compare' && (
         <section className="mx-auto mt-4 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6" role="status">
           <p className="text-sm text-slate-300">
             {lang === 'ar'
@@ -393,16 +435,16 @@ function AppInner() {
         </section>
       )}
       <div id="main-content" tabIndex={-1} className="flex-1 outline-none">
-        {settings.status === 'error' && (
+        {isOnline && settings.status === 'error' && (
           <ResourceNotice name="config" error={settings.error} lang={lang} retry={settings.retry} />
         )}
-        {guides.status === 'error' && route.name !== 'guide' && (
+        {isOnline && guides.status === 'error' && route.name !== 'guide' && (
           <ResourceNotice name="guides" error={guides.error} lang={lang} retry={guides.retry} />
         )}
-        {offers.status === 'error' && route.name === 'guide' && (
+        {isOnline && offers.status === 'error' && route.name === 'guide' && (
           <ResourceNotice name="deals" error={offers.error} lang={lang} retry={offers.retry} />
         )}
-        {omitted > 0 && (
+        {isOnline && omitted > 0 && (
           <p className="mx-auto max-w-6xl px-4 pt-4 text-sm text-amber-200" role="status">
             {lang === 'ar'
               ? 'تم استبعاد بعض السجلات غير الصالحة. قد تكون القائمة أو الأدلة غير مكتملة.'

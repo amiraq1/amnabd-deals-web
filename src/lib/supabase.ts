@@ -1,6 +1,7 @@
 import { PostgrestClient } from '@supabase/postgrest-js';
 import { publicSupabaseConfig } from './environment';
 import { ResourceError } from './resource';
+import { networkOnlyFetch } from './network.js';
 
 let client: PostgrestClient | null = null;
 
@@ -19,6 +20,9 @@ export function getSupabase() {
   // Legacy anon JWTs also act as the anonymous bearer. Publishable API keys are
   // not JWTs; the gateway supplies anonymous access when no user bearer exists.
   if (!config.key.startsWith('sb_publishable_')) headers.Authorization = `Bearer ${config.key}`;
-  client = new PostgrestClient(`${config.url.replace(/\/$/, '')}/rest/v1`, { headers });
+  client = new PostgrestClient(`${config.url.replace(/\/$/, '')}/rest/v1`, {
+    headers,
+    fetch: networkOnlyFetch,
+  });
   return client;
 }

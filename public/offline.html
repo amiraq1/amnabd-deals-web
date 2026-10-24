@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#020617" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>غير متصل | AMNABD Deals</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, Tajawal, system-ui, sans-serif; background: #020617; color: #e2e8f0; }
+      * { box-sizing: border-box; }
+      body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; }
+      main { width: min(100%, 34rem); border: 1px solid #334155; border-radius: 1.25rem; background: #0f172a; padding: clamp(24px, 6vw, 40px); text-align: start; }
+      .mark { display: grid; width: 3rem; height: 3rem; place-items: center; border-radius: 1rem; background: #064e3b; color: #6ee7b7; font-size: 1.4rem; font-weight: 800; }
+      h1 { margin: 1.25rem 0 .5rem; font-size: clamp(1.5rem, 5vw, 2rem); color: #fff; }
+      p { margin: .75rem 0; color: #cbd5e1; line-height: 1.8; }
+      .hint { color: #94a3b8; font-size: .94rem; }
+      button { min-height: 44px; margin-top: 1.25rem; border: 0; border-radius: .75rem; background: #10b981; padding: .65rem 1rem; color: #022c22; font: inherit; font-weight: 700; cursor: pointer; }
+      button:focus-visible { outline: 3px solid #a7f3d0; outline-offset: 3px; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark" aria-hidden="true">A</div>
+      <section id="arabic" lang="ar" dir="rtl">
+        <h1>أنت غير متصل بالإنترنت</h1>
+        <p>لا نعرض نسخة مخزنة من كتالوج العروض على أنها حديثة. أعد الاتصال بالإنترنت لتحميل أحدث البيانات.</p>
+        <p class="hint">مفضلاتك المحلية محفوظة في هذا المتصفح، وستظهر عند عودة الاتصال.</p>
+        <button type="button" onclick="location.reload()">إعادة المحاولة</button>
+      </section>
+      <section id="english" lang="en" dir="ltr" hidden>
+        <h1>You’re offline</h1>
+        <p>We don’t present a cached offers catalog as current. Reconnect to load the latest data.</p>
+        <p class="hint">Your local favorites remain saved in this browser and will return when you’re online.</p>
+        <button type="button" onclick="location.reload()">Try again</button>
+      </section>
+    </main>
+    <script>
+      try {
+        const requested = new URLSearchParams(location.search).getAll('lang');
+        const fromUrl = requested.length === 1 && (requested[0] === 'en' || requested[0] === 'ar') ? requested[0] : null;
+        const saved = localStorage.getItem('amnabd-lang');
+        const preferred = fromUrl || saved;
+        const useEnglish = preferred === 'en' || (!preferred && navigator.language.toLowerCase().startsWith('en'));
+        document.documentElement.lang = useEnglish ? 'en' : 'ar';
+        document.documentElement.dir = useEnglish ? 'ltr' : 'rtl';
+        document.title = useEnglish ? 'Offline | AMNABD Deals' : 'غير متصل | AMNABD Deals';
+        document.getElementById('arabic').hidden = useEnglish;
+        document.getElementById('english').hidden = !useEnglish;
+      } catch (_) {}
+    </script>
+  </body>
+</html>
