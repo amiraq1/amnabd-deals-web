@@ -61,7 +61,8 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       .filter((deal): deal is Deal => Boolean(deal));
   }, [favorites, deals]);
 
-  const soonEndingDeals = getSavedOffersEndingSoon(favoriteDeals, new Date());
+  const referenceNow = new Date();
+  const soonEndingDeals = getSavedOffersEndingSoon(favoriteDeals, referenceNow);
 
   // نشارك العروض الموجودة فعلًا فقط، فلا تصل لمن يفتح الرابط مفضلات لعروض محذوفة.
   const validSlugs = useMemo(() => favoriteDeals.map((d) => d.slug), [favoriteDeals]);
@@ -240,7 +241,12 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {favoriteDeals.map((deal) => (
-            <DealCard key={deal.slug} deal={deal} onOpen={onOpenDeal} />
+            <DealCard
+              key={deal.slug}
+              deal={deal}
+              referenceNow={referenceNow}
+              onOpen={onOpenDeal}
+            />
           ))}
         </div>
       )}

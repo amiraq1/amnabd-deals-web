@@ -41,6 +41,7 @@ export default function CollectionPage({
 }: CollectionPageProps) {
   const { lang, dir } = useLanguage();
   const { favorites, toggleFavorite } = useFavorites();
+  const referenceNow = new Date();
 
   const config: AggregationConfig | undefined = AGGREGATIONS[collectionKey];
   const Icon = COLLECTION_ICONS[collectionKey] || Sparkles;
@@ -249,6 +250,7 @@ export default function CollectionPage({
               <DealCard
                 key={deal.slug}
                 deal={deal}
+                referenceNow={referenceNow}
                 index={idx}
                 onOpen={onOpenDeal}
                 isFavorited={favorites.includes(deal.slug)}

@@ -21,6 +21,7 @@ import FavoriteButton from '@/components/FavoriteButton';
 
 export interface DealCardProps {
   deal: Deal;
+  referenceNow: Date;
   country?: string;
   onOpen?: (slug: string) => void;
   // الخصائص التالية أبقيتها للتوافق مع الاستدعاءات الحالية، وهي غير مستخدمة داخل البطاقة.
@@ -52,17 +53,22 @@ function registrationLabel(date: string, passed: boolean, lang: Lang): string {
   return `${prefix}: ${date}`;
 }
 
-function isRecentlyReviewed(reviewedOn?: string | null, createdAt?: string | null): boolean {
+function isRecentlyReviewed(
+  reviewedOn: string | null | undefined,
+  createdAt: string | null | undefined,
+  referenceNow: Date
+): boolean {
   const value = reviewedOn || createdAt;
   if (!value) return false;
   const time = new Date(value).getTime();
   if (!Number.isFinite(time)) return false;
-  const diffDays = (Date.now() - time) / DAY_MS;
+  const diffDays = (referenceNow.getTime() - time) / DAY_MS;
   return diffDays >= 0 && diffDays <= 7;
 }
 
 export default function DealCard({
   deal,
+  referenceNow,
   country,
   onOpen,
   isComparisonSelected = false,
@@ -81,13 +87,13 @@ export default function DealCard({
     : deal.description_en || deal.description_ar;
 
   // One timing model for the card, the sort and the collections (PR-2).
-  const timing = getTimingState(deal, new Date());
+  const timing = getTimingState(deal, referenceNow);
   const expired = timing.offer.state === 'expired';
   const endingSoon = timing.offer.state === 'ending_soon';
   const daysLeft = timing.offer.daysLeft;
   const expiredByDate = expired && timing.offer.reason === 'ends_at';
   const registration = timing.registration;
-  const isNew = !expired && isRecentlyReviewed(deal.review.reviewed_on, deal.created_at);
+  const isNew = !expired && isRecentlyReviewed(deal.review.reviewed_on, deal.created_at, referenceNow);
   const verified = isVerifiedReview(deal.review);
 
   const noCard = deal.eligibility.card_required === 'not_required';

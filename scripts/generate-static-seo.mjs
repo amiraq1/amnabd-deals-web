@@ -103,6 +103,23 @@ export async function loadPublicDealSlugs({
   return rows.map((row) => row.slug).sort();
 }
 
+export async function loadPublicDealStates({
+  rootDir = ROOT,
+  publicUrl,
+  publicKey,
+  fetchImpl = globalThis.fetch,
+  pageSize = 500,
+} = {}) {
+  return loadPublicDealRows({
+    rootDir,
+    publicUrl,
+    publicKey,
+    fetchImpl,
+    pageSize,
+    select: 'slug,status,ends_at',
+  });
+}
+
 const PUBLIC_DEAL_GUARD_FIELDS =
   'slug,status,ends_at,name_ar,name_en,description_ar,description_en,benefits,eligibility,official_sources,review';
 
@@ -169,13 +186,18 @@ async function loadPublicDealRows({
   return result;
 }
 
-export async function loadBuildDealSlugs({ rootDir = ROOT } = {}) {
+async function loadBuildDealData({ rootDir = ROOT } = {}) {
   const source = process.env.SEO_PARITY_SOURCE || 'live';
-  if (source === 'snapshot') return loadDealSlugSnapshot(rootDir);
+  if (source === 'snapshot') return { slugs: loadDealSlugSnapshot(rootDir), records: null };
   if (source !== 'live') {
     throw new Error(`SEO_PARITY_SOURCE must be "live" or "snapshot" (received "${source}").`);
   }
-  return loadPublicDealSlugs({ rootDir });
+  const records = await loadPublicDealStates({ rootDir });
+  return { slugs: records.map((row) => row.slug).sort(), records };
+}
+
+export async function loadBuildDealSlugs(options = {}) {
+  return (await loadBuildDealData(options)).slugs;
 }
 
 export function writeMissingDealRoutePages({
@@ -380,12 +402,23 @@ export function toRfc822Date(dateStr) {
   return Number.isNaN(parsed.getTime()) ? new Date().toUTCString() : parsed.toUTCString();
 }
 
-export function generateRssFeedXml(deals, baseUrl = DEFAULT_SITE_URL) {
-  const cleanBase = baseUrl.replace(/\/+$/, '');
+function hasPassedRecordedEnd(deal, nowMs) {
+  if (typeof deal?.ends_at !== 'string' || !deal.ends_at.trim()) return false;
+  const endMs = Date.parse(deal.ends_at);
+  return Number.isFinite(endMs) && endMs <= nowMs;
+}
 
-  // Include active or ending_soon deals only, sorted by newest review.
+export function generateRssFeedXml(deals, baseUrl = DEFAULT_SITE_URL, referenceNow = new Date()) {
+  const cleanBase = baseUrl.replace(/\/+$/, '');
+  const nowMs = referenceNow instanceof Date ? referenceNow.getTime() : Date.parse(String(referenceNow));
+
+  // Keep only live records with no explicit expiry status or passed ends_at.
+  // Missing/invalid dates stay unknown; no dates are inferred from prose.
   const feedDeals = [...deals]
-    .filter((deal) => deal?.slug && deal.status !== 'expired')
+    .filter(
+      (deal) =>
+        deal?.slug && deal.status !== 'expired' && !hasPassedRecordedEnd(deal, nowMs)
+    )
     .sort((a, b) => {
       const aTime = a.review?.reviewed_on ? new Date(a.review.reviewed_on).getTime() : 0;
       const bTime = b.review?.reviewed_on ? new Date(b.review.reviewed_on).getTime() : 0;
@@ -618,6 +651,7 @@ export async function runStaticSeoGeneration({
   distDir = join(ROOT, 'dist'),
   baseUrl = DEFAULT_SITE_URL,
   databaseSlugs,
+  databaseDealStates,
 } = {}) {
   const indexHtmlPath = join(distDir, 'index.html');
   if (!existsSync(indexHtmlPath)) {
@@ -630,11 +664,31 @@ export async function runStaticSeoGeneration({
   const baseHtml = readFileSync(indexHtmlPath, 'utf8');
   const deals = loadDealsCatalog(rootDir);
   const seoDeals = deals.filter((deal) => isStaticDealSlug(deal?.slug));
-  const publishedSlugs = databaseSlugs ?? (await loadBuildDealSlugs({ rootDir }));
+  const liveBuildData =
+    databaseSlugs === undefined && databaseDealStates === undefined
+      ? await loadBuildDealData({ rootDir })
+      : null;
+  const liveDealStates = databaseDealStates ?? liveBuildData?.records ?? null;
+  const publishedSlugs =
+    databaseSlugs ??
+    liveBuildData?.slugs ??
+    (liveDealStates ? liveDealStates.map((row) => row.slug).sort() : null) ??
+    (await loadBuildDealSlugs({ rootDir }));
+  const liveStateBySlug = liveDealStates
+    ? new Map(liveDealStates.map((row) => [row.slug, row]))
+    : null;
+  const feedDeals = liveStateBySlug
+    ? seoDeals.flatMap((deal) => {
+        const liveState = liveStateBySlug.get(deal.slug);
+        return liveState
+          ? [{ ...deal, status: liveState.status, ends_at: liveState.ends_at }]
+          : [];
+      })
+    : seoDeals;
 
   writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'robots.txt'), generateRobotsTxt(baseUrl), 'utf8');
-  writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(seoDeals, baseUrl), 'utf8');
+  writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(feedDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'llms.txt'), generateLlmsTxt(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, '404.html'), baseHtml, 'utf8');
 

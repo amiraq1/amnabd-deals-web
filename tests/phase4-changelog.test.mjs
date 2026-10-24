@@ -152,7 +152,7 @@ test('generateRssFeedXml creates compliant RSS 2.0 feed', () => {
     },
   ];
 
-  const xml = generateRssFeedXml(deals, 'https://amnabd.com');
+  const xml = generateRssFeedXml(deals, 'https://amnabd.com', new Date('2026-10-24T12:00:00Z'));
 
   // Verify XML structure and RSS 2.0 namespace
   assert.ok(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
@@ -172,6 +172,21 @@ test('generateRssFeedXml creates compliant RSS 2.0 feed', () => {
 
   // Guid is composite for bot change detection
   assert.ok(xml.includes('<guid isPermaLink="false">cursor-ending:ending_soon:2026-10-19</guid>'));
+});
+
+test('generateRssFeedXml excludes a passed recorded ends_at even when status is stale', () => {
+  const xml = generateRssFeedXml(
+    [
+      { slug: 'past-end', status: 'active', ends_at: '2026-10-24T11:59:59Z' },
+      { slug: 'future-end', status: 'active', ends_at: '2026-10-24T12:00:01Z' },
+      { slug: 'unknown-end', status: null, ends_at: null },
+    ],
+    'https://amnabd.com',
+    new Date('2026-10-24T12:00:00Z')
+  );
+  assert.doesNotMatch(xml, /past-end/);
+  assert.match(xml, /future-end/);
+  assert.match(xml, /unknown-end/);
 });
 
 test('generateSitemapXml includes changelog page with daily changefreq', () => {

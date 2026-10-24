@@ -1165,6 +1165,7 @@ export default function HomePage({
               <DealCard
                 key={`new-${deal.slug}`}
                 deal={deal}
+                referenceNow={referenceNow}
                 country={filterState.country}
                 onOpen={onOpenDeal}
                 isComparisonSelected={comparisonSelection.includes(deal.slug)}
@@ -1321,6 +1322,7 @@ export default function HomePage({
                         </p>
                         <DealCard
                           deal={deal}
+                          referenceNow={referenceNow}
                           country={filterState.country}
                           onOpen={onOpenDeal}
                           isComparisonSelected={comparisonSelection.includes(deal.slug)}
@@ -1334,6 +1336,7 @@ export default function HomePage({
                     ) : (
                       <DealCard
                         deal={deal}
+                        referenceNow={referenceNow}
                         country={filterState.country}
                         onOpen={onOpenDeal}
                         isComparisonSelected={comparisonSelection.includes(deal.slug)}

@@ -138,6 +138,10 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
       distDir,
       baseUrl: 'https://deals.example.com',
       databaseSlugs: deals.map((deal) => deal.slug),
+      databaseDealStates: [
+        { slug: 'bolt-builders-week', status: 'expired', ends_at: '2026-10-19T06:59:00Z' },
+        { slug: 'second-deal', status: null, ends_at: null },
+      ],
     });
 
     const generated = readFileSync(join(distDir, 'llms.txt'), 'utf8');
@@ -148,6 +152,9 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     assert.deepEqual(llmsSlugs.sort(), pageSlugs.sort());
     assert.equal(llmsSlugs.length, 2);
     assert.doesNotMatch(generated, /#\/deal|stale hash route/);
+    const feed = readFileSync(join(distDir, 'feed.xml'), 'utf8');
+    assert.doesNotMatch(feed, /bolt-builders-week/);
+    assert.match(feed, /second-deal/);
     assert.equal(readFileSync(join(distDir, 'ending-soon', 'index.html'), 'utf8'), sampleBaseHtml);
     const comparisonShell = readFileSync(join(distDir, 'compare', 'index.html'), 'utf8');
     assert.equal(comparisonShell, buildNoIndexAppShell(sampleBaseHtml));
