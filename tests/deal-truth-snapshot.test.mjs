@@ -77,7 +77,14 @@ const deal = {
     reviewed_on: '2026-10-24',
     verified_on: null,
     offer_status: 'active',
-    unknown_fields: ['eligibility.card_required', 'registration.credit_validity'],
+    unknown_fields: [
+      'Iraq_availability',
+      'benefits.0.duration',
+      'eligibility.card_required',
+      'eligibility.countries',
+      'registration.credit_validity',
+      'registration.deadline',
+    ],
     verification_status: 'verified',
   },
 };
@@ -155,6 +162,7 @@ function renderForLanguage(lang) {
 
 for (const lang of ['ar', 'en']) {
   test(`deal truth snapshot is present before both guides (${lang})`, () => {
+    const originalDeal = JSON.stringify(deal);
     const html = renderForLanguage(lang);
     const isArabic = lang === 'ar';
     const truthHeading = isArabic
@@ -180,8 +188,14 @@ for (const lang of ['ar', 'en']) {
     assert.ok(html.includes(isArabic ? 'شروط الأهلية' : 'Eligibility facts'));
     assert.ok(html.includes(knownLabel), 'known eligibility state is preserved');
     assert.ok(html.includes(unknownLabel), 'unknown eligibility state is preserved');
-    assert.ok(html.includes('eligibility.card_required'));
-    assert.ok(html.includes('registration.credit_validity'));
+    const fieldLabels = isArabic
+      ? ['مدى توفر العرض في العراق', 'مدة المنفعة الأولى', 'اشتراط بطاقة ائتمان', 'البلدان المشمولة بالأهلية', 'مدة صلاحية الرصيد', 'الموعد النهائي للتسجيل']
+      : ['Availability in Iraq', 'First benefit duration', 'Credit-card requirement', 'Eligible countries', 'Credit validity period', 'Registration deadline'];
+    for (const label of fieldLabels) assert.ok(html.includes(label), `localized label ${label} is visible`);
+    for (const field of deal.review.unknown_fields) {
+      assert.ok(!html.includes(field), `raw identifier ${field} is not rendered`);
+    }
+    assert.equal(JSON.stringify(deal), originalDeal, 'rendering preserves all recorded keys and unknown values');
     assert.ok(html.includes(reviewNote), 'localized review notes are visible');
     assert.ok(html.includes('https://official.example.test/terms'));
     assert.ok(usageGuideIndex > truthIndex, 'usage guide follows the truth snapshot');

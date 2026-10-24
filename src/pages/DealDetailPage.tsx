@@ -22,6 +22,7 @@ import ScrollToTop from '@/components/ScrollToTop';
 import FavoriteButton from '@/components/FavoriteButton';
 import ReportDealBox from '@/components/ReportDealBox';
 import { filterActivationGuide } from '@/lib/activationGuideSafety';
+import { unknownFieldLabel } from '@/lib/unknownFieldLabels';
 import { ActivationGuide } from '@/components/ActivationGuide';
 
 interface DealDetailPageProps {
@@ -86,6 +87,7 @@ export default function DealDetailPage({
   // must not print `offer_status` on its own.
   const timing = getTimingState(deal, new Date());
   const unknownCount = deal.review.unknown_fields.length;
+  const unknownFieldNames = deal.review.unknown_fields.map((field) => unknownFieldLabel(field, lang));
   const activationGuide = filterActivationGuide(guide?.activation, deal.review.unknown_fields);
 
   return (
@@ -243,8 +245,8 @@ export default function DealDetailPage({
                 kind="info"
                 text={
                   lang === 'ar'
-                    ? `حقول غير مثبتة بالأدلة (${unknownCount.toLocaleString('ar-EG')}): ${deal.review.unknown_fields.join('، ')}. تعني «غير معلوم» أن المصادر المتاحة لا تؤكد القيمة أو القاعدة.`
-                    : `Fields not established by evidence (${unknownCount}): ${deal.review.unknown_fields.join(', ')}. “Unknown” means the available sources do not confirm the value or rule.`
+                    ? `حقول غير مثبتة بالأدلة (${unknownCount.toLocaleString('ar-EG')}): ${unknownFieldNames.join('، ')}. تعني «غير معلوم» أن المصادر المتاحة لا تؤكد القيمة أو القاعدة.`
+                    : `Fields not established by evidence (${unknownCount}): ${unknownFieldNames.join(', ')}. “Unknown” means the available sources do not confirm the value or rule.`
                 }
               />
             </section>
