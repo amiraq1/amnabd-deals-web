@@ -278,7 +278,7 @@ function runVerifyDist(distDir) {
   return execFileSync(
     process.execPath,
     [join(process.cwd(), 'scripts/verify-dist.mjs'), '--dist', distDir],
-    { encoding: 'utf8', stdio: 'pipe' }
+    { encoding: 'utf8', stdio: 'pipe', env: { ...process.env, SEO_PARITY_SOURCE: 'snapshot' } }
   );
 }
 
@@ -427,7 +427,7 @@ test('verify-dist warns about claim-like source summaries without failing', () =
   const result = spawnSync(
     process.execPath,
     [join(process.cwd(), 'scripts/verify-dist.mjs'), '--dist', dist],
-    { encoding: 'utf8' }
+    { encoding: 'utf8', env: { ...process.env, SEO_PARITY_SOURCE: 'snapshot' } }
   );
   assert.equal(result.status, 0);
   assert.match(result.stdout, /verify-dist: OK/);

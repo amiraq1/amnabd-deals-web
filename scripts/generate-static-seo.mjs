@@ -92,23 +92,63 @@ export async function loadPublicDealSlugs({
   fetchImpl = globalThis.fetch,
   pageSize = 500,
 } = {}) {
+  const rows = await loadPublicDealRows({
+    rootDir,
+    publicUrl,
+    publicKey,
+    fetchImpl,
+    pageSize,
+    select: 'slug',
+  });
+  return rows.map((row) => row.slug).sort();
+}
+
+const PUBLIC_DEAL_GUARD_FIELDS =
+  'slug,status,ends_at,name_ar,name_en,description_ar,description_en,benefits,eligibility,official_sources,review';
+
+export async function loadPublicDealRecords({
+  rootDir = ROOT,
+  publicUrl,
+  publicKey,
+  fetchImpl = globalThis.fetch,
+  pageSize = 500,
+} = {}) {
+  return loadPublicDealRows({
+    rootDir,
+    publicUrl,
+    publicKey,
+    fetchImpl,
+    pageSize,
+    select: PUBLIC_DEAL_GUARD_FIELDS,
+  });
+}
+
+async function loadPublicDealRows({
+  rootDir,
+  publicUrl,
+  publicKey,
+  fetchImpl,
+  pageSize,
+  select,
+}) {
   const config = routeLookupConfig(rootDir, { publicUrl, publicKey });
   if (typeof fetchImpl !== 'function') throw new Error('Static deal-route lookup requires fetch.');
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000)
     throw new RangeError('Static deal-route page size must be from 1 to 1000.');
 
-  const slugs = new Set();
+  const seenSlugs = new Set();
+  const result = [];
   for (let offset = 0; ; offset += pageSize) {
     const endpoint = new URL('/rest/v1/deals', config.url);
-    endpoint.searchParams.set('select', 'slug');
+    endpoint.searchParams.set('select', select);
     endpoint.searchParams.set('order', 'slug.asc');
     endpoint.searchParams.set('limit', String(pageSize));
     endpoint.searchParams.set('offset', String(offset));
+    const headers = { apikey: config.key };
+    if (!config.key.startsWith('sb_publishable_'))
+      headers.Authorization = `Bearer ${config.key}`;
     const response = await fetchImpl(endpoint, {
-      headers: {
-        apikey: config.key,
-        Authorization: `Bearer ${config.key}`,
-      },
+      headers,
     });
     if (!response.ok)
       throw new Error(`Static deal-route lookup failed (HTTP ${response.status}).`);
@@ -118,14 +158,15 @@ export async function loadPublicDealSlugs({
       if (!isStaticDealSlug(row?.slug)) {
         throw new Error('Static deal-route lookup returned a row with an invalid public slug.');
       }
-      if (slugs.has(row.slug)) {
+      if (seenSlugs.has(row.slug)) {
         throw new Error(`Static deal-route lookup returned duplicate public slug: ${row.slug}`);
       }
-      slugs.add(row.slug);
+      seenSlugs.add(row.slug);
+      result.push(row);
     }
     if (rows.length < pageSize) break;
   }
-  return [...slugs].sort();
+  return result;
 }
 
 export async function loadBuildDealSlugs({ rootDir = ROOT } = {}) {

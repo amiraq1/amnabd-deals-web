@@ -58,6 +58,12 @@ jobs:
           SEO_PARITY_SOURCE: ${{ github.event_name == 'pull_request' && 'snapshot' || 'live' }}
       # Fails the build if dist/ publishes a claim the catalog cannot prove.
       - run: node scripts/verify-dist.mjs
+        env:
+          # The F-04 guard reads only public deal fields with the anon key on
+          # deploy builds. Fork PRs use the slug snapshot and unit fixtures.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://audit-fixture.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001' }}
+          SEO_PARITY_SOURCE: ${{ github.event_name == 'pull_request' && 'snapshot' || 'live' }}
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:

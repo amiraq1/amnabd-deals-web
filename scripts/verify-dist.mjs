@@ -22,9 +22,11 @@ import { fileURLToPath } from 'node:url';
 import {
   isStaticDealSlug,
   loadDealsCatalog,
+  loadPublicDealRecords,
   STATIC_AGGREGATIONS,
   sharedSeo,
 } from './generate-static-seo.mjs';
+import { inspectDealDeadlineCoverage } from './deal-deadline-guard.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { dealFacts } = sharedSeo;
@@ -247,7 +249,7 @@ function summaryWarnings(deals) {
   return warnings;
 }
 
-export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}) {
+export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveDeals } = {}) {
   if (!existsSync(distDir)) {
     return { violations: [`${distDir}: مجلد البناء غير موجود`], warnings: [] };
   }
@@ -258,6 +260,29 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}
   const deals = loadDealsCatalog(rootDir);
   const bySlug = new Map(deals.map((deal) => [deal.slug, deal]));
   const genericAppShell = readIfExists(join(distDir, 'index.html'));
+  let deadlineWarnings = [];
+  let deadlineCoverage = [];
+
+  if (Array.isArray(liveDeals)) {
+    const recordsWithSeoText = liveDeals.map((deal) => {
+      const seoDeal = bySlug.get(deal?.slug);
+      return {
+        ...deal,
+        name: deal?.name ?? seoDeal?.name,
+        summary: seoDeal?.summary,
+      };
+    });
+    const coverage = inspectDealDeadlineCoverage(recordsWithSeoText, {
+      timestampInstant: sharedSeo.timestampInstant,
+    });
+    deadlineWarnings = coverage.warnings;
+    deadlineCoverage = coverage.covered;
+    for (const issue of coverage.violations) {
+      report(
+        `F-04: deal/${issue.slug}: explicit closing date/time in ${issue.paths.join(', ')} requires a valid ends_at`
+      );
+    }
+  }
 
   for (const slug of listSlugs(distDir, 'deal')) {
     const deal = bySlug.get(slug);
@@ -308,34 +333,69 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}
     }
   }
 
-  return { violations, warnings: summaryWarnings(deals) };
+  return { violations, warnings: summaryWarnings(deals), deadlineWarnings, deadlineCoverage };
 }
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
 
 if (isMain) {
-  const index = process.argv.indexOf('--dist');
-  const distDir = index > -1 && process.argv[index + 1] ? resolve(process.argv[index + 1]) : undefined;
-  const { violations, warnings } = verifyDist(distDir ? { distDir } : {});
-  if (warnings.length > 0) {
-    // Written outside the repo so the list is reviewable without being committed.
-    const warningFile = join(tmpdir(), 'amnabd-verify-dist-warnings.txt');
-    writeFileSync(
-      warningFile,
-      warnings.map((w) => `${w.slug}\t${w.word}\t${w.excerpt}`).join('\n') + '\n',
-      'utf8'
-    );
-    console.warn(
-      `verify-dist: ${warnings.length} تحذير محتوى (لا يوقف البناء) — ${warningFile}`
-    );
-    for (const warning of warnings) {
-      console.warn(`  ! deal/${warning.slug}: نص المصدر يحوي «${warning.word}»`);
+  try {
+    const index = process.argv.indexOf('--dist');
+    const distDir = index > -1 && process.argv[index + 1] ? resolve(process.argv[index + 1]) : undefined;
+    const source = process.env.SEO_PARITY_SOURCE || 'live';
+    let liveDeals;
+    if (source === 'live') {
+      liveDeals = await loadPublicDealRecords({ rootDir: ROOT });
+    } else if (source === 'snapshot') {
+      console.warn('verify-dist: F-04 live-data guard skipped (snapshot build has no live ends_at fields).');
+    } else {
+      throw new Error(`SEO_PARITY_SOURCE must be "live" or "snapshot" (received "${source}").`);
     }
-  }
-  if (violations.length > 0) {
-    console.error('verify-dist: FAIL');
-    for (const violation of violations) console.error(`  - ${violation}`);
+
+    const { violations, warnings, deadlineWarnings, deadlineCoverage } = verifyDist({
+      ...(distDir ? { distDir } : {}),
+      ...(liveDeals ? { liveDeals } : {}),
+    });
+    if (warnings.length > 0) {
+      // Written outside the repo so the list is reviewable without being committed.
+      const warningFile = join(tmpdir(), 'amnabd-verify-dist-warnings.txt');
+      writeFileSync(
+        warningFile,
+        warnings.map((w) => `${w.slug}\t${w.word}\t${w.excerpt}`).join('\n') + '\n',
+        'utf8'
+      );
+      console.warn(
+        `verify-dist: ${warnings.length} تحذير محتوى (لا يوقف البناء) — ${warningFile}`
+      );
+      for (const warning of warnings) {
+        console.warn(`  ! deal/${warning.slug}: نص المصدر يحوي «${warning.word}»`);
+      }
+    }
+    if (deadlineWarnings.length > 0) {
+      console.warn(
+        `verify-dist: ${deadlineWarnings.length} موعدًا يوميًا بلا ends_at صالح؛ مستبعد من احتساب الانتهاء دون اختراع وقت.`
+      );
+      for (const warning of deadlineWarnings) {
+        console.warn(
+          `  ! deal/${warning.slug}: موعد إغلاق يومي في ${warning.paths.join(', ')} غير مؤهل لمعالجة الانتهاء.`
+        );
+      }
+    }
+    if (deadlineCoverage.length > 0) {
+      console.log(
+        `verify-dist: F-04 ends_at verified for ${deadlineCoverage.length} deadline-bearing deal(s): ${deadlineCoverage
+          .map((deal) => deal.slug)
+          .join(', ')}`
+      );
+    }
+    if (violations.length > 0) {
+      console.error('verify-dist: FAIL');
+      for (const violation of violations) console.error(`  - ${violation}`);
+      process.exit(1);
+    }
+    console.log('verify-dist: OK');
+  } catch (error) {
+    console.error('[verify-dist] error:', error instanceof Error ? error.message : 'unknown error');
     process.exit(1);
   }
-  console.log('verify-dist: OK');
 }
