@@ -65,10 +65,10 @@ const COPY: Record<string, RouteCopy> = {
     },
   },
   changelog: {
-    title: { ar: 'سجل التغييرات وتحديثات العروض', en: 'Changelog & Deal Updates' },
+    title: { ar: 'سجل مراجعات العروض', en: 'Offer Review History' },
     description: {
-      ar: 'أحدث العروض المضافة، المراجعات الدورية، والتنبيهات قبل انتهاء صلاحية أرصدة الذكاء الاصطناعي.',
-      en: 'New offers, periodic reviews, and warnings before AI credits expire.',
+      ar: 'آخر مراجعة مسجّلة لكل عرض وملاحظاتها، مع أحداث الانتهاء المحسوبة من موعد مسجّل، دون ادعاء فروق تاريخية للحقول.',
+      en: 'The latest recorded review and notes for each offer, plus expiry events calculated from recorded end dates, without claiming historical field changes.',
     },
   },
   notfound: {

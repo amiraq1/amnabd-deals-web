@@ -55,7 +55,7 @@ export default function Footer() {
                 href={localizedPath('/changelog')}
                 className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-400"
               >
-                {lang === 'ar' ? 'سجل التغييرات' : 'Changelog'}
+                {lang === 'ar' ? 'سجل المراجعات' : 'Review History'}
               </a>
               <span className="text-slate-600">·</span>
               <a

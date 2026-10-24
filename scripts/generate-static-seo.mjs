@@ -585,15 +585,15 @@ export async function runStaticSeoGeneration({
   const changelogDir = join(distDir, 'changelog');
   mkdirSync(changelogDir, { recursive: true });
   const changelogSeo = {
-    title: 'سجل التغييرات وتحديثات العروض — عروض وأرصدة الذكاء الاصطناعي',
+    title: 'سجل مراجعات العروض — عروض وأرصدة الذكاء الاصطناعي',
     description:
-      'تابع أحدث العروض المضافة، المراجعات الدورية، والتنبيهات قبل انتهاء صلاحية أرصدة الذكاء الاصطناعي.',
+      'آخر مراجعة مسجّلة لكل عرض وملاحظاتها، مع أحداث الانتهاء المحسوبة من موعد مسجّل، دون ادعاء فروق تاريخية للحقول.',
     canonicalUrl: `${baseUrl.replace(/\/+$/, '')}/changelog`,
     ogImageUrl: `${baseUrl.replace(/\/+$/, '')}/og-image.png`,
     jsonLd: {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'سجل التغييرات وتحديثات العروض',
+      name: 'سجل مراجعات العروض',
       url: `${baseUrl.replace(/\/+$/, '')}/changelog`,
     },
   };

@@ -40,11 +40,14 @@ test('getChangelogEventType accurately reflects deal status', () => {
 
 test('buildChangelogSummary produces tailored notes for each event type', () => {
   const expiredSummary = buildChangelogSummary({ status: 'expired' }, 'expired');
-  assert.ok(expiredSummary.includes('انتهت صلاحية العرض'));
+  assert.ok(expiredSummary.includes('الحالة الحالية في السجل: منتهٍ'));
+  assert.doesNotMatch(expiredSummary, /أرشف/);
 
   const endingSoonSummary = buildChangelogSummary(
     { status: 'ending_soon', ends_at: '2026-10-31' },
-    'ending_soon'
+    'ending_soon',
+    'ar',
+    new Date('2026-10-24T12:00:00Z')
   );
   assert.ok(endingSoonSummary.includes('2026-10-31'));
 
@@ -55,8 +58,9 @@ test('buildChangelogSummary produces tailored notes for each event type', () => 
     },
     'verified'
   );
-  assert.ok(verifiedSummary.includes('بدون بطاقة'));
-  assert.ok(verifiedSummary.includes('للطلاب'));
+  assert.ok(verifiedSummary.includes('سُجّلت مراجعة'));
+  assert.ok(verifiedSummary.includes('لا تتوفر مقارنة محفوظة'));
+  assert.doesNotMatch(verifiedSummary, /تم تغيير|تمت إضافة|أرشف/);
 });
 
 test('buildChangelogEntries extracts and sorts entries chronologically descending', () => {
@@ -86,7 +90,7 @@ test('buildChangelogEntries extracts and sorts entries chronologically descendin
     },
   ];
 
-  const entries = buildChangelogEntries(deals);
+  const entries = buildChangelogEntries(deals, 'ar', new Date('2026-10-24T12:00:00Z'));
   assert.equal(entries.length, 2);
   assert.equal(entries[0].dealSlug, 'new-deal');
   assert.equal(entries[1].dealSlug, 'old-deal');
