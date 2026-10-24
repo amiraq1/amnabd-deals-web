@@ -29,6 +29,10 @@ interface HomePageProps {
   getSearchLink?: () => string;
   onFilterChange?: (update: Partial<FilterState>, method?: 'push' | 'replace') => void;
   onResetFilters?: () => void;
+  comparisonSelection: string[];
+  onToggleComparison: (slug: string) => void;
+  onClearComparison: () => void;
+  onOpenComparison: () => void;
 }
 
 const USE_CASE_LABELS: Record<string, { ar: string; en: string }> = {
@@ -61,6 +65,10 @@ export default function HomePage({
   getSearchLink = () => window.location.href,
   onFilterChange = () => undefined,
   onResetFilters = () => undefined,
+  comparisonSelection,
+  onToggleComparison,
+  onClearComparison,
+  onOpenComparison,
 }: HomePageProps) {
   const { lang, pick } = useLanguage();
   const { savedList, savedSet, toggle, degraded, atLimit } = useSavedDeals();
@@ -1064,10 +1072,33 @@ export default function HomePage({
                 key={`new-${deal.slug}`}
                 deal={deal}
                 onOpen={onOpenDeal}
+                isComparisonSelected={comparisonSelection.includes(deal.slug)}
+                comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
+                onToggleComparison={onToggleComparison}
                 isSaved={savedSet.has(deal.slug)}
                 onToggleSave={toggle}
               />
             ))}
+          </div>
+        </section>
+      )}
+
+      {comparisonSelection.length > 0 && (
+        <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4" role="status">
+          <p className="text-sm text-slate-200">
+            {lang === 'ar'
+              ? `تم اختيار ${comparisonSelection.length.toLocaleString('ar-EG')} من عرضين للمقارنة.`
+              : `${comparisonSelection.length} of 2 offers selected for comparison.`}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {comparisonSelection.length === 2 && (
+              <button type="button" onClick={onOpenComparison} className="min-h-11 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-emerald-400">
+                {lang === 'ar' ? 'عرض المقارنة' : 'View comparison'}
+              </button>
+            )}
+            <button type="button" onClick={onClearComparison} className="min-h-11 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500">
+              {lang === 'ar' ? 'مسح الاختيار' : 'Clear selection'}
+            </button>
           </div>
         </section>
       )}
@@ -1196,6 +1227,9 @@ export default function HomePage({
                         <DealCard
                           deal={deal}
                           onOpen={onOpenDeal}
+                          isComparisonSelected={comparisonSelection.includes(deal.slug)}
+                          comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
+                          onToggleComparison={onToggleComparison}
                           index={i}
                           isSaved={savedSet.has(deal.slug)}
                           onToggleSave={toggle}
@@ -1205,6 +1239,9 @@ export default function HomePage({
                       <DealCard
                         deal={deal}
                         onOpen={onOpenDeal}
+                        isComparisonSelected={comparisonSelection.includes(deal.slug)}
+                        comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
+                        onToggleComparison={onToggleComparison}
                         index={i}
                         isSaved={savedSet.has(deal.slug)}
                         onToggleSave={toggle}

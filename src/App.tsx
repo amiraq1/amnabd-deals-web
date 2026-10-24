@@ -33,12 +33,17 @@ import CollectionPage from '@/pages/CollectionPage';
 import { buildDealSeo, applyDocumentMetadata } from '@/lib/seo';
 import { routeMetadata } from '@/lib/metadata';
 import { languageSearchForLocation } from '@/lib/languageStorage';
+import { comparisonSearch, parseComparisonSlugs, toggleComparisonSelection } from '@/lib/comparison';
+import ComparisonPage from '@/pages/ComparisonPage';
 
 function AppInner() {
   const { lang } = useLanguage();
   // A01: `pathname` + `search` are the only source of truth. The legacy hash
   // was migrated once in main.tsx, before this component ever mounted.
   const [route, setRoute] = useState<Route>(() => parseHash(window.location.pathname));
+  const [comparisonSelection, setComparisonSelection] = useState<string[]>(() =>
+    parseComparisonSlugs(window.location.search)
+  );
   // Each resource settles independently. Language is presentation state and is
   // deliberately not a dependency of any data request.
   const offers = useResource(loadDeals);
@@ -165,12 +170,12 @@ function AppInner() {
     if (routeRef.current.name === 'home') writeLocation(currentDiscoveryUrl(), 'replace');
   }, [cancelPending, currentDiscoveryUrl, writeLocation]);
   const navigate = useCallback(
-    (next: Route) => {
+    (next: Route, searchOverride?: string) => {
       flushDiscovery();
-      const search =
-        next.name === 'home'
+      const search = searchOverride ??
+        (next.name === 'home'
           ? new URL(lastDiscoveryUrl.current, window.location.origin).search
-          : '';
+          : '');
       const url = routeUrl(next, languageAwareSearch(search));
       writeLocation(url, 'push');
       window.scrollTo({ top: 0 });
@@ -216,6 +221,23 @@ function AppInner() {
   }, [cancelPending, currentDiscoveryUrl, writeLocation]);
   const onOpenDeal = useCallback((slug: string) => navigate({ name: 'deal', slug }), [navigate]);
   const onBackFromDeal = useCallback(() => navigate({ name: 'home' }), [navigate]);
+  const onToggleComparison = useCallback(
+    (slug: string) => {
+      const update = toggleComparisonSelection(comparisonSelection, slug);
+      if (update.limitReached) return;
+      setComparisonSelection(update.selected);
+      if (update.added && update.selected.length === 2) {
+        const search = comparisonSearch(update.selected);
+        if (search) navigate({ name: 'compare' }, search);
+      }
+    },
+    [comparisonSelection, navigate]
+  );
+  const onClearComparison = useCallback(() => setComparisonSelection([]), []);
+  const onOpenComparison = useCallback(() => {
+    const search = comparisonSearch(comparisonSelection);
+    if (search) navigate({ name: 'compare' }, search);
+  }, [comparisonSelection, navigate]);
 
   const deal = route.name === 'deal' ? deals.find((row) => row.slug === route.slug) : undefined;
   const guide = deal ? (guideRows.find((row) => row.slug === deal.slug) ?? null) : null;
@@ -283,6 +305,23 @@ function AppInner() {
         <ResourceNotice name="deals" error={offers.error} lang={lang} retry={offers.retry} />
       </main>
     );
+  } else if (route.name === 'compare') {
+    content = offers.status === 'loading' ? (
+      <main className="mx-auto max-w-4xl px-4 py-10" aria-busy="true" aria-label={lang === 'ar' ? 'جارٍ تحميل بيانات المقارنة' : 'Loading comparison data'}>
+        <div className="skeleton h-64 w-full" />
+      </main>
+    ) : (
+      <ComparisonPage
+        deals={deals}
+        slugs={parseComparisonSlugs(window.location.search)}
+        onBackToHome={() => navigate({ name: 'home' })}
+        onClearAndBack={() => {
+          onClearComparison();
+          navigate({ name: 'home' });
+        }}
+        onOpenDeal={onOpenDeal}
+      />
+    );
   } else if (route.name === 'deal') {
     if (offers.status === 'loading')
       content = (
@@ -302,6 +341,9 @@ function AppInner() {
           guide={guide}
           sectionLabels={config?.section_labels?.[lang] ?? {}}
           onBack={onBackFromDeal}
+          onToggleComparison={onToggleComparison}
+          comparisonSelected={comparisonSelection.includes(deal.slug)}
+          comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
         />
       );
   } else {
@@ -316,6 +358,10 @@ function AppInner() {
         onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
         onOpenDeal={onOpenDeal}
+        comparisonSelection={comparisonSelection}
+        onToggleComparison={onToggleComparison}
+        onClearComparison={onClearComparison}
+        onOpenComparison={onOpenComparison}
       />
     );
   }
@@ -329,6 +375,23 @@ function AppInner() {
         {lang === 'ar' ? 'تخطي إلى المحتوى الرئيسي' : 'Skip to main content'}
       </a>
       <Navbar route={route} navigate={navigate} savedCount={validSavedCount} />
+      {comparisonSelection.length === 1 && route.name !== 'home' && route.name !== 'compare' && (
+        <section className="mx-auto mt-4 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6" role="status">
+          <p className="text-sm text-slate-300">
+            {lang === 'ar'
+              ? `تم اختيار «${deals.find((item) => item.slug === comparisonSelection[0])?.name_ar ?? comparisonSelection[0]}»؛ اختر عرضًا ثانيًا.`
+              : `“${deals.find((item) => item.slug === comparisonSelection[0])?.name_en ?? comparisonSelection[0]}” is selected; choose one more offer.`}
+          </p>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => navigate({ name: 'home' })} className="min-h-11 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/20">
+              {lang === 'ar' ? 'اختيار العرض الثاني' : 'Choose the second offer'}
+            </button>
+            <button type="button" onClick={onClearComparison} className="min-h-11 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500">
+              {lang === 'ar' ? 'إلغاء' : 'Clear'}
+            </button>
+          </div>
+        </section>
+      )}
       <div id="main-content" tabIndex={-1} className="flex-1 outline-none">
         {settings.status === 'error' && (
           <ResourceNotice name="config" error={settings.error} lang={lang} retry={settings.retry} />

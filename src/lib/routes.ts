@@ -1,7 +1,7 @@
 import { parseLanguageFromSearch } from './languageStorage.js';
 
 export interface Route {
-  name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites' | 'changelog' | 'collection';
+  name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites' | 'changelog' | 'collection' | 'compare';
   slug?: string;
   collectionKey?: string;
 }
@@ -37,6 +37,7 @@ export function parseHash(raw: unknown): Route {
     if (first === 'guide') return { name: 'guide' };
     if (first === 'favorites') return { name: 'favorites' };
     if (first === 'changelog') return { name: 'changelog' };
+    if (first === 'compare') return { name: 'compare' };
     if (['for-students', 'no-credit-card', 'coding', 'ending-soon'].includes(first)) {
       return { name: 'collection', collectionKey: first };
     }
@@ -55,6 +56,7 @@ export function routeHash(route: Route): string {
   if (route.name === 'guide') return '#/guide';
   if (route.name === 'favorites') return '#/favorites';
   if (route.name === 'changelog') return '#/changelog';
+  if (route.name === 'compare') return '#/compare';
   if (route.name === 'collection' && route.collectionKey) {
     return `#/${route.collectionKey}`;
   }
@@ -73,6 +75,7 @@ export function routePath(route: Route): string {
   if (route.name === 'guide') return '/guide';
   if (route.name === 'favorites') return '/favorites';
   if (route.name === 'changelog') return '/changelog';
+  if (route.name === 'compare') return '/compare';
   if (route.name === 'collection' && route.collectionKey) {
     return `/${route.collectionKey}`;
   }

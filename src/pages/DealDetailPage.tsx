@@ -30,6 +30,9 @@ interface DealDetailPageProps {
   guide: UsageGuide | null;
   sectionLabels: Record<string, string>;
   onBack: () => void;
+  onToggleComparison: (slug: string) => void;
+  comparisonSelected: boolean;
+  comparisonDisabled: boolean;
 }
 
 export default function DealDetailPage({
@@ -37,6 +40,9 @@ export default function DealDetailPage({
   guide,
   sectionLabels,
   onBack,
+  onToggleComparison,
+  comparisonSelected,
+  comparisonDisabled,
 }: DealDetailPageProps) {
   const { lang, dir } = useLanguage();
 
@@ -149,6 +155,22 @@ export default function DealDetailPage({
             )}
 
             <FavoriteButton slug={deal.slug} dealName={displayName} showText={true} />
+
+            <button
+              type="button"
+              aria-pressed={comparisonSelected}
+              disabled={comparisonDisabled}
+              onClick={() => onToggleComparison(deal.slug)}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-emerald-500/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {comparisonSelected
+                ? lang === 'ar'
+                  ? 'إزالة من المقارنة'
+                  : 'Remove from comparison'
+                : lang === 'ar'
+                  ? 'أضف للمقارنة'
+                  : 'Add to comparison'}
+            </button>
 
             <CopyDealLink key={deal.slug} slug={deal.slug} />
 

@@ -27,6 +27,9 @@ export interface DealCardProps {
   onToggleSave?: (slug: string) => void;
   isFavorited?: boolean;
   onToggleFavorite?: (slug: string) => void;
+  isComparisonSelected?: boolean;
+  comparisonDisabled?: boolean;
+  onToggleComparison?: (slug: string) => void;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -56,7 +59,13 @@ function isRecentlyReviewed(reviewedOn?: string | null, createdAt?: string | nul
   return diffDays >= 0 && diffDays <= 7;
 }
 
-export default function DealCard({ deal, onOpen }: DealCardProps) {
+export default function DealCard({
+  deal,
+  onOpen,
+  isComparisonSelected = false,
+  comparisonDisabled = false,
+  onToggleComparison,
+}: DealCardProps) {
   const { lang, dir } = useLanguage();
   const isAr = lang === 'ar';
 
@@ -221,7 +230,7 @@ export default function DealCard({ deal, onOpen }: DealCardProps) {
       </div>
 
       {/* الذيل */}
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-800/60 pt-3.5">
+      <div className="relative z-10 mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/60 pt-3.5">
         <span
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 transition-colors group-hover:text-white"
           aria-hidden="true"
@@ -229,6 +238,29 @@ export default function DealCard({ deal, onOpen }: DealCardProps) {
           {isAr ? 'تفاصيل العرض' : 'View details'}
           <Arrow className="h-3.5 w-3.5 transition-transform motion-reduce:transition-none rtl:group-hover:-translate-x-1 ltr:group-hover:translate-x-1" />
         </span>
+
+        {onToggleComparison && (
+          <button
+            type="button"
+            aria-pressed={isComparisonSelected}
+            aria-label={`${isComparisonSelected ? (isAr ? 'إزالة من المقارنة' : 'Remove from comparison') : (isAr ? 'أضف للمقارنة' : 'Add to comparison')}: ${displayName}`}
+            disabled={comparisonDisabled}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onToggleComparison(deal.slug);
+            }}
+            className="inline-flex min-h-11 items-center rounded-lg border border-emerald-500/25 bg-slate-900/90 px-2.5 py-1.5 text-xs font-medium text-emerald-200 transition hover:border-emerald-400/50 hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            {isComparisonSelected
+              ? isAr
+                ? 'إزالة من المقارنة'
+                : 'Remove from comparison'
+              : isAr
+                ? 'أضف للمقارنة'
+                : 'Add to comparison'}
+          </button>
+        )}
 
         {officialUrl && (
           <a
