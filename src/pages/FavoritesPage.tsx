@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Heart, ArrowLeft, ArrowRight, Share2, Copy, Check, Search } from 'lucide-react';
+import { Heart, ArrowLeft, ArrowRight, Share2, Copy, Check, Search, Clock3 } from 'lucide-react';
 import type { Deal, Lang } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { buildSharedFavoritesUrl, formatFavoritesAsText } from '@/lib/shareFavorites';
 import { copyLink } from '@/lib/share';
+import { offerExpiryInstant } from '@/lib/dealTiming';
+import { getSavedOffersEndingSoon } from '@/lib/savedOfferExpiry';
 import DealCard from '@/components/DealCard';
 
 interface FavoritesPageProps {
@@ -28,6 +30,15 @@ function countLabel(n: number, lang: Lang): string {
   return `${n} ${n === 1 ? 'deal' : 'deals'}`;
 }
 
+function formatExpiryDate(value: string, lang: Lang): string {
+  const expiry = offerExpiryInstant(value);
+  if (expiry === null) return '';
+  return new Intl.DateTimeFormat(lang === 'ar' ? 'ar' : 'en', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(expiry);
+}
+
 export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: FavoritesPageProps) {
   const { lang, dir } = useLanguage();
   const isAr = lang === 'ar';
@@ -49,6 +60,8 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       .map((slug) => dealMap.get(slug))
       .filter((deal): deal is Deal => Boolean(deal));
   }, [favorites, deals]);
+
+  const soonEndingDeals = getSavedOffersEndingSoon(favoriteDeals, new Date());
 
   // نشارك العروض الموجودة فعلًا فقط، فلا تصل لمن يفتح الرابط مفضلات لعروض محذوفة.
   const validSlugs = useMemo(() => favoriteDeals.map((d) => d.slug), [favoriteDeals]);
@@ -154,6 +167,53 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       >
         {statusMessage}
       </p>
+
+      {soonEndingDeals.length > 0 && (
+        <section className="mt-8 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6" aria-labelledby="saved-ending-soon-title">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 id="saved-ending-soon-title" className="font-heading flex items-center gap-2 text-lg font-bold text-amber-200">
+                <Clock3 className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span>{isAr ? 'عروض محفوظة تنتهي خلال 14 يومًا' : 'Saved offers ending within 14 days'}</span>
+              </h2>
+              <p className="mt-1 text-sm text-slate-400">
+                {isAr
+                  ? 'يعرض هذا القسم العروض التي لها تاريخ انتهاء مسجّل وصالح فقط.'
+                  : 'Only saved offers with a valid recorded end date appear here.'}
+              </p>
+            </div>
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+              {countLabel(soonEndingDeals.length, lang)}
+            </span>
+          </div>
+          <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {soonEndingDeals.map((deal) => {
+              const name = isAr ? deal.name_ar : deal.name_en;
+              const endsAt = deal.ends_at?.trim() ?? '';
+              return (
+                <li key={deal.slug} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-white">{name}</p>
+                    <p className="mt-1 text-xs text-amber-200/80">
+                      <time dateTime={endsAt}>
+                        {isAr ? 'ينتهي في' : 'Ends'} {formatExpiryDate(endsAt, lang)}
+                      </time>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onOpenDeal(deal.slug)}
+                    aria-label={isAr ? `فتح ${name}` : `Open ${name}`}
+                    className="shrink-0 rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-amber-400/60 hover:text-amber-200"
+                  >
+                    {isAr ? 'التفاصيل' : 'Details'}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {favoriteDeals.length === 0 ? (
         <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/40 px-6 py-16 text-center">

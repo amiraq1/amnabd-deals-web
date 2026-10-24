@@ -23,6 +23,7 @@
     "src/lib/filterState.ts",
     "src/lib/dealSort.ts",
     "src/lib/dealTiming.ts",
+    "src/lib/savedOfferExpiry.ts",
     "src/lib/instants.ts",
     "src/lib/savedDeals.ts",
     "src/lib/favorites.ts",
