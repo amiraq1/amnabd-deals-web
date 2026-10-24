@@ -284,7 +284,11 @@ function runVerifyDist(distDir) {
 
 function fixtureDist(files) {
   const root = mkdtempSync(join(tmpdir(), 'amnabd-dist-'));
-  for (const [rel, body] of Object.entries(files)) {
+  const defaults = {
+    'compare/index.html':
+      '<!doctype html><html><head><title>AMNABD Deals</title><meta name="robots" content="noindex,follow"></head><body><div id="root"></div></body></html>',
+  };
+  for (const [rel, body] of Object.entries({ ...defaults, ...files })) {
     const full = join(root, rel);
     mkdirSync(join(full, '..'), { recursive: true });
     writeFileSync(full, body);
@@ -342,6 +346,27 @@ test('verify-dist covers site-level files, not just deal pages', () => {
     assert.equal(error.status, 1);
     assert.match(String(error.stderr), /index\.html/);
     assert.match(String(error.stderr), /llms\.txt/);
+    return true;
+  });
+});
+
+test('verify-dist requires the comparison route to be noindex and free of SEO claims', () => {
+  const noRobots = fixtureDist({
+    'compare/index.html': '<html><head><title>AMNABD Deals</title></head><body></body></html>',
+  });
+  assert.throws(() => runVerifyDist(noRobots), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /compare\/index\.html: route must be explicitly noindex/);
+    return true;
+  });
+
+  const homepageClaim = fixtureDist({
+    'compare/index.html':
+      '<html><head><meta name="robots" content="noindex,follow"><meta name="description" content="unreviewed comparison"></head></html>',
+  });
+  assert.throws(() => runVerifyDist(homepageClaim), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /compare\/index\.html: route must not publish SEO claims or structured data/);
     return true;
   });
 });

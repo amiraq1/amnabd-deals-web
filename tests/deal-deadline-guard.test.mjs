@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -160,6 +160,11 @@ test('F-04: public row loader paginates a bounded field projection and rejects p
 test('F-04: verify-dist fails timed live copy and warns on Google-style date-only copy', () => {
   const distDir = mkdtempSync(join(tmpdir(), 'amnabd-deadline-dist-'));
   try {
+    mkdirSync(join(distDir, 'compare'), { recursive: true });
+    writeFileSync(
+      join(distDir, 'compare', 'index.html'),
+      '<html><head><meta name="robots" content="noindex,follow"></head><body><div id="root"></div></body></html>'
+    );
     const timed = verifyDist({
       distDir,
       liveDeals: [

@@ -543,6 +543,21 @@ export function injectSeoIntoHtml(baseHtml, seo) {
   return html;
 }
 
+export function buildNoIndexAppShell(baseHtml) {
+  let html = baseHtml
+    .replace(/<title>[\s\S]*?<\/title>/i, '<title>AMNABD Deals</title>')
+    .replace(/<meta\s+name=["']description["'][^>]*\/?\s*>/gi, '')
+    .replace(/<meta\s+name=["']robots["'][^>]*\/?\s*>/gi, '')
+    .replace(/<link\s+rel=["']canonical["'][^>]*\/?\s*>/gi, '')
+    .replace(/<meta\s+(?:property|name)=["'](?:og:[^"']+|twitter:[^"']+)["'][^>]*\/?\s*>/gi, '')
+    .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '');
+  html = html.replace(
+    '</head>',
+    '  <meta name="robots" content="noindex,follow">\n</head>'
+  );
+  return html;
+}
+
 function toCatalogRow(item) {
   const url = typeof item?.url === 'string' ? item.url : '';
   const match = url.match(/deal\/([^/?#]+)/);
@@ -622,6 +637,12 @@ export async function runStaticSeoGeneration({
   writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'llms.txt'), generateLlmsTxt(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, '404.html'), baseHtml, 'utf8');
+
+  // Comparisons are user-selected and may contain unreviewed combinations.
+  // Publish a real path shell for HTTP 200, but no indexable metadata or claims.
+  const comparisonDir = join(distDir, 'compare');
+  mkdirSync(comparisonDir, { recursive: true });
+  writeFileSync(join(comparisonDir, 'index.html'), buildNoIndexAppShell(baseHtml), 'utf8');
 
   const changelogDir = join(distDir, 'changelog');
   mkdirSync(changelogDir, { recursive: true });

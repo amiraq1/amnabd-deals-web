@@ -13,6 +13,7 @@ const {
   generateLlmsTxt,
   runStaticSeoGeneration,
   injectSeoIntoHtml,
+  buildNoIndexAppShell,
   escapeHtml,
   loadDealsCatalog,
 } = await import(pathToFileURL(join(process.cwd(), 'scripts/generate-static-seo.mjs')));
@@ -62,6 +63,21 @@ test('injectSeoIntoHtml replaces existing title and meta tags without duplicatio
   assert.ok(output.includes('https://deals.example.com/og/bolt-builders-week.png'));
   assert.ok(output.includes('application/ld+json'));
   assert.ok(output.includes('data-deal-jsonld="true"'));
+});
+
+test('comparison app shell returns a noindex route without homepage SEO claims', () => {
+  const homepageHtml = sampleBaseHtml.replace(
+    '</head>',
+    '<link rel="canonical" href="https://amnabd.com/">' +
+      '<meta property="og:description" content="homepage claim">' +
+      '<meta name="twitter:title" content="homepage title">' +
+      '<script type="application/ld+json">{"@type":"ItemList"}</script></head>'
+  );
+  const shell = buildNoIndexAppShell(homepageHtml);
+  assert.match(shell, /<meta name="robots" content="noindex,follow">/);
+  assert.match(shell, /<title>AMNABD Deals<\/title>/);
+  assert.match(shell, /<div id="root"><\/div>/);
+  assert.doesNotMatch(shell, /name="description"|rel="canonical"|property="og:|name="twitter:|application\/ld\+json|homepage claim|homepage title/);
 });
 
 test('generateSitemapXml builds valid XML with clean URLs and lastmod', () => {
@@ -133,6 +149,10 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     assert.equal(llmsSlugs.length, 2);
     assert.doesNotMatch(generated, /#\/deal|stale hash route/);
     assert.equal(readFileSync(join(distDir, 'ending-soon', 'index.html'), 'utf8'), sampleBaseHtml);
+    const comparisonShell = readFileSync(join(distDir, 'compare', 'index.html'), 'utf8');
+    assert.equal(comparisonShell, buildNoIndexAppShell(sampleBaseHtml));
+    assert.match(comparisonShell, /name="robots" content="noindex,follow"/);
+    assert.doesNotMatch(comparisonShell, /name="description"|property="og:|application\/ld\+json/);
   } finally {
     rmSync(rootDir, { recursive: true, force: true });
   }

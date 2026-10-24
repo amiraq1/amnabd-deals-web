@@ -316,6 +316,22 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
   checkSiteFiles(report, distDir, deals);
   checkLlmsDealRoutes(report, distDir, deals);
 
+  const comparisonShell = readIfExists(join(distDir, 'compare', 'index.html'));
+  if (comparisonShell === null) {
+    report('compare/index.html: generic noindex route shell is missing');
+  } else {
+    if (!/<meta\s+name=["']robots["']\s+content=["']noindex,follow["']/i.test(comparisonShell)) {
+      report('compare/index.html: route must be explicitly noindex');
+    }
+    if (
+      /<meta\s+name=["']description["']|<link\s+rel=["']canonical["']|<meta\s+(?:property|name)=["'](?:og:|twitter:)|<script\s+type=["']application\/ld\+json["']/i.test(
+        comparisonShell
+      )
+    ) {
+      report('compare/index.html: route must not publish SEO claims or structured data');
+    }
+  }
+
   // An empty collection page advertises deals that were never established.
   for (const agg of STATIC_AGGREGATIONS) {
     const matches = deals.filter((deal) => agg.filter(deal));
