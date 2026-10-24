@@ -8,36 +8,28 @@ const { activationGuides, getActivationGuide } = await import(
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/content/activationGuides.js'))
 );
 
-test('activationGuides contains expected 4 top-value deals', () => {
-  const targetSlugs = [
-    'antigravity-ultra-scientists',
-    'deepgram',
-    'github-copilot',
-    'blitz-cloud',
-  ];
+const formerlyPublishedUnreviewedSlugs = [
+  'antigravity-ultra-scientists',
+  'deepgram',
+  'github-copilot',
+  'blitz-cloud',
+];
 
-  const keys = Object.keys(activationGuides);
-  assert.equal(keys.length, 4);
-
-  for (const slug of targetSlugs) {
-    assert.ok(keys.includes(slug), `Expected guide for ${slug} to exist`);
+test('unreviewed static activation guides stay out of the public registry', () => {
+  assert.deepEqual(Object.keys(activationGuides), []);
+  assert.equal(Object.isFrozen(activationGuides), true);
+  for (const slug of formerlyPublishedUnreviewedSlugs) {
+    assert.equal(
+      getActivationGuide(slug),
+      undefined,
+      `Unreviewed guide for ${slug} must remain hidden`
+    );
   }
 });
 
-test('getActivationGuide returns correct guide for valid slugs and undefined for unknown', () => {
+test('unknown activation guides fail closed', () => {
   assert.equal(getActivationGuide('unknown-slug-123'), undefined);
   assert.equal(getActivationGuide(''), undefined);
-
-  const copilotGuide = getActivationGuide('github-copilot');
-  assert.ok(copilotGuide);
-  assert.equal(copilotGuide.slug, 'github-copilot');
-  assert.ok(copilotGuide.summary.includes('Copilot'));
-  assert.ok(copilotGuide.steps.length >= 4);
-
-  const antigravityGuide = getActivationGuide('antigravity-ultra-scientists');
-  assert.ok(antigravityGuide);
-  assert.equal(antigravityGuide.slug, 'antigravity-ultra-scientists');
-  assert.ok(antigravityGuide.steps.length >= 5);
 });
 
 test('all activation guides have valid structure, steps, and notes', () => {
