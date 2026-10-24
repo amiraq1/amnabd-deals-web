@@ -82,6 +82,15 @@ test('English singular/plural, fractional precision and unknown duration', () =>
     'Until used up'
   );
 });
+test('no-time-limit plans are distinct from credits that last until used up', () => {
+  assert.equal(durationLabel({ value: null, unit: null, status: 'no_time_limit' }, 'en'), 'No time limit');
+  assert.equal(durationLabel({ value: null, unit: null, status: 'no_time_limit' }, 'ar'), 'بلا حد زمني');
+  assert.equal(durationLabel({ value: null, unit: null, status: 'no_expiration' }, 'en'), 'Until used up');
+});
+test('upper-bound durations retain the "up to" qualifier in both languages', () => {
+  assert.equal(durationLabel({ value: 6, unit: 'months', status: 'up_to' }, 'en'), 'Up to 6 months');
+  assert.equal(durationLabel({ value: 6, unit: 'months', status: 'up_to' }, 'ar'), 'حتى ٦ أشهر');
+});
 test('review dates: no invented date or timezone', () => {
   assert.equal(reviewDateLabel('2026-10-17', 'ar'), '2026-10-17');
   assert.equal(reviewDateLabel('2024-02-29', 'en'), '2024-02-29');

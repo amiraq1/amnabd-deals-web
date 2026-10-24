@@ -148,6 +148,7 @@ export function durationLabel(
 ): string {
   if (!duration || duration.status === 'unknown') return unknown(lang);
   if (duration.status === 'no_expiration') return lang === 'ar' ? 'حتى الاستهلاك' : 'Until used up';
+  if (duration.status === 'no_time_limit') return lang === 'ar' ? 'بلا حد زمني' : 'No time limit';
   if (
     !finiteAmount(duration.value) ||
     !duration.unit ||
@@ -155,9 +156,14 @@ export function durationLabel(
   )
     return unknown(lang);
   const unit = knownUnit(duration.unit.trim().toLowerCase());
-  return unit
+  const label = unit
     ? countLabel(duration.value, unit, lang)
     : `${numberLabel(duration.value, lang)} ${duration.unit}`;
+  return duration.status === 'up_to'
+    ? lang === 'ar'
+      ? `حتى ${label}`
+      : `Up to ${label}`
+    : label;
 }
 
 export function reviewDateLabel(value: unknown, lang: Lang): string {
