@@ -134,3 +134,16 @@ test('F-06: metadata and navigation reframe the unchanged route as review histor
   assert.match(staticSeo, /title: 'سجل مراجعات العروض —/);
   assert.doesNotMatch(staticSeo, /سجل التغييرات وتحديثات العروض/);
 });
+
+test('F-06: recorded ISO dates stay left-to-right inside Arabic history summaries', () => {
+  const ends_at = '2026-10-19T06:59:00+00:00';
+  const [ar] = buildChangelogEntries([{ ...offer, ends_at }], 'ar', now);
+  const [en] = buildChangelogEntries([{ ...offer, ends_at }], 'en', now);
+  assert.ok(ar.summary.includes(`\u2066${ends_at}\u2069`));
+  assert.doesNotMatch(en.summary, /[\u2066-\u2069]/);
+  const future = '2026-10-31T16:00:00Z';
+  const [review] = buildChangelogEntries([{ ...offer, ends_at: future }], 'ar', now);
+  assert.ok(review.timingNote.includes(`\u2066${future}\u2069`));
+  const page = readFileSync(join(process.cwd(), 'src/pages/ChangelogPage.tsx'), 'utf8');
+  assert.match(page, /<time dateTime=\{group\.date\} dir="ltr">/);
+});

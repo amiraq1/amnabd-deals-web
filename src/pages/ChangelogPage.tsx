@@ -137,7 +137,7 @@ export default function ChangelogPage({
               <div className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
                 <h2 className="font-heading flex items-center gap-2 text-sm font-bold text-slate-200 sm:text-base">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <span>{lang === 'ar' ? 'سجلات ' : 'Records for '}<time dateTime={group.date}>{group.date}</time></span>
+                  <span>{lang === 'ar' ? 'سجلات ' : 'Records for '}<time dateTime={group.date} dir="ltr">{group.date}</time></span>
                 </h2>
                 <span className="text-xs text-slate-500">
                   {group.entries.length}{' '}{lang === 'ar' ? (group.entries.length === 1 ? 'سجل' : 'سجلات') : (group.entries.length === 1 ? 'record' : 'records')}

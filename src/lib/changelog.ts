@@ -46,11 +46,13 @@ export function buildChangelogSummary(
   referenceNow: Date = new Date()
 ): string {
   const expiresAt = offerExpiryInstant(deal.ends_at);
+  // Isolate ISO dates inside RTL sentences without changing the recorded value.
+  const endDateLabel = lang === 'ar' ? `\u2066${deal.ends_at}\u2069` : deal.ends_at;
   if (type === 'expired') {
     if (expiresAt !== null && expiresAt <= referenceNow.getTime()) {
       return lang === 'ar'
-        ? `انقضى موعد انتهاء العرض المسجّل (${deal.ends_at}).`
-        : `The recorded offer end date has passed (${deal.ends_at}).`;
+        ? `انقضى موعد انتهاء العرض المسجّل (${endDateLabel}).`
+        : `The recorded offer end date has passed (${endDateLabel}).`;
     }
     return lang === 'ar'
       ? 'الحالة الحالية في السجل: منتهٍ؛ لا يوجد موعد انتهاء منقضٍ مسجّل لإسناد تاريخ الحدث.'
@@ -59,8 +61,8 @@ export function buildChangelogSummary(
   if (type === 'ending_soon') {
     return expiresAt !== null && expiresAt > referenceNow.getTime()
       ? lang === 'ar'
-        ? `حالة الموعد الآن: ينتهي قريبًا وفق الموعد المسجّل (${deal.ends_at}).`
-        : `Current deadline status: ending soon per the recorded end date (${deal.ends_at}).`
+        ? `حالة الموعد الآن: ينتهي قريبًا وفق الموعد المسجّل (${endDateLabel}).`
+        : `Current deadline status: ending soon per the recorded end date (${endDateLabel}).`
       : lang === 'ar'
         ? 'الحالة الحالية موسومة بأنها تنتهي قريبًا؛ موعد الانتهاء غير مسجّل.'
         : 'The current record is marked ending soon; no end date is recorded.';
