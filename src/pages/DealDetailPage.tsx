@@ -165,6 +165,155 @@ export default function DealDetailPage({
           </p>
         </header>
 
+
+
+        <section
+          aria-labelledby="deal-truth-heading"
+          className="mt-8 rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/20 via-slate-900/50 to-slate-900/30 p-5 shadow-lg sm:p-7"
+        >
+          <div className="mb-5">
+            <h2 id="deal-truth-heading" className="font-heading text-xl font-bold text-white sm:text-2xl">
+              {lang === 'ar' ? 'ماذا نعرف وماذا لا نعرف؟' : 'What We Know and What Remains Unknown'}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              {lang === 'ar'
+                ? 'ملخص شروط الأهلية وسجل المراجعة كما تثبتها الأدلة. راجع هذه المعلومات قبل اتباع أي دليل.'
+                : 'A summary of eligibility and review facts supported by evidence. Check it before following any guide.'}
+            </p>
+          </div>
+          <section className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+              <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
+                {lang === 'ar' ? 'شروط الأهلية' : 'Eligibility facts'}
+              </h3>
+              <dl className="mt-4 space-y-2.5 text-sm">
+                <FactRow
+                  label={lang === 'ar' ? 'حالة الطالب' : 'Student status'}
+                  value={requirementLabel(e.student_status, lang)}
+                />
+                <FactRow
+                  label={lang === 'ar' ? 'حساب جديد' : 'New account'}
+                  value={requirementLabel(e.new_account, lang)}
+                />
+                <FactRow
+                  label={lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
+                  value={requirementLabel(e.card_required, lang)}
+                />
+                <FactRow
+                  label={lang === 'ar' ? 'هاتف' : 'Phone'}
+                  value={requirementLabel(e.phone_required, lang)}
+                />
+              </dl>
+              <p className="mt-4 text-xs leading-relaxed text-slate-500">{e.conditions[lang]}</p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+              <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
+                {lang === 'ar' ? 'المنافع' : 'Benefits'}
+              </h3>
+              <ul className="mt-4 space-y-4">
+                {deal.benefits.map((b, i) => (
+                  <li key={i} className="text-sm">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                        <bdi>{benefitTypeLabel(b.type, lang)}</bdi>
+                      </span>
+                      <span className="font-semibold text-white">
+                        <bdi>{benefitAmount(b.amount, lang)}</bdi>
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        <bdi>{durationLabel(b.duration, lang)}</bdi>
+                      </span>
+                      {frequencyLabel(b.frequency, lang) && (
+                        <span className="rounded-md bg-gold/10 px-2 py-0.5 text-xs text-gold">
+                          <bdi>{frequencyLabel(b.frequency, lang)}</bdi>
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1.5 leading-relaxed text-slate-300">{b.description[lang]}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          {unknownCount > 0 && (
+            <section className="mt-8">
+              <InfoBanner
+                kind="info"
+                text={
+                  lang === 'ar'
+                    ? `حقول غير مثبتة بالأدلة (${unknownCount.toLocaleString('ar-EG')}): ${deal.review.unknown_fields.join('، ')}. تعني «غير معلوم» أن المصادر المتاحة لا تؤكد القيمة أو القاعدة.`
+                    : `Fields not established by evidence (${unknownCount}): ${deal.review.unknown_fields.join(', ')}. “Unknown” means the available sources do not confirm the value or rule.`
+                }
+              />
+            </section>
+          )}
+
+          <p className="mt-6 text-xs text-slate-400">
+            {lang === 'ar'
+              ? `حقول مسجلة غير مثبتة: ${unknownCount.toLocaleString('ar-EG')}. عددها لا يثبت اكتمال المعلومات، ودعم المصدر لا يضمن استمرار العرض أو الأهلية.`
+              : `Recorded unestablished fields: ${unknownCount}. This count does not prove completeness; source support does not guarantee availability or eligibility.`}
+          </p>
+
+          <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+            <h3 className="font-heading flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+              <ShieldCheck className="h-4 w-4" />
+              {lang === 'ar' ? 'المصادر والأدلة' : 'Sources and evidence'}
+            </h3>
+            <div className="mt-4 space-y-5">
+              {deal.official_sources.map((src, i) => (
+                <div key={i}>
+                  <a
+                    href={safeUrl(src.url) ?? '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(ev) => {
+                      if (!safeUrl(src.url)) ev.preventDefault();
+                    }}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300"
+                  >
+                    <bdi>{src.title}</bdi>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                  {src.context && (
+                    <p className="mt-1 text-xs italic leading-relaxed text-slate-500">
+                      {src.context}
+                    </p>
+                  )}
+                  <ul className="mt-2 space-y-1.5">
+                    {src.claims.map((claim, j) => (
+                      <li
+                        key={j}
+                        className="flex items-start gap-2 text-xs leading-relaxed text-slate-400"
+                      >
+                        <FileText className="mt-0.5 h-3 w-3 shrink-0 text-slate-600" />
+                        <span>{claim.evidence}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-500">
+              {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}:{' '}
+              <bdi>{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
+              {' · '}
+              {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
+              <span className="text-slate-300">
+                {offerTimingLabel(timing.offer, deal.review.offer_status, lang)}
+              </span>
+            </p>
+          </section>
+
+          <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
+              {lang === 'ar' ? 'ملاحظات المراجعة' : 'Review notes'}
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-slate-300">{deal.review.notes[lang]}</p>
+          </section>
+        </section>
+
         {guide && (
           <section className="mt-10">
             <h2 className="font-heading text-xl font-bold text-white">
@@ -219,138 +368,6 @@ export default function DealDetailPage({
             </div>
           </section>
         )}
-
-        <section className="mt-10 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-            <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
-              {lang === 'ar' ? 'شروط الأهلية' : 'Eligibility facts'}
-            </h3>
-            <dl className="mt-4 space-y-2.5 text-sm">
-              <FactRow
-                label={lang === 'ar' ? 'حالة الطالب' : 'Student status'}
-                value={requirementLabel(e.student_status, lang)}
-              />
-              <FactRow
-                label={lang === 'ar' ? 'حساب جديد' : 'New account'}
-                value={requirementLabel(e.new_account, lang)}
-              />
-              <FactRow
-                label={lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
-                value={requirementLabel(e.card_required, lang)}
-              />
-              <FactRow
-                label={lang === 'ar' ? 'هاتف' : 'Phone'}
-                value={requirementLabel(e.phone_required, lang)}
-              />
-            </dl>
-            <p className="mt-4 text-xs leading-relaxed text-slate-500">{e.conditions[lang]}</p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-            <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
-              {lang === 'ar' ? 'المنافع' : 'Benefits'}
-            </h3>
-            <ul className="mt-4 space-y-4">
-              {deal.benefits.map((b, i) => (
-                <li key={i} className="text-sm">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
-                      <bdi>{benefitTypeLabel(b.type, lang)}</bdi>
-                    </span>
-                    <span className="font-semibold text-white">
-                      <bdi>{benefitAmount(b.amount, lang)}</bdi>
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      <bdi>{durationLabel(b.duration, lang)}</bdi>
-                    </span>
-                    {frequencyLabel(b.frequency, lang) && (
-                      <span className="rounded-md bg-gold/10 px-2 py-0.5 text-xs text-gold">
-                        <bdi>{frequencyLabel(b.frequency, lang)}</bdi>
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1.5 leading-relaxed text-slate-300">{b.description[lang]}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {unknownCount > 0 && (
-          <section className="mt-8">
-            <InfoBanner
-              kind="info"
-              text={
-                lang === 'ar'
-                  ? `حقول غير مثبتة بالأدلة (${unknownCount.toLocaleString('ar-EG')}): ${deal.review.unknown_fields.join('، ')}. تعني «غير معلوم» أن المصادر المتاحة لا تؤكد القيمة أو القاعدة.`
-                  : `Fields not established by evidence (${unknownCount}): ${deal.review.unknown_fields.join(', ')}. “Unknown” means the available sources do not confirm the value or rule.`
-              }
-            />
-          </section>
-        )}
-
-        <p className="mt-6 text-xs text-slate-400">
-          {lang === 'ar'
-            ? `حقول مسجلة غير مثبتة: ${unknownCount.toLocaleString('ar-EG')}. عددها لا يثبت اكتمال المعلومات، ودعم المصدر لا يضمن استمرار العرض أو الأهلية.`
-            : `Recorded unestablished fields: ${unknownCount}. This count does not prove completeness; source support does not guarantee availability or eligibility.`}
-        </p>
-
-        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="font-heading flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
-            <ShieldCheck className="h-4 w-4" />
-            {lang === 'ar' ? 'المصادر والأدلة' : 'Sources and evidence'}
-          </h3>
-          <div className="mt-4 space-y-5">
-            {deal.official_sources.map((src, i) => (
-              <div key={i}>
-                <a
-                  href={safeUrl(src.url) ?? '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(ev) => {
-                    if (!safeUrl(src.url)) ev.preventDefault();
-                  }}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300"
-                >
-                  <bdi>{src.title}</bdi>
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-                {src.context && (
-                  <p className="mt-1 text-xs italic leading-relaxed text-slate-500">
-                    {src.context}
-                  </p>
-                )}
-                <ul className="mt-2 space-y-1.5">
-                  {src.claims.map((claim, j) => (
-                    <li
-                      key={j}
-                      className="flex items-start gap-2 text-xs leading-relaxed text-slate-400"
-                    >
-                      <FileText className="mt-0.5 h-3 w-3 shrink-0 text-slate-600" />
-                      <span>{claim.evidence}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <p className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-500">
-            {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}:{' '}
-            <bdi>{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
-            {' · '}
-            {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
-            <span className="text-slate-300">
-              {offerTimingLabel(timing.offer, deal.review.offer_status, lang)}
-            </span>
-          </p>
-        </section>
-
-        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
-            {lang === 'ar' ? 'ملاحظات المراجعة' : 'Review notes'}
-          </h3>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">{deal.review.notes[lang]}</p>
-        </section>
 
         {activationGuide && <ActivationGuide guide={activationGuide} officialUrl={offerUrl} />}
 
