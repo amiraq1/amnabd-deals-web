@@ -11,6 +11,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadEnv } from 'vite';
 import { loadSharedSeo } from './load-shared.mjs';
+import { isStaticDealSlug, loadDealSlugSnapshot, verifySeoParity } from './seo-parity.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -20,6 +21,7 @@ const { AGGREGATIONS, dealDisplayName, dealFacts } = shared;
 
 // Re-exported so `verify-dist.mjs` reuses the already-compiled copy.
 export { shared as sharedSeo };
+export { isStaticDealSlug };
 
 export const buildDealSeo = shared.buildDealSeo;
 export const generateSitemapXml = shared.generateSitemapXml;
@@ -44,7 +46,8 @@ function routeLookupConfig(rootDir, { publicUrl, publicKey } = {}) {
   const env = loadEnv('production', rootDir, 'VITE_');
   const rawUrl = publicUrl ?? process.env.VITE_SUPABASE_URL ?? env.VITE_SUPABASE_URL;
   const rawKey = publicKey ?? process.env.VITE_SUPABASE_ANON_KEY ?? env.VITE_SUPABASE_ANON_KEY;
-  if (!rawUrl && !rawKey) return null;
+  if (!rawUrl && !rawKey)
+    throw new Error('Live static deal-route lookup requires the public Supabase URL and anon key.');
   if (typeof rawUrl !== 'string' || !rawUrl.trim() || typeof rawKey !== 'string' || !rawKey.trim())
     throw new Error('Static deal-route lookup requires the public Supabase URL and key.');
 
@@ -82,15 +85,6 @@ function routeLookupConfig(rootDir, { publicUrl, publicKey } = {}) {
   return { url: parsedUrl.toString().replace(/\/+$/, ''), key };
 }
 
-export function isStaticDealSlug(value) {
-  return (
-    typeof value === 'string' &&
-    value.length > 0 &&
-    value.length <= 200 &&
-    /^[a-zA-Z0-9_\-\u0600-\u06FF]+$/i.test(value)
-  );
-}
-
 export async function loadPublicDealSlugs({
   rootDir = ROOT,
   publicUrl,
@@ -99,7 +93,6 @@ export async function loadPublicDealSlugs({
   pageSize = 500,
 } = {}) {
   const config = routeLookupConfig(rootDir, { publicUrl, publicKey });
-  if (!config) return [];
   if (typeof fetchImpl !== 'function') throw new Error('Static deal-route lookup requires fetch.');
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000)
     throw new RangeError('Static deal-route page size must be from 1 to 1000.');
@@ -122,11 +115,26 @@ export async function loadPublicDealSlugs({
     const rows = await response.json();
     if (!Array.isArray(rows)) throw new Error('Static deal-route lookup returned invalid data.');
     for (const row of rows) {
-      if (isStaticDealSlug(row?.slug)) slugs.add(row.slug);
+      if (!isStaticDealSlug(row?.slug)) {
+        throw new Error('Static deal-route lookup returned a row with an invalid public slug.');
+      }
+      if (slugs.has(row.slug)) {
+        throw new Error(`Static deal-route lookup returned duplicate public slug: ${row.slug}`);
+      }
+      slugs.add(row.slug);
     }
     if (rows.length < pageSize) break;
   }
   return [...slugs].sort();
+}
+
+export async function loadBuildDealSlugs({ rootDir = ROOT } = {}) {
+  const source = process.env.SEO_PARITY_SOURCE || 'live';
+  if (source === 'snapshot') return loadDealSlugSnapshot(rootDir);
+  if (source !== 'live') {
+    throw new Error(`SEO_PARITY_SOURCE must be "live" or "snapshot" (received "${source}").`);
+  }
+  return loadPublicDealSlugs({ rootDir });
 }
 
 export function writeMissingDealRoutePages({
@@ -566,15 +574,11 @@ export async function runStaticSeoGeneration({
   const baseHtml = readFileSync(indexHtmlPath, 'utf8');
   const deals = loadDealsCatalog(rootDir);
   const seoDeals = deals.filter((deal) => isStaticDealSlug(deal?.slug));
-  const publishedSlugs =
-    databaseSlugs ??
-    (process.env.GITHUB_EVENT_NAME === 'pull_request'
-      ? []
-      : await loadPublicDealSlugs({ rootDir }));
+  const publishedSlugs = databaseSlugs ?? (await loadBuildDealSlugs({ rootDir }));
 
-  writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(deals, baseUrl), 'utf8');
+  writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'robots.txt'), generateRobotsTxt(baseUrl), 'utf8');
-  writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(deals, baseUrl), 'utf8');
+  writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'llms.txt'), generateLlmsTxt(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, '404.html'), baseHtml, 'utf8');
 
@@ -601,7 +605,7 @@ export async function runStaticSeoGeneration({
   let publishedAggregations = 0;
   const skippedAggregations = [];
   for (const agg of STATIC_AGGREGATIONS) {
-    const matching = deals.filter((deal) => agg.filter(deal));
+    const matching = seoDeals.filter((deal) => agg.filter(deal));
     const aggDir = join(distDir, agg.slug);
     mkdirSync(aggDir, { recursive: true });
     if (matching.length === 0) {
@@ -655,12 +659,27 @@ export async function runStaticSeoGeneration({
     databaseSlugs: publishedSlugs,
   });
 
+  const parityViolations = verifySeoParity({
+    distDir,
+    catalogDeals: deals,
+    liveDealSlugs: publishedSlugs,
+    baseHtml,
+    baseUrl,
+  });
+  if (parityViolations.length > 0) {
+    throw new Error(`[SEO parity] FAIL:\n${parityViolations.map((item) => `- ${item}`).join('\n')}`);
+  }
+
   console.log(
     `[SEO] sitemap/robots/feed + ${generatedHtmlCount} صفحة عرض + ${publishedAggregations} صفحة مجموعة` +
       (generatedPngCount > 0 ? ` + ${generatedPngCount} صورة OG.` : ' (OG بصيغة SVG).')
   );
   if (generatedRouteShellCount > 0)
     console.log(`[SEO] ${generatedRouteShellCount} direct deal routes added from the public slug list.`);
+  console.log(
+    `[SEO parity] OK: ${publishedSlugs.length} current public routes, ${seoDeals.length} reviewed SEO entries, ` +
+      `${publishedSlugs.length - seoDeals.length} generic live-only shells.`
+  );
 }
 
 const isMain =

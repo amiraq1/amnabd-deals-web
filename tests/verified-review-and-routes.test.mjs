@@ -73,6 +73,22 @@ test('public deal-slug lookup paginates and rejects non-public keys', async () =
   );
 });
 
+test('public deal-slug lookup rejects duplicate route identities', async () => {
+  const anonKey = `eyJhbGciOiJub25lIn0.${Buffer.from(JSON.stringify({ role: 'anon' })).toString('base64url')}.sig`;
+  await assert.rejects(
+    loadPublicDealSlugs({
+      publicUrl: 'https://project.supabase.co',
+      publicKey: anonKey,
+      fetchImpl: async () =>
+        new Response(JSON.stringify([{ slug: 'duplicate' }, { slug: 'duplicate' }]), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+    }),
+    /duplicate public slug/
+  );
+});
+
 test('uncatalogued public deal slugs receive safe static route shells', () => {
   const distDir = mkdtempSync(join(tmpdir(), 'amnabd-deal-routes-'));
   try {

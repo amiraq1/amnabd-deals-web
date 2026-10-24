@@ -10,6 +10,7 @@ const key = 'sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001';
 const baseline = {
   VITE_SUPABASE_URL: 'https://audit-fixture.supabase.co',
   VITE_SUPABASE_ANON_KEY: key,
+  SEO_PARITY_SOURCE: 'snapshot',
 };
 const privateJwt = [
   'eyJhbGciOiJIUzI1NiJ9',

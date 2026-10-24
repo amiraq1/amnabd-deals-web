@@ -53,6 +53,9 @@ jobs:
           # publishes, and it never runs on a pull request.
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://audit-fixture.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001' }}
+          # Fork PRs cannot read repository secrets; compare those builds with
+          # the reviewed slug-only snapshot. Main/deploy builds read live slugs.
+          SEO_PARITY_SOURCE: ${{ github.event_name == 'pull_request' && 'snapshot' || 'live' }}
       # Fails the build if dist/ publishes a claim the catalog cannot prove.
       - run: node scripts/verify-dist.mjs
       - uses: actions/upload-pages-artifact@v3

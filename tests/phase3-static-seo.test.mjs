@@ -99,9 +99,11 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
   const deals = [
     sampleDeal,
     { slug: 'second-deal', name_ar: 'العرض الثاني', description_ar: 'وصف متاح من المصدر.' },
-    { slug: 'invalid/slug', name_ar: 'مسار غير صالح' },
   ];
-  const direct = generateLlmsTxt(deals, 'https://deals.example.com');
+  const direct = generateLlmsTxt(
+    [...deals, { slug: 'invalid/slug', name_ar: 'مسار غير صالح' }],
+    'https://deals.example.com'
+  );
   assert.match(direct, /https:\/\/deals\.example\.com\/deal\/bolt-builders-week/);
   assert.match(direct, /https:\/\/deals\.example\.com\/deal\/second-deal/);
   assert.doesNotMatch(direct, /invalid\/slug|#\/deal|\]\([^)]*[?#]/);
@@ -119,7 +121,7 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
       rootDir,
       distDir,
       baseUrl: 'https://deals.example.com',
-      databaseSlugs: [],
+      databaseSlugs: deals.map((deal) => deal.slug),
     });
 
     const generated = readFileSync(join(distDir, 'llms.txt'), 'utf8');
