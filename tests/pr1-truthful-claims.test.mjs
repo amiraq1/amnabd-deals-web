@@ -313,6 +313,26 @@ test('verify-dist passes a clean build and fails a build with unproven claims', 
   });
 });
 
+test('verify-dist allows only exact generic app shells for live slugs outside the SEO catalog', () => {
+  const shell = '<!doctype html><html><head><title>AMNABD Deals</title></head><body><div id="root"></div></body></html>';
+  const clean = fixtureDist({
+    'index.html': shell,
+    'deal/live-database-slug/index.html': shell,
+  });
+  assert.match(runVerifyDist(clean), /verify-dist: OK/);
+
+  const dirty = fixtureDist({
+    'index.html': shell,
+    'deal/live-database-slug/index.html':
+      '<!doctype html><html><head><meta name="description" content="verified"></head><body></body></html>',
+  });
+  assert.throws(() => runVerifyDist(dirty), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /live-database-slug/);
+    return true;
+  });
+});
+
 test('verify-dist covers site-level files, not just deal pages', () => {
   const siteDirty = fixtureDist({
     'index.html': '<html><head><meta name="description" content="verified deals"></head></html>',

@@ -9,6 +9,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadEnv } from 'vite';
 import { loadSharedSeo } from './load-shared.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -37,6 +38,113 @@ export function escapeHtml(value = '') {
 
 function explicitText(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : '';
+}
+
+function routeLookupConfig(rootDir, { publicUrl, publicKey } = {}) {
+  const env = loadEnv('production', rootDir, 'VITE_');
+  const rawUrl = publicUrl ?? process.env.VITE_SUPABASE_URL ?? env.VITE_SUPABASE_URL;
+  const rawKey = publicKey ?? process.env.VITE_SUPABASE_ANON_KEY ?? env.VITE_SUPABASE_ANON_KEY;
+  if (!rawUrl && !rawKey) return null;
+  if (typeof rawUrl !== 'string' || !rawUrl.trim() || typeof rawKey !== 'string' || !rawKey.trim())
+    throw new Error('Static deal-route lookup requires the public Supabase URL and key.');
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(rawUrl.trim());
+  } catch {
+    throw new Error('Static deal-route lookup received an invalid public Supabase URL.');
+  }
+  if (
+    parsedUrl.protocol !== 'https:' ||
+    parsedUrl.username ||
+    parsedUrl.password ||
+    parsedUrl.search ||
+    parsedUrl.hash
+  )
+    throw new Error('Static deal-route lookup requires a clean HTTPS project URL.');
+
+  const key = rawKey.trim();
+  let publicKeyValid = /^sb_publishable_[A-Za-z0-9_-]{16,}$/.test(key);
+  if (!publicKeyValid && !key.startsWith('sb_secret_')) {
+    const parts = key.split('.');
+    if (parts.length === 3 && parts.every((part) => /^[A-Za-z0-9_-]+$/.test(part))) {
+      try {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+        publicKeyValid = payload?.role === 'anon';
+      } catch {
+        publicKeyValid = false;
+      }
+    }
+  }
+  if (!publicKeyValid)
+    throw new Error('Static deal-route lookup accepts only a Supabase anon/publishable key.');
+
+  return { url: parsedUrl.toString().replace(/\/+$/, ''), key };
+}
+
+function isStaticDealSlug(value) {
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= 200 &&
+    /^[a-zA-Z0-9_\-\u0600-\u06FF]+$/i.test(value)
+  );
+}
+
+export async function loadPublicDealSlugs({
+  rootDir = ROOT,
+  publicUrl,
+  publicKey,
+  fetchImpl = globalThis.fetch,
+  pageSize = 500,
+} = {}) {
+  const config = routeLookupConfig(rootDir, { publicUrl, publicKey });
+  if (!config) return [];
+  if (typeof fetchImpl !== 'function') throw new Error('Static deal-route lookup requires fetch.');
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000)
+    throw new RangeError('Static deal-route page size must be from 1 to 1000.');
+
+  const slugs = new Set();
+  for (let offset = 0; ; offset += pageSize) {
+    const endpoint = new URL('/rest/v1/deals', config.url);
+    endpoint.searchParams.set('select', 'slug');
+    endpoint.searchParams.set('order', 'slug.asc');
+    endpoint.searchParams.set('limit', String(pageSize));
+    endpoint.searchParams.set('offset', String(offset));
+    const response = await fetchImpl(endpoint, {
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+      },
+    });
+    if (!response.ok)
+      throw new Error(`Static deal-route lookup failed (HTTP ${response.status}).`);
+    const rows = await response.json();
+    if (!Array.isArray(rows)) throw new Error('Static deal-route lookup returned invalid data.');
+    for (const row of rows) {
+      if (isStaticDealSlug(row?.slug)) slugs.add(row.slug);
+    }
+    if (rows.length < pageSize) break;
+  }
+  return [...slugs].sort();
+}
+
+export function writeMissingDealRoutePages({
+  distDir,
+  baseHtml,
+  catalogSlugs = [],
+  databaseSlugs = [],
+}) {
+  const existing = new Set(catalogSlugs);
+  const written = new Set();
+  for (const slug of databaseSlugs) {
+    if (!isStaticDealSlug(slug) || existing.has(slug) || written.has(slug)) continue;
+    const indexPath = join(distDir, 'deal', slug, 'index.html');
+    mkdirSync(dirname(indexPath), { recursive: true });
+    writeFileSync(indexPath, baseHtml, 'utf8');
+    written.add(slug);
+  }
+  return written.size;
 }
 
 function wrapLines(text, max) {
@@ -414,6 +522,7 @@ export async function runStaticSeoGeneration({
   rootDir = ROOT,
   distDir = join(ROOT, 'dist'),
   baseUrl = DEFAULT_SITE_URL,
+  databaseSlugs,
 } = {}) {
   const indexHtmlPath = join(distDir, 'index.html');
   if (!existsSync(indexHtmlPath)) {
@@ -425,6 +534,11 @@ export async function runStaticSeoGeneration({
 
   const baseHtml = readFileSync(indexHtmlPath, 'utf8');
   const deals = loadDealsCatalog(rootDir);
+  const publishedSlugs =
+    databaseSlugs ??
+    (process.env.GITHUB_EVENT_NAME === 'pull_request'
+      ? []
+      : await loadPublicDealSlugs({ rootDir }));
 
   writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(deals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'robots.txt'), generateRobotsTxt(baseUrl), 'utf8');
@@ -501,10 +615,19 @@ export async function runStaticSeoGeneration({
     }
   }
 
+  const generatedRouteShellCount = writeMissingDealRoutePages({
+    distDir,
+    baseHtml,
+    catalogSlugs: deals.map((deal) => deal.slug),
+    databaseSlugs: publishedSlugs,
+  });
+
   console.log(
     `[SEO] sitemap/robots/feed + ${generatedHtmlCount} صفحة عرض + ${publishedAggregations} صفحة مجموعة` +
       (generatedPngCount > 0 ? ` + ${generatedPngCount} صورة OG.` : ' (OG بصيغة SVG).')
   );
+  if (generatedRouteShellCount > 0)
+    console.log(`[SEO] ${generatedRouteShellCount} direct deal routes added from the public slug list.`);
 }
 
 const isMain =

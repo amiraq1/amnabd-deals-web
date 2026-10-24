@@ -13,6 +13,7 @@ import type { Deal, DealStatus, Eligibility } from '@/types';
 import { AGGREGATIONS, type AggregationConfig } from './aggregations.js';
 import { applicantType, isOpenToAll, requirementState, truthState } from './eligibility.js';
 import { reviewDateLabel } from './format.js';
+import { isVerifiedReview } from './verification.js';
 
 export { AGGREGATIONS } from './aggregations.js';
 
@@ -113,7 +114,7 @@ export function dealFacts(input: unknown): DealFacts {
   return {
     status,
     availability: getAvailabilitySchema(status),
-    verified: asString(review?.verification_status) === 'verified',
+    verified: isVerifiedReview(review),
     reviewedOn,
     openToAll: isOpenToAll(eligibility),
     studentsOnly: eligibility.student_status === 'required',

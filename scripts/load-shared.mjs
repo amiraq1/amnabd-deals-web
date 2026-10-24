@@ -12,6 +12,7 @@ import ts from 'typescript';
 // Keep in sync with the runtime imports of `src/lib/seoFacts.ts`.
 const SHARED_MODULES = [
   'src/lib/seoFacts.ts',
+  'src/lib/verification.ts',
   'src/lib/eligibility.ts',
   'src/lib/format.ts',
   'src/lib/aggregations.ts',

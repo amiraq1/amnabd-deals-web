@@ -287,6 +287,7 @@ function parseDeal(input: unknown, ctx: Context): Deal | null {
       offer_status: text(get(review, 'offer_status'), ctx, 'unknown'),
       unknown_fields: strings(get(review, 'unknown_fields'), ctx),
       verification_status: text(get(review, 'verification_status'), ctx, 'unknown'),
+      verdict: requiredText(get(review, 'verdict')) ?? undefined,
     },
   };
 }

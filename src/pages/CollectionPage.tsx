@@ -13,6 +13,7 @@ import type { Deal } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { AGGREGATIONS, type AggregationConfig } from '@/lib/aggregations';
+import { isVerifiedReview } from '@/lib/verification';
 import DealCard from '@/components/DealCard';
 
 interface CollectionPageProps {
@@ -49,9 +50,9 @@ export default function CollectionPage({
     return deals.filter(config.filter);
   }, [deals, config]);
 
-  // "Verified" is only counted for rows that explicitly carry that status.
+  // Use the same explicit current/legacy review signals as the homepage.
   const verifiedCount = useMemo(
-    () => matchingDeals.filter((deal) => deal.review?.verification_status === 'verified').length,
+    () => matchingDeals.filter((deal) => isVerifiedReview(deal.review)).length,
     [matchingDeals]
   );
 

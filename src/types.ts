@@ -116,6 +116,7 @@ export interface Review {
   offer_status: string;
   unknown_fields: string[];
   verification_status: string;
+  verdict?: string;
 }
 
 export type DealStatus = 'active' | 'ending_soon' | 'expired' | 'verifying';

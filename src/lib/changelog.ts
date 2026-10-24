@@ -1,6 +1,7 @@
 import type { Deal } from '@/types';
 import { getDealDisplayName } from './dealMetadata.js';
 import { getTimingState } from './dealTiming.js';
+import { isVerifiedReview } from './verification.js';
 
 export type ChangelogEventType = 'verified' | 'active' | 'ending_soon' | 'expired';
 
@@ -22,8 +23,8 @@ export interface ChangelogGroup {
   entries: ChangelogEntry[];
 }
 
-// "verified" is a claim, so it requires the explicit status. An active deal
-// without that field is listed as active — never as verified (audit H-11).
+// "verified" is a claim, so it requires an explicit current or legacy review
+// signal. An active deal without one is listed as active — never as verified.
 export function getChangelogEventType(
   deal: Deal,
   referenceNow: Date = new Date()
@@ -31,7 +32,7 @@ export function getChangelogEventType(
   const { offer } = getTimingState(deal, referenceNow);
   if (offer.state === 'expired') return 'expired';
   if (offer.state === 'ending_soon') return 'ending_soon';
-  return deal.review?.verification_status === 'verified' ? 'verified' : 'active';
+  return isVerifiedReview(deal.review) ? 'verified' : 'active';
 }
 
 export function buildChangelogSummary(deal: Deal, type: ChangelogEventType): string {

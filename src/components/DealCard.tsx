@@ -12,6 +12,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { resolveDealOfficialUrl } from '@/lib/safeUrl';
 import { getDealDisplayName, getDealHeadlineValue, getDealKeyCondition } from '@/lib/dealMetadata';
 import { getTimingState } from '@/lib/dealTiming';
+import { isVerifiedReview } from '@/lib/verification';
 import { routePath } from '@/lib/routes';
 import DealIcon from '@/components/DealIcon';
 import FavoriteButton from '@/components/FavoriteButton';
@@ -74,7 +75,7 @@ export default function DealCard({ deal, onOpen }: DealCardProps) {
   const expiredByDate = expired && timing.offer.reason === 'ends_at';
   const registration = timing.registration;
   const isNew = !expired && isRecentlyReviewed(deal.review.reviewed_on, deal.created_at);
-  const verified = deal.review.verification_status === 'verified';
+  const verified = isVerifiedReview(deal.review);
 
   const noCard = deal.eligibility.card_required === 'not_required';
   const studentsOnly = deal.eligibility.applicant_type === 'student';

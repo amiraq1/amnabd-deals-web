@@ -210,10 +210,13 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}
 
   const deals = loadDealsCatalog(rootDir);
   const bySlug = new Map(deals.map((deal) => [deal.slug, deal]));
+  const genericAppShell = readIfExists(join(distDir, 'index.html'));
 
   for (const slug of listSlugs(distDir, 'deal')) {
     const deal = bySlug.get(slug);
     if (!deal) {
+      const routeHtml = readIfExists(join(distDir, 'deal', slug, 'index.html'));
+      if (genericAppShell !== null && routeHtml === genericAppShell) continue;
       report(`deal/${slug}: صفحة لعرض غير موجود في المصدر`);
       continue;
     }

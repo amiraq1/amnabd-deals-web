@@ -6,6 +6,7 @@ import { buildDealCorpus, categoryOptions, matchesCategory, matchesCorpus } from
 import { matchesEligibility } from '@/lib/eligibility';
 import { compileQuery } from '@/lib/normalize';
 import { reviewDateLabel } from '@/lib/format';
+import { isVerifiedReview } from '@/lib/verification';
 import { tristateLabel } from '@/lib/tristate';
 import { classifyDeadline, deadlineTierLabel, sortDeals } from '@/lib/dealSort';
 import { getTimingState } from '@/lib/dealTiming';
@@ -182,7 +183,7 @@ export default function HomePage({
 
   // نصف بـ«موثّق» فقط ما حالته verified فعلًا، لا كل ما ليس منتهيًا.
   const verifiedActiveCount = useMemo(
-    () => activeDeals.filter((d) => d.review?.verification_status === 'verified').length,
+    () => activeDeals.filter((d) => isVerifiedReview(d.review)).length,
     [activeDeals]
   );
   const allActiveVerified = verifiedActiveCount === activeDeals.length;
