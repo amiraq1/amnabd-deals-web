@@ -37,6 +37,47 @@ test('AGGREGATIONS defines all 4 primary curated collections', () => {
   }
 });
 
+test('the student page distinguishes GitHub email, enrollment proof, activation, and API credit', () => {
+  const students = AGGREGATIONS['for-students'];
+  const guide = students.studentVerificationGuide;
+  assert.ok(guide);
+  assert.equal(guide.steps.length, 3);
+  assert.match(guide.steps[0].body.en, /If the application asks/);
+  assert.match(guide.steps[1].body.en, /proof of current student status/);
+  assert.match(guide.steps[2].body.en, /Verification and activation are separate/);
+  assert.match(guide.steps[0].body.ar, /إذا طلب/);
+  assert.match(guide.steps[1].body.ar, /إثبات الحالة الدراسية الحالية/);
+  assert.match(guide.steps[2].body.ar, /خطوتان منفصلتان/);
+  assert.match(guide.creditNote.ar, /رصيد API/);
+  assert.match(guide.creditNote.en, /API credit/);
+  assert.doesNotMatch(guide.creditNote.en, /\$|\bUSD\b|\b\d+\b/);
+  for (const url of [...guide.steps.map((step) => step.sourceUrl), guide.packTermsUrl]) {
+    assert.equal(new URL(url).hostname, 'docs.github.com');
+  }
+  for (const step of guide.steps) {
+    assert.ok(step.title.ar && step.title.en);
+    assert.ok(step.body.ar && step.body.en);
+    assert.ok(step.sourceLabel.ar && step.sourceLabel.en);
+  }
+  assert.equal(AGGREGATIONS.coding.studentVerificationGuide, undefined);
+  assert.equal(AGGREGATIONS['no-credit-card'].studentVerificationGuide, undefined);
+});
+
+test('student collection copy states per-provider requirements and stays aligned with static SEO', () => {
+  const students = AGGREGATIONS['for-students'];
+  assert.match(students.descriptionAr, /تختلف متطلبات البريد الأكاديمي وإثبات القيد والتفعيل/);
+  assert.match(students.descriptionEn, /requirements vary by provider/);
+  assert.doesNotMatch(students.descriptionAr, /عبر البريد الأكاديمي أو بطاقة الطالب/);
+
+  const staticStudents = STATIC_AGGREGATIONS.find((item) => item.slug === 'for-students');
+  assert.ok(staticStudents);
+  assert.equal(staticStudents.description, students.metaDescriptionAr);
+  assert.equal(
+    buildAggregationSeo(staticStudents, [], 'https://amnabd.com').canonicalUrl,
+    'https://amnabd.com/for-students'
+  );
+});
+
 test('aggregation filters accurately match qualifying deals', () => {
   const studentDeal = {
     id: '1',

@@ -8,6 +8,7 @@ import {
   Clock,
   Sparkles,
   Inbox,
+  ExternalLink,
 } from 'lucide-react';
 import type { Deal } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
@@ -156,6 +157,73 @@ export default function CollectionPage({
           </div>
         </div>
       </header>
+
+      {collectionKey === 'for-students' && config.studentVerificationGuide && (
+        <section
+          aria-labelledby="student-verification-heading"
+          className="mt-6 rounded-2xl border border-emerald-500/20 bg-slate-900/70 p-5 sm:p-6"
+        >
+          <div className="max-w-3xl">
+            <h2
+              id="student-verification-heading"
+              className="font-heading text-lg font-bold text-white sm:text-xl"
+            >
+              {config.studentVerificationGuide.heading[lang]}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              {config.studentVerificationGuide.intro[lang]}
+            </p>
+          </div>
+
+          <ol className="mt-5 grid gap-3 md:grid-cols-3">
+            {config.studentVerificationGuide.steps.map((step, index) => (
+              <li
+                key={step.title.en}
+                className="flex flex-col rounded-xl border border-slate-800 bg-slate-950/50 p-4"
+              >
+                <div className="flex items-start gap-2.5">
+                  <span
+                    aria-hidden="true"
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-xs font-bold text-emerald-300"
+                  >
+                    {index + 1}
+                  </span>
+                  <h3 className="pt-0.5 text-sm font-semibold text-white">
+                    {step.title[lang]}
+                  </h3>
+                </div>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-300">
+                  {step.body[lang]}
+                </p>
+                <a
+                  href={step.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-emerald-300 underline underline-offset-4 hover:text-emerald-200"
+                >
+                  <bdi>{step.sourceLabel[lang]}</bdi>
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              </li>
+            ))}
+          </ol>
+
+          <aside className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <p className="text-sm leading-relaxed text-slate-300">
+              {config.studentVerificationGuide.creditNote[lang]}
+            </p>
+            <a
+              href={config.studentVerificationGuide.packTermsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-amber-300 underline underline-offset-4 hover:text-amber-200"
+            >
+              <bdi>{config.studentVerificationGuide.packTermsLabel[lang]}</bdi>
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+          </aside>
+        </section>
+      )}
 
       {/* 3. Deals Grid */}
       <section className="mt-8">
