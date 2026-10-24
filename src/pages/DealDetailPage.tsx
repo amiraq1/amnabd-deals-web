@@ -21,7 +21,7 @@ import DealIcon from '@/components/DealIcon';
 import ScrollToTop from '@/components/ScrollToTop';
 import FavoriteButton from '@/components/FavoriteButton';
 import ReportDealBox from '@/components/ReportDealBox';
-import { getActivationGuide } from '@/content/activationGuides';
+import { filterActivationGuide } from '@/lib/activationGuideSafety';
 import { ActivationGuide } from '@/components/ActivationGuide';
 
 interface DealDetailPageProps {
@@ -86,7 +86,7 @@ export default function DealDetailPage({
   // must not print `offer_status` on its own.
   const timing = getTimingState(deal, new Date());
   const unknownCount = deal.review.unknown_fields.length;
-  const activationGuide = getActivationGuide(deal.slug);
+  const activationGuide = filterActivationGuide(guide?.activation, deal.review.unknown_fields);
 
   return (
     <>

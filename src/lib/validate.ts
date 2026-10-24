@@ -1,7 +1,9 @@
 import { isValidSlug } from './routes.js';
 import { applicantType, requirementState, truthState } from './eligibility.js';
 import { parseInstant } from './instants.js';
+import { hasSensitiveClaimCoverage } from './activationGuideSafety.js';
 import type {
+  ActivationGuideStep,
   Benefit,
   Claim,
   Deal,
@@ -9,6 +11,7 @@ import type {
   GuideSection,
   Localized,
   OfficialSource,
+  ReviewedActivationGuide,
   SiteConfig,
   UsageGuide,
 } from '@/types';
@@ -292,11 +295,114 @@ function parseDeal(input: unknown, ctx: Context): Deal | null {
   };
 }
 
+const ACTIVATION_SOURCE_HOSTS: Record<string, string[]> = {
+  'antigravity-ultra-scientists': ['antigravity.google', 'forms.gle', 'google.com'],
+  deepgram: ['deepgram.com', 'console.deepgram.com', 'developers.deepgram.com'],
+  'github-copilot': ['github.com', 'docs.github.com', 'support.github.com'],
+  'blitz-cloud': ['blitz.cloud', 'dashboard.blitz.cloud'],
+};
+
+function officialGuideSources(value: unknown, slug: string): string[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const hosts = ACTIVATION_SOURCE_HOSTS[slug] ?? [];
+  const result: string[] = [];
+  for (const item of value) {
+    const raw = requiredText(item);
+    if (!raw) return null;
+    try {
+      const url = new URL(raw);
+      const official = hosts.some(
+        (host) => url.hostname === host || url.hostname.endsWith(`.${host}`)
+      );
+      if (url.protocol !== 'https:' || !official || url.username || url.password)
+        return null;
+      result.push(url.href);
+    } catch {
+      return null;
+    }
+  }
+  return result;
+}
+
+function strictStrings(value: unknown): string[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const result = value.map(requiredText);
+  return result.every((item): item is string => item !== null) ? result : null;
+}
+
+function parseActivationStep(value: unknown, slug: string): ActivationGuideStep | null {
+  const row = object(value);
+  const ar = requiredText(get(row, 'ar'));
+  const en = requiredText(get(row, 'en'));
+  const sources = officialGuideSources(get(row, 'sources'), slug);
+  const claimFields = strictStrings(get(row, 'claim_fields'));
+  if (!row || !ar || !en || !sources || !claimFields) return null;
+  if (
+    !hasSensitiveClaimCoverage(`${ar}\n${en}`, claimFields)
+  )
+    return null;
+  return { ar, en, sources, claim_fields: claimFields };
+}
+
+function parseActivationGuide(
+  value: unknown,
+  slug: string,
+  ctx: Context
+): ReviewedActivationGuide | null {
+  const row = object(value);
+  const reviewStatus = requiredText(get(row, 'review_status'));
+  if (reviewStatus !== 'reviewed' && reviewStatus !== 'reviewed_with_unknowns') return null;
+  const reviewedOn = dateOnly(get(row, 'reviewed_on'), ctx);
+  const summary = localized(get(row, 'summary'), ctx);
+  const summarySources = officialGuideSources(get(row, 'summary_sources'), slug);
+  const summaryClaimFields = strictStrings(get(row, 'summary_claim_fields'));
+  const rawSteps = get(row, 'steps');
+  const notes = localized(get(row, 'notes'), ctx);
+  const notesSources = officialGuideSources(get(row, 'notes_sources'), slug);
+  const unknownFields = strictStrings(get(row, 'unknown_fields'));
+  if (
+    !row ||
+    !reviewedOn ||
+    !summary.ar || summary.ar === UNKNOWN.ar ||
+    !summary.en || summary.en === UNKNOWN.en ||
+    !summarySources ||
+    !summaryClaimFields ||
+    !hasSensitiveClaimCoverage(`${summary.ar}\n${summary.en}`, summaryClaimFields) ||
+    !Array.isArray(rawSteps) || rawSteps.length === 0 ||
+    !notes.ar || notes.ar === UNKNOWN.ar ||
+    !notes.en || notes.en === UNKNOWN.en ||
+    !notesSources ||
+    !unknownFields ||
+    (reviewStatus === 'reviewed_with_unknowns' && unknownFields.length === 0)
+  )
+    return null;
+  const steps = rawSteps.map((step) => parseActivationStep(step, slug));
+  if (steps.some((step) => step === null)) return null;
+  return {
+    review_status: reviewStatus,
+    reviewed_on: reviewedOn,
+    summary,
+    summary_sources: summarySources,
+    summary_claim_fields: summaryClaimFields,
+    steps: steps as ActivationGuideStep[],
+    notes,
+    notes_sources: notesSources,
+    unknown_fields: unknownFields,
+  };
+}
+
 function parseGuide(input: unknown, ctx: Context): UsageGuide | null {
   const row = object(input);
   const slug = requiredText(get(row, 'slug'));
   if (!row || !slug || !isValidSlug(slug)) return null;
   const sections = object(get(row, 'sections'));
+  const rawActivation = get(sections, 'activation_guide');
+  let activation: ReviewedActivationGuide | undefined;
+  if (rawActivation !== undefined) {
+    const parsedActivation = parseActivationGuide(rawActivation, slug, ctx);
+    if (!parsedActivation) return null;
+    activation = parsedActivation;
+  }
   const section = (key: string): GuideSection => {
     const item = object(get(sections, key));
     return { ...localized(item, ctx), sources: strings(get(item, 'sources'), ctx) };
@@ -309,6 +415,7 @@ function parseGuide(input: unknown, ctx: Context): UsageGuide | null {
       limitations: section('limitations'),
       after_expiry: section('after_expiry'),
     },
+    activation,
   };
 }
 

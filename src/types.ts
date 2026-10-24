@@ -152,11 +152,31 @@ export interface GuideSection {
   sources: string[];
 }
 
+export interface ActivationGuideStep {
+  ar: string;
+  en: string;
+  sources: string[];
+  claim_fields: string[];
+}
+
+export interface ReviewedActivationGuide {
+  review_status: 'reviewed' | 'reviewed_with_unknowns';
+  reviewed_on: string;
+  summary: Localized;
+  summary_sources: string[];
+  summary_claim_fields: string[];
+  steps: ActivationGuideStep[];
+  notes: Localized;
+  notes_sources: string[];
+  unknown_fields: string[];
+}
+
 export type GuideSectionKey = 'eligibility' | 'registration' | 'limitations' | 'after_expiry';
 
 export interface UsageGuide {
   slug: string;
   sections: Record<GuideSectionKey, GuideSection>;
+  activation?: ReviewedActivationGuide;
 }
 
 export interface SiteConfig {

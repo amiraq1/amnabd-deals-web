@@ -34,6 +34,7 @@
     "src/lib/shareFavorites.ts",
     "src/lib/changelog.ts",
     "src/lib/aggregations.ts",
+    "src/lib/activationGuideSafety.ts",
     "src/content/activationGuides.ts"
   ]
 }
