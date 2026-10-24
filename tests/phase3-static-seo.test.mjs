@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -8,6 +10,8 @@ const {
   buildDealOgSvg,
   generateSitemapXml,
   generateRobotsTxt,
+  generateLlmsTxt,
+  runStaticSeoGeneration,
   injectSeoIntoHtml,
   escapeHtml,
   loadDealsCatalog,
@@ -89,4 +93,45 @@ test('loadDealsCatalog successfully parses deals from scripts/deals-catalog.json
   const bolt = catalog.find((d) => d.slug.includes('bolt'));
   assert.ok(bolt);
   assert.ok(bolt.slug);
+});
+
+test('F-05: postbuild generates llms.txt from exactly the static deal pages', async () => {
+  const deals = [
+    sampleDeal,
+    { slug: 'second-deal', name_ar: 'العرض الثاني', description_ar: 'وصف متاح من المصدر.' },
+    { slug: 'invalid/slug', name_ar: 'مسار غير صالح' },
+  ];
+  const direct = generateLlmsTxt(deals, 'https://deals.example.com');
+  assert.match(direct, /https:\/\/deals\.example\.com\/deal\/bolt-builders-week/);
+  assert.match(direct, /https:\/\/deals\.example\.com\/deal\/second-deal/);
+  assert.doesNotMatch(direct, /invalid\/slug|#\/deal|\]\([^)]*[?#]/);
+
+  const rootDir = mkdtempSync(join(tmpdir(), 'amnabd-llms-'));
+  const distDir = join(rootDir, 'dist');
+  try {
+    mkdirSync(join(rootDir, 'scripts'), { recursive: true });
+    mkdirSync(distDir, { recursive: true });
+    writeFileSync(join(rootDir, 'scripts', 'deals-catalog.json'), JSON.stringify(deals));
+    writeFileSync(join(distDir, 'index.html'), sampleBaseHtml);
+    writeFileSync(join(distDir, 'llms.txt'), 'stale hash route');
+
+    await runStaticSeoGeneration({
+      rootDir,
+      distDir,
+      baseUrl: 'https://deals.example.com',
+      databaseSlugs: [],
+    });
+
+    const generated = readFileSync(join(distDir, 'llms.txt'), 'utf8');
+    const pageSlugs = readdirSync(join(distDir, 'deal'));
+    const llmsSlugs = [...generated.matchAll(/\]\(https:\/\/deals\.example\.com\/deal\/([^)?#]+)\)/g)].map(
+      (match) => match[1]
+    );
+    assert.deepEqual(llmsSlugs.sort(), pageSlugs.sort());
+    assert.equal(llmsSlugs.length, 2);
+    assert.doesNotMatch(generated, /#\/deal|stale hash route/);
+    assert.equal(readFileSync(join(distDir, 'ending-soon', 'index.html'), 'utf8'), sampleBaseHtml);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
 });

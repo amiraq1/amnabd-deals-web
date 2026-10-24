@@ -82,7 +82,7 @@ function routeLookupConfig(rootDir, { publicUrl, publicKey } = {}) {
   return { url: parsedUrl.toString().replace(/\/+$/, ''), key };
 }
 
-function isStaticDealSlug(value) {
+export function isStaticDealSlug(value) {
   return (
     typeof value === 'string' &&
     value.length > 0 &&
@@ -292,6 +292,37 @@ export function buildAggregationSeo(agg, matchingDeals, baseUrl = DEFAULT_SITE_U
 export function generateRobotsTxt(baseUrl = DEFAULT_SITE_URL) {
   const cleanBase = baseUrl.replace(/\/+$/, '');
   return `User-agent: *\nAllow: /\n\nSitemap: ${cleanBase}/sitemap.xml\n`;
+}
+
+export function generateLlmsTxt(deals, baseUrl = DEFAULT_SITE_URL) {
+  const cleanBase = baseUrl.replace(/\/+$/, '');
+  const dealLines = deals
+    .filter((deal) => isStaticDealSlug(deal?.slug))
+    .map((deal) => {
+      const seo = buildDealSeo(deal, cleanBase);
+      const name = dealDisplayName(deal, deal.slug);
+      const label = String(name)
+        .replaceAll('\\', '\\\\')
+        .replaceAll('[', '\\[')
+        .replaceAll(']', '\\]');
+      const description = String(seo.description || name).replace(/\s+/g, ' ').trim();
+      return `- [${label}](${seo.canonicalUrl}): ${description}`;
+    });
+
+  return `# AMNABD Deals
+
+> Arabic-first directory of AI-tool deals, each with a source link.
+> Terms, eligibility and evidence are recorded per deal where the source states them; each deal page shows what is still unknown.
+
+## Deals
+
+${dealLines.join('\n')}
+
+## Official site
+
+- Homepage: ${cleanBase}/
+- Language: Arabic (RTL) primary, English names for tools.
+`;
 }
 
 export function toRfc822Date(dateStr) {
@@ -534,6 +565,7 @@ export async function runStaticSeoGeneration({
 
   const baseHtml = readFileSync(indexHtmlPath, 'utf8');
   const deals = loadDealsCatalog(rootDir);
+  const seoDeals = deals.filter((deal) => isStaticDealSlug(deal?.slug));
   const publishedSlugs =
     databaseSlugs ??
     (process.env.GITHUB_EVENT_NAME === 'pull_request'
@@ -543,6 +575,7 @@ export async function runStaticSeoGeneration({
   writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(deals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'robots.txt'), generateRobotsTxt(baseUrl), 'utf8');
   writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(deals, baseUrl), 'utf8');
+  writeFileSync(join(distDir, 'llms.txt'), generateLlmsTxt(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, '404.html'), baseHtml, 'utf8');
 
   const changelogDir = join(distDir, 'changelog');
@@ -562,25 +595,27 @@ export async function runStaticSeoGeneration({
   };
   writeFileSync(join(changelogDir, 'index.html'), injectSeoIntoHtml(baseHtml, changelogSeo), 'utf8');
 
-  // A collection page is only published when it can list at least one deal.
-  // An empty "best deals for students" page would be a claim with no evidence.
+  // Bake collection SEO only when the catalog proves at least one deal. A
+  // generic app shell still gives a known route HTTP 200 and lets the live
+  // collection load without publishing any collection-specific static claims.
   let publishedAggregations = 0;
   const skippedAggregations = [];
   for (const agg of STATIC_AGGREGATIONS) {
     const matching = deals.filter((deal) => agg.filter(deal));
+    const aggDir = join(distDir, agg.slug);
+    mkdirSync(aggDir, { recursive: true });
     if (matching.length === 0) {
+      writeFileSync(join(aggDir, 'index.html'), baseHtml, 'utf8');
       skippedAggregations.push(agg.slug);
       continue;
     }
-    const aggDir = join(distDir, agg.slug);
-    mkdirSync(aggDir, { recursive: true });
     const aggSeo = buildAggregationSeo(agg, matching, baseUrl);
     writeFileSync(join(aggDir, 'index.html'), injectSeoIntoHtml(baseHtml, aggSeo), 'utf8');
     publishedAggregations += 1;
   }
   if (skippedAggregations.length > 0) {
     console.log(
-      `[SEO] صفحات مجموعات لم تُنشر (لا عروض يثبتها المصدر): ${skippedAggregations.join(', ')}`
+      `[SEO] generic collection route shells (no static collection claims): ${skippedAggregations.join(', ')}`
     );
   }
 
@@ -591,9 +626,7 @@ export async function runStaticSeoGeneration({
   let generatedHtmlCount = 0;
   let generatedPngCount = 0;
 
-  for (const deal of deals) {
-    if (!deal?.slug || !/^[a-zA-Z0-9_\-\u0600-\u06FF]+$/i.test(deal.slug)) continue;
-
+  for (const deal of seoDeals) {
     const facts = dealFacts(deal);
     const seo = buildDealSeo(deal, baseUrl);
     const dealDir = join(distDir, 'deal', deal.slug);
@@ -618,7 +651,7 @@ export async function runStaticSeoGeneration({
   const generatedRouteShellCount = writeMissingDealRoutePages({
     distDir,
     baseHtml,
-    catalogSlugs: deals.map((deal) => deal.slug),
+    catalogSlugs: seoDeals.map((deal) => deal.slug),
     databaseSlugs: publishedSlugs,
   });
 

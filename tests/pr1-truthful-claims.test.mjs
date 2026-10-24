@@ -346,6 +346,46 @@ test('verify-dist covers site-level files, not just deal pages', () => {
   });
 });
 
+test('verify-dist permits only an unchanged app shell for an uncatalogued collection route', () => {
+  const shell = '<!doctype html><html><head><title>AMNABD Deals</title></head><body><div id="root"></div></body></html>';
+  const clean = fixtureDist({ 'index.html': shell, 'ending-soon/index.html': shell });
+  assert.match(runVerifyDist(clean), /verify-dist: OK/);
+
+  const dirty = fixtureDist({
+    'index.html': shell,
+    'ending-soon/index.html': '<html><head><title>Ending Soon Deals</title></head></html>',
+  });
+  assert.throws(() => runVerifyDist(dirty), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /ending-soon\/index\.html/);
+    return true;
+  });
+});
+
+test('verify-dist requires llms.txt links to match SEO deal paths without hashes', () => {
+  const deals = staticSeo.loadDealsCatalog(process.cwd());
+  const canonical = staticSeo.generateLlmsTxt(deals, 'https://amnabd.com');
+  assert.match(runVerifyDist(fixtureDist({ 'llms.txt': canonical })), /verify-dist: OK/);
+
+  const foreign = canonical.replaceAll('https://amnabd.com/deal/', 'https://wrong.example/deal/');
+  assert.throws(() => runVerifyDist(fixtureDist({ 'llms.txt': foreign })), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /llms\.txt/);
+    return true;
+  });
+
+  const legacy = canonical.replace(
+    /\]\(https:\/\/amnabd\.com\/deal\/([^)]*)\)/g,
+    '](https://amnabd.com/#/deal/$1)'
+  );
+  assert.throws(() => runVerifyDist(fixtureDist({ 'llms.txt': legacy })), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /llms\.txt/);
+    assert.match(String(error.stderr), /canonical|مفقود/);
+    return true;
+  });
+});
+
 test('verify-dist judges the feed channel header, not the per-deal item text', () => {
   // "بدون بطاقة" inside an <item> is source content, not a site-wide claim.
   const feed = fixtureDist({

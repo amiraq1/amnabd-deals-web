@@ -3,6 +3,7 @@ import { BookOpen, Globe, Heart, History, Menu, Tag, X, Sparkles } from 'lucide-
 import { useLanguage } from '@/context/LanguageContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { routePath, type Route } from '@/lib/routes';
+import { languageSearchForLocation } from '@/lib/languageStorage';
 
 export type { Route } from '@/lib/routes';
 
@@ -81,12 +82,14 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
 
   const t = translations[lang] ?? translations.ar;
   const [menuOpen, setMenuOpen] = useState(false);
+  const languageQuery = languageSearchForLocation('', lang, window.location.search);
+  const localizedPath = (path: string) => `${path}${languageQuery ? `?${languageQuery}` : ''}`;
 
   const handleNavigate = (target: Route) => {
     if (navigate) {
       navigate(target);
     } else if (typeof window !== 'undefined') {
-      window.location.href = routePath(target);
+      window.location.href = localizedPath(routePath(target));
     }
   };
 
@@ -127,7 +130,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* الشعار */}
         <a
-          href="/"
+          href={localizedPath('/')}
           onClick={(e) => go(e, { name: 'home' })}
           className={`flex items-center gap-2.5 rounded-lg ${focusRing}`}
         >
@@ -146,7 +149,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
             return (
               <a
                 key={key}
-                href={path}
+                href={localizedPath(path)}
                 onClick={(e) => go(e, routeTarget)}
                 aria-current={active ? 'page' : undefined}
                 className={`${baseLink} ${active ? activeLink : idleLink}`}
@@ -208,7 +211,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
               return (
                 <li key={key}>
                   <a
-                    href={path}
+                    href={localizedPath(path)}
                     onClick={(e) => go(e, routeTarget)}
                     aria-current={active ? 'page' : undefined}
                     className={`${baseLink} w-full py-2.5 text-base ${

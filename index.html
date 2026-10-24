@@ -293,8 +293,13 @@
     <script>
       (function () {
         try {
-          var saved = localStorage.getItem('amnabd-lang');
-          var lang = saved === 'en' ? 'en' : 'ar';
+          var params = new URLSearchParams(window.location.search);
+          var requested = params.getAll('lang');
+          var fromUrl = requested.length === 1 && (requested[0] === 'en' || requested[0] === 'ar')
+            ? requested[0]
+            : null;
+          var saved = fromUrl ? null : localStorage.getItem('amnabd-lang');
+          var lang = fromUrl || (saved === 'en' ? 'en' : 'ar');
           document.documentElement.lang = lang;
           document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
         } catch (e) {}

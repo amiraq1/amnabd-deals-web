@@ -1,8 +1,11 @@
 import { ShieldAlert, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { languageSearchForLocation } from '@/lib/languageStorage';
 
 export default function Footer() {
   const { lang } = useLanguage();
+  const languageQuery = languageSearchForLocation('', lang, window.location.search);
+  const localizedPath = (path: string) => `${path}${languageQuery ? `?${languageQuery}` : ''}`;
 
   return (
     <footer className="mt-16 border-t border-slate-800/80 bg-slate-950">
@@ -30,26 +33,26 @@ export default function Footer() {
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
               <span className="text-slate-400 font-semibold">{lang === 'ar' ? 'مجموعات مميزة:' : 'Collections:'}</span>
-              <a href="/for-students" className="text-slate-400 hover:text-emerald-400">
+              <a href={localizedPath('/for-students')} className="text-slate-400 hover:text-emerald-400">
                 {lang === 'ar' ? 'للطلاب' : 'For Students'}
               </a>
               <span className="text-slate-700">·</span>
-              <a href="/no-credit-card" className="text-slate-400 hover:text-emerald-400">
+              <a href={localizedPath('/no-credit-card')} className="text-slate-400 hover:text-emerald-400">
                 {lang === 'ar' ? 'بدون بطاقة' : 'No Card'}
               </a>
               <span className="text-slate-700">·</span>
-              <a href="/coding" className="text-slate-400 hover:text-emerald-400">
+              <a href={localizedPath('/coding')} className="text-slate-400 hover:text-emerald-400">
                 {lang === 'ar' ? 'أدوات البرمجة' : 'Coding Tools'}
               </a>
               <span className="text-slate-700">·</span>
-              <a href="/ending-soon" className="text-slate-400 hover:text-amber-400">
+              <a href={localizedPath('/ending-soon')} className="text-slate-400 hover:text-amber-400">
                 {lang === 'ar' ? 'تنتهي قريباً' : 'Ending Soon'}
               </a>
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <a
-                href="/changelog"
+                href={localizedPath('/changelog')}
                 className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-400"
               >
                 {lang === 'ar' ? 'سجل التغييرات' : 'Changelog'}

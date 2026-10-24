@@ -19,7 +19,12 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadDealsCatalog, STATIC_AGGREGATIONS, sharedSeo } from './generate-static-seo.mjs';
+import {
+  isStaticDealSlug,
+  loadDealsCatalog,
+  STATIC_AGGREGATIONS,
+  sharedSeo,
+} from './generate-static-seo.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { dealFacts } = sharedSeo;
@@ -141,6 +146,48 @@ function checkSiteFiles(report, distDir, deals) {
   }
 }
 
+function checkLlmsDealRoutes(report, distDir, deals) {
+  const raw = readIfExists(join(distDir, 'llms.txt'));
+  if (raw === null) return;
+
+  const canonicalOrigin = new URL(sharedSeo.DEFAULT_SITE_URL).origin;
+  const expected = new Set(deals.filter((deal) => isStaticDealSlug(deal?.slug)).map((deal) => deal.slug));
+  const found = [];
+  for (const match of raw.matchAll(/\]\(([^)\s]+)\)/g)) {
+    const link = match[1];
+    let parsed;
+    try {
+      parsed = new URL(link);
+    } catch {
+      report(`llms.txt: رابط عرض غير صالح (${link})`);
+      continue;
+    }
+    const route = parsed.pathname.match(/^\/deal\/([^/]+)$/);
+    if (parsed.origin !== canonicalOrigin || parsed.search || parsed.hash || !route) {
+      report(`llms.txt: يجب أن يكون رابط العرض مسارًا canonical بلا query أو hash (${link})`);
+      continue;
+    }
+    let slug;
+    try {
+      slug = decodeURIComponent(route[1]);
+    } catch {
+      report(`llms.txt: slug غير صالح (${link})`);
+      continue;
+    }
+    if (!expected.has(slug)) report(`llms.txt: رابط لعرض غير موجود في كتالوج SEO (${slug})`);
+    found.push(slug);
+  }
+
+  const seen = new Set();
+  for (const slug of found) {
+    if (seen.has(slug)) report(`llms.txt: رابط مكرر للعرض ${slug}`);
+    seen.add(slug);
+  }
+  for (const slug of expected) {
+    if (!seen.has(slug)) report(`llms.txt: رابط SEO مفقود للعرض ${slug}`);
+  }
+}
+
 // Only the parts of a site file that speak about the directory as a whole.
 // Per-deal text (feed items, llms.txt deal lines, JSON-LD ItemList entries) is
 // source content and must not be judged by a site-wide rule.
@@ -242,6 +289,7 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}
   }
 
   checkSiteFiles(report, distDir, deals);
+  checkLlmsDealRoutes(report, distDir, deals);
 
   // An empty collection page advertises deals that were never established.
   for (const agg of STATIC_AGGREGATIONS) {
@@ -249,7 +297,8 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist') } = {}
     const rel = `${agg.slug}/index.html`;
     const html = readIfExists(join(distDir, rel));
     if (matches.length === 0) {
-      if (html !== null) report(`${rel}: صفحة مجموعة بلا أي عرض يثبتها المصدر`);
+      if (html !== null && html !== genericAppShell)
+        report(`${rel}: صفحة مجموعة بلا أي عرض يثبتها المصدر`);
       continue;
     }
     if (html === null) continue;

@@ -1,6 +1,8 @@
 import { isValidSlug, routePath } from './routes.js';
+import type { Lang } from '@/types';
+import { parseLanguageFromSearch, withLanguageSearch } from './languageStorage.js';
 
-export function buildDealLink(pageUrl: string, slug: string): string | null {
+export function buildDealLink(pageUrl: string, slug: string, lang?: Lang): string | null {
   if (!isValidSlug(slug)) return null;
   try {
     const path = routePath({ name: 'deal', slug });
@@ -14,7 +16,10 @@ export function buildDealLink(pageUrl: string, slug: string): string | null {
     // `/404/deal/x`), and a subdirectory deploy needs the router and the build
     // `base` configured for it anyway — not an inference made here.
     url.pathname = path;
-    url.search = '';
+    const selectedLanguage = lang ?? parseLanguageFromSearch(url.search);
+    url.search = selectedLanguage
+      ? withLanguageSearch('', selectedLanguage, selectedLanguage === 'ar')
+      : '';
     url.hash = '';
     return url.href;
   } catch {

@@ -32,6 +32,7 @@ import ChangelogPage from '@/pages/ChangelogPage';
 import CollectionPage from '@/pages/CollectionPage';
 import { buildDealSeo, applyDocumentMetadata } from '@/lib/seo';
 import { routeMetadata } from '@/lib/metadata';
+import { languageSearchForLocation } from '@/lib/languageStorage';
 
 function AppInner() {
   const { lang } = useLanguage();
@@ -71,6 +72,11 @@ function AppInner() {
   categoriesRef.current = offers.status === 'ready' ? validCategoryKeys : undefined;
   const routeRef = useRef(route);
   const currentUrl = () => window.location.pathname + window.location.search;
+  const languageAwareSearch = useCallback(
+    (search: string) =>
+      languageSearchForLocation(search, lang, window.location.search),
+    [lang]
+  );
   const lastDiscoveryUrl = useRef(route.name === 'home' ? currentUrl() : '/');
   const lastAppliedPath = useRef(window.location.pathname);
   const lastAppliedSearch = useRef(window.location.search.replace(/^\?/, ''));
@@ -151,8 +157,8 @@ function AppInner() {
     []
   );
   const currentDiscoveryUrl = useCallback(
-    () => routeUrl({ name: 'home' }, currentDiscoverySearch()),
-    [currentDiscoverySearch]
+    () => routeUrl({ name: 'home' }, languageAwareSearch(currentDiscoverySearch())),
+    [currentDiscoverySearch, languageAwareSearch]
   );
   const flushDiscovery = useCallback(() => {
     cancelPending();
@@ -161,11 +167,15 @@ function AppInner() {
   const navigate = useCallback(
     (next: Route) => {
       flushDiscovery();
-      const url = next.name === 'home' ? lastDiscoveryUrl.current : routeUrl(next);
+      const search =
+        next.name === 'home'
+          ? new URL(lastDiscoveryUrl.current, window.location.origin).search
+          : '';
+      const url = routeUrl(next, languageAwareSearch(search));
       writeLocation(url, 'push');
       window.scrollTo({ top: 0 });
     },
-    [flushDiscovery, writeLocation]
+    [flushDiscovery, languageAwareSearch, writeLocation]
   );
   const handleFilterChange = useCallback(
     (update: Partial<FilterState>, method: 'push' | 'replace' = 'push') => {
@@ -187,17 +197,17 @@ function AppInner() {
         timer.current = window.setTimeout(() => {
           timer.current = null;
           if (routeRef.current.name === 'home')
-            writeLocation(routeUrl({ name: 'home' }, search), 'replace', true);
+            writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)), 'replace', true);
         }, 250);
-      else writeLocation(routeUrl({ name: 'home' }, search), 'push');
+      else writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)), 'push');
     },
-    [cancelPending, writeLocation]
+    [cancelPending, languageAwareSearch, writeLocation]
   );
   const handleResetFilters = useCallback(() => {
     cancelPending();
     filtersRef.current = { ...DEFAULT_FILTER_STATE };
-    writeLocation('/', 'push');
-  }, [cancelPending, writeLocation]);
+    writeLocation(routeUrl({ name: 'home' }, languageAwareSearch('')), 'push');
+  }, [cancelPending, languageAwareSearch, writeLocation]);
   const getSearchLink = useCallback(() => {
     cancelPending();
     const url = currentDiscoveryUrl();

@@ -13,7 +13,8 @@ import { resolveDealOfficialUrl } from '@/lib/safeUrl';
 import { getDealDisplayName, getDealHeadlineValue, getDealKeyCondition } from '@/lib/dealMetadata';
 import { getTimingState } from '@/lib/dealTiming';
 import { isVerifiedReview } from '@/lib/verification';
-import { routePath } from '@/lib/routes';
+import { routeUrl } from '@/lib/routes';
+import { languageSearchForLocation } from '@/lib/languageStorage';
 import DealIcon from '@/components/DealIcon';
 import FavoriteButton from '@/components/FavoriteButton';
 
@@ -80,7 +81,8 @@ export default function DealCard({ deal, onOpen }: DealCardProps) {
   const noCard = deal.eligibility.card_required === 'not_required';
   const studentsOnly = deal.eligibility.applicant_type === 'student';
 
-  const href = routePath({ name: 'deal', slug: deal.slug });
+  const languageQuery = languageSearchForLocation('', lang, window.location.search);
+  const href = routeUrl({ name: 'deal', slug: deal.slug }, languageQuery);
 
   // نقرة عادية = تنقل داخل التطبيق. Ctrl/Cmd/Shift/Alt أو الزر الأوسط = يتولاها المتصفح.
   const handleOpen = (e: MouseEvent<HTMLAnchorElement>) => {

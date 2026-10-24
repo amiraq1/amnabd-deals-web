@@ -2,9 +2,11 @@
 // These are the acceptance cases the audit asked for, at the pure-function
 // level: the browser half is exercised by the manual checklist.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { runInNewContext } from 'node:vm';
 
 const load = (rel) =>
   import(pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, `src/lib/${rel}.js`)).href);
@@ -16,6 +18,7 @@ const {
   isHashOnlyLocationChange,
 } = await load('routes');
 const { buildDiscoverySearch, DEFAULT_FILTER_STATE } = await load('filterState');
+const { parseLanguageFromSearch, readLanguage, withLanguageSearch, languageSearchForLocation } = await load('languageStorage');
 const { routeMetadata } = await load('metadata');
 const { buildDealSeo } = await load('seoFacts');
 const { buildDealLink } = await load('share');
@@ -38,6 +41,45 @@ test('A01: a route and its filters produce one path-based URL', () => {
   assert.equal(routeUrl({ name: 'home' }, '?q=alpha&sort=deadline'), '/?q=alpha&sort=deadline');
   // A stray leading "?" is not doubled.
   assert.equal(routeUrl({ name: 'home' }, 'q=alpha'), '/?q=alpha');
+});
+
+test('F-02: URL language overrides storage and invalid or repeated values are ignored', () => {
+  const stored = (value) => () => ({ getItem: () => value, setItem: () => {} });
+  assert.equal(parseLanguageFromSearch('?lang=en'), 'en');
+  assert.equal(parseLanguageFromSearch('q=ai&lang=ar'), 'ar');
+  assert.equal(parseLanguageFromSearch('?lang=fr'), null);
+  assert.equal(parseLanguageFromSearch('?lang=en&lang=ar'), null);
+  assert.equal(readLanguage(stored('ar'), '?lang=en'), 'en');
+  assert.equal(readLanguage(stored('en'), '?lang=ar'), 'ar');
+  assert.equal(readLanguage(stored('en'), '?lang=unknown'), 'en');
+  assert.equal(readLanguage(() => { throw new Error('storage blocked'); }, ''), 'ar');
+  assert.equal(readLanguage(() => { throw new Error('storage blocked'); }, '?lang=en'), 'en');
+});
+
+test('F-02: HTML bootstrap honors the URL before React even when storage is blocked', () => {
+  const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
+  const bootstrap = /<script>\s*([\s\S]*?)<\/script>/.exec(html)?.[1];
+  assert.ok(bootstrap);
+  const document = { documentElement: { lang: 'ar', dir: 'rtl' } };
+  runInNewContext(bootstrap, {
+    URLSearchParams,
+    window: { location: { search: '?lang=en' } },
+    document,
+    localStorage: { getItem: () => { throw new Error('storage blocked'); } },
+  });
+  assert.equal(document.documentElement.lang, 'en');
+  assert.equal(document.documentElement.dir, 'ltr');
+});
+
+test('F-02: localized search preserves filters and only emits Arabic when explicitly selected', () => {
+  assert.equal(
+    withLanguageSearch('?q=alpha&q=beta&lang=unknown&sort=deadline', 'en'),
+    'q=alpha&q=beta&sort=deadline&lang=en'
+  );
+  assert.equal(withLanguageSearch('q=alpha', 'ar'), 'q=alpha');
+  assert.equal(withLanguageSearch('q=alpha&lang=en', 'ar', true), 'q=alpha&lang=ar');
+  assert.equal(languageSearchForLocation('q=alpha', 'ar', '?lang=en'), 'q=alpha&lang=en');
+  assert.equal(languageSearchForLocation('q=alpha', 'en', '?lang=ar'), 'q=alpha&lang=ar');
 });
 
 test('A01: a legacy hash link becomes a path URL exactly once', () => {
@@ -71,6 +113,14 @@ test('A01: a legacy hash link becomes a path URL exactly once', () => {
   assert.equal(
     migrateLegacyHashLocation({ pathname: '/', search: '?list=a&list=b', hash: '#/?q=Alpha' }),
     '/?list=a&list=b&q=Alpha'
+  );
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '', hash: '#/deal/alpha?lang=en' }),
+    '/deal/alpha?lang=en'
+  );
+  assert.equal(
+    migrateLegacyHashLocation({ pathname: '/', search: '?lang=ar', hash: '#/deal/alpha?lang=en' }),
+    '/deal/alpha?lang=ar'
   );
 });
 
@@ -130,6 +180,10 @@ test('A12: leaving a deal page restores the destination metadata', () => {
   const onDeal = routeMetadata({ name: 'deal', slug: 'alpha' }, 'ar', dealSeo);
   assert.equal(onDeal.canonicalUrl, 'https://amnabd.com/deal/alpha');
   assert.equal(onDeal.jsonLd['@type'], 'Offer');
+  const englishDeal = routeMetadata({ name: 'deal', slug: 'alpha' }, 'en', dealSeo);
+  // lang is a shareable UI preference, not a separately prerendered SEO page.
+  assert.equal(englishDeal.canonicalUrl, onDeal.canonicalUrl);
+  assert.equal(englishDeal.jsonLd.url, englishDeal.canonicalUrl);
 
   const home = routeMetadata({ name: 'home' }, 'ar');
   assert.equal(home.canonicalUrl, 'https://amnabd.com/');
@@ -170,6 +224,7 @@ test('A12: an unknown deal does not claim the previous deal canonical', () => {
 
 test('A12: the home title names the site once', () => {
   const home = routeMetadata({ name: 'home' }, 'en');
+  assert.equal(home.canonicalUrl, 'https://amnabd.com/');
   const occurrences = home.title.split('AMNABD Deals').length - 1;
   assert.equal(occurrences, 1);
 });
@@ -182,4 +237,12 @@ test('A01: a shared deal link is the page path, not a hash', () => {
     'https://amnabd.com/deal/alpha'
   );
   assert.equal(buildDealLink('https://amnabd.com/', 'not a slug!'), null);
+  assert.equal(
+    buildDealLink('https://amnabd.com/deal/alpha?lang=en&utm_source=x', 'alpha', 'en'),
+    'https://amnabd.com/deal/alpha?lang=en'
+  );
+  assert.equal(
+    buildDealLink('https://amnabd.com/deal/alpha', 'alpha', 'ar'),
+    'https://amnabd.com/deal/alpha?lang=ar'
+  );
 });

@@ -23,7 +23,7 @@ export default function CopyDealLink({ slug }: { slug: string }) {
 
   async function copy() {
     if (pending.current) return;
-    const url = buildDealLink(window.location.href, slug);
+    const url = buildDealLink(window.location.href, slug, lang);
     if (!url) return;
     pending.current = true;
     setLink(url);

@@ -1,3 +1,5 @@
+import { parseLanguageFromSearch } from './languageStorage.js';
+
 export interface Route {
   name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites' | 'changelog' | 'collection';
   slug?: string;
@@ -128,8 +130,12 @@ export function migrateLegacyHashLocation(location: LegacyLocation): string | nu
   // (first value wins), and collapsing the pair would silently change what the
   // shared link asks for. Duplicates and their order are preserved.
   for (const [key, value] of searchParams) {
-    if (!(FILTER_KEYS as readonly string[]).includes(key)) merged.append(key, value);
+    if (key !== 'lang' && !(FILTER_KEYS as readonly string[]).includes(key))
+      merged.append(key, value);
   }
+  const language =
+    parseLanguageFromSearch(location.search) ?? parseLanguageFromSearch(extractHashSearch(hash));
+  if (language) merged.append('lang', language);
   // Filters come from the modern query when it has any, otherwise from the hash.
   const filterSource = hasFilterParams(location.search) ? searchParams : hashParams;
   for (const [key, value] of filterSource) {

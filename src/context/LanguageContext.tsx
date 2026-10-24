@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Lang, Localized } from '@/types';
-import { readLanguage, saveLanguage } from '@/lib/languageStorage';
+import { readLanguage, saveLanguage, withLanguageSearch } from '@/lib/languageStorage';
 
 interface LanguageContextValue {
   lang: Lang;
@@ -13,7 +13,18 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>(() => readLanguage());
+  const [lang, updateLanguage] = useState<Lang>(() => readLanguage());
+
+  const setLang = useCallback((next: Lang) => {
+    try {
+      const search = withLanguageSearch(window.location.search, next, true);
+      const url = `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`;
+      window.history.replaceState(window.history.state, '', url);
+    } catch {
+      // A blocked History API must not prevent changing the visible language.
+    }
+    updateLanguage(next);
+  }, []);
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
 
@@ -23,11 +34,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     saveLanguage(lang);
   }, [lang, dir]);
 
+  useEffect(() => {
+    const onPopState = () => updateLanguage(readLanguage());
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
   const value: LanguageContextValue = {
     lang,
     dir,
     setLang,
-    toggle: () => setLang((l) => (l === 'ar' ? 'en' : 'ar')),
+    toggle: () => setLang(lang === 'ar' ? 'en' : 'ar'),
     pick: (l) => (l ? l[lang] : ''),
   };
 
