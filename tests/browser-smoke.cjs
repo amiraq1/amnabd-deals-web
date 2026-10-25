@@ -361,6 +361,16 @@ const config = {
       { deals: [], hash: '#/deal/missing' },
       async (p) => assert.match(await p.locator('main').innerText(), /404/)
     );
+    await run('AMN-004 Escape closes mobile nav and restores trigger focus', {}, async (p) => {
+      await p.setViewportSize({ width: 390, height: 844 });
+      const trigger = p.locator('button[aria-controls="mobile-menu"]');
+      await trigger.click();
+      assert.equal(await p.locator('#mobile-menu').count(), 1);
+      await p.locator('#mobile-menu a').first().focus();
+      await p.keyboard.press('Escape');
+      await p.locator('#mobile-menu').waitFor({ state: 'detached' });
+      assert.equal(await trigger.evaluate((element) => element === document.activeElement), true);
+    });
     await run(
       'AMN-004 slow optional request does not hold cards',
       { delay: { guides: 700 } },
