@@ -15,24 +15,17 @@
 3. فعّل النشر من Actions:
    - Settings ← Pages ← Source ← اختر **GitHub Actions**
 
-4. افتح تبويب Actions وانتظر انتهاء سير العمل "Deploy to GitHub Pages".
-   - عند النجاح سيظهر رابط الموقع بالشكل:
-     `https://amiraq1.github.io/amnabd-deals-web/`
+4. افتح [Actions](https://github.com/amiraq1/amnabd-deals-web/actions) وانتظر انتهاء سير العمل **Verify & Deploy**؛ يمر عبر وظائف `verify` و`build` ثم `deploy`.
+   - الرابط العام الحالي: [https://amnabd.com/](https://amnabd.com/).
+   - رابط GitHub Pages للمشروع `https://amiraq1.github.io/amnabd-deals-web/` يعيد التوجيه حاليًا إلى النطاق العام أعلاه.
 
 ## تعديلات لاحقة
 
 أي تحديث جديد على فرع `main` سيعيد البناء والنشر تلقائيًا.
 
-## بديل: Cloudflare Pages
+## مزود النشر المتتبع
 
-يمكن النشر على Cloudflare Pages بدلًا من ذلك:
-1. أنشئ حسابًا في Cloudflare واربطه بمستودع GitHub.
-2. إعداد البناء:
-   - Framework preset: **Vite**
-   - Build command: `npm run build`
-   - Build output directory: `dist`
-3. أضف المتغيرين `VITE_SUPABASE_URL` و `VITE_SUPABASE_ANON_KEY` في إعدادات Environment variables.
-4. Cloudflare سينشر الموقع على نطاق مجاني مثل `amnabd-deals.pages.dev` مع دعم HTTPS تلقائيًا.
+هذا المستودع يتتبع النشر عبر GitHub Actions إلى GitHub Pages. لا توثق هذه الصفحة إعدادًا بديلًا لدى مزود آخر، ولا تستنتج منها إعدادات DNS أو الرؤوس في طبقة الاستضافة.
 
 ## حواجز البناء العام
 

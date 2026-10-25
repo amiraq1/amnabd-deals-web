@@ -591,6 +591,15 @@ export function buildNoIndexAppShell(baseHtml) {
   return html;
 }
 
+export function buildNotFoundPage(baseHtml, baseUrl = DEFAULT_SITE_URL) {
+  const shell = buildNoIndexAppShell(baseHtml);
+  const canonicalUrl = `${baseUrl.replace(/\/+$/, '')}/404`;
+  return shell.replace(
+    '</head>',
+    `  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">\n</head>`
+  );
+}
+
 function toCatalogRow(item) {
   const url = typeof item?.url === 'string' ? item.url : '';
   const match = url.match(/deal\/([^/?#]+)/);
@@ -690,7 +699,7 @@ export async function runStaticSeoGeneration({
   writeFileSync(join(distDir, 'robots.txt'), generateRobotsTxt(baseUrl), 'utf8');
   writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(feedDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'llms.txt'), generateLlmsTxt(seoDeals, baseUrl), 'utf8');
-  writeFileSync(join(distDir, '404.html'), baseHtml, 'utf8');
+  writeFileSync(join(distDir, '404.html'), buildNotFoundPage(baseHtml, baseUrl), 'utf8');
 
   // Comparisons are user-selected and may contain unreviewed combinations.
   // Publish a real path shell for HTTP 200, but no indexable metadata or claims.

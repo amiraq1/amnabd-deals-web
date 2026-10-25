@@ -110,7 +110,7 @@ function deadlineDate(value: unknown, ctx: Context): string | null {
       Number(value.slice(11, 13)) <= 23 &&
       Number(value.slice(14, 16)) <= 59 &&
       (value[16] !== ':' || Number(value.slice(17, 19)) <= 59) &&
-      Number.isFinite(Date.parse(value))
+      parseInstant(value) !== null
     )
       return value;
     changed(ctx);

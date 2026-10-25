@@ -14,6 +14,7 @@ const {
   runStaticSeoGeneration,
   injectSeoIntoHtml,
   buildNoIndexAppShell,
+  buildNotFoundPage,
   escapeHtml,
   loadDealsCatalog,
 } = await import(pathToFileURL(join(process.cwd(), 'scripts/generate-static-seo.mjs')));
@@ -28,6 +29,13 @@ const sampleBaseHtml = `<!doctype html>
   </head>
   <body><div id="root"></div></body>
 </html>`;
+
+const sampleHomepageHtml = sampleBaseHtml.replace(
+  '</head>',
+  `  <link rel="canonical" href="https://deals.example.com/">
+  <script type="application/ld+json">{"@type":"ItemList","itemListElement":[{"position":1}]}</script>
+</head>`
+);
 
 const sampleDeal = {
   slug: 'bolt-builders-week',
@@ -130,7 +138,7 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     mkdirSync(join(rootDir, 'scripts'), { recursive: true });
     mkdirSync(distDir, { recursive: true });
     writeFileSync(join(rootDir, 'scripts', 'deals-catalog.json'), JSON.stringify(deals));
-    writeFileSync(join(distDir, 'index.html'), sampleBaseHtml);
+    writeFileSync(join(distDir, 'index.html'), sampleHomepageHtml);
     writeFileSync(join(distDir, 'llms.txt'), 'stale hash route');
 
     await runStaticSeoGeneration({
@@ -155,11 +163,18 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     const feed = readFileSync(join(distDir, 'feed.xml'), 'utf8');
     assert.doesNotMatch(feed, /bolt-builders-week/);
     assert.match(feed, /second-deal/);
-    assert.equal(readFileSync(join(distDir, 'ending-soon', 'index.html'), 'utf8'), sampleBaseHtml);
+    assert.equal(readFileSync(join(distDir, 'ending-soon', 'index.html'), 'utf8'), sampleHomepageHtml);
     const comparisonShell = readFileSync(join(distDir, 'compare', 'index.html'), 'utf8');
-    assert.equal(comparisonShell, buildNoIndexAppShell(sampleBaseHtml));
+    assert.equal(comparisonShell, buildNoIndexAppShell(sampleHomepageHtml));
     assert.match(comparisonShell, /name="robots" content="noindex,follow"/);
     assert.doesNotMatch(comparisonShell, /name="description"|property="og:|application\/ld\+json/);
+    const notFoundHtml = readFileSync(join(distDir, '404.html'), 'utf8');
+    assert.equal(notFoundHtml, buildNotFoundPage(sampleHomepageHtml, 'https://deals.example.com'));
+    assert.match(notFoundHtml, /<meta name="robots" content="noindex,follow">/);
+    assert.match(notFoundHtml, /<link rel="canonical" href="https:\/\/deals\.example\.com\/404">/);
+    assert.equal((notFoundHtml.match(/<link\s+rel=["']canonical["']/gi) ?? []).length, 1);
+    assert.doesNotMatch(notFoundHtml, /href="https:\/\/deals\.example\.com\/"/);
+    assert.doesNotMatch(notFoundHtml, /ItemList|application\/ld\+json/i);
   } finally {
     rmSync(rootDir, { recursive: true, force: true });
   }

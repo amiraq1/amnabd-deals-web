@@ -162,6 +162,10 @@ test('F-04: verify-dist fails timed live copy and warns on Google-style date-onl
   try {
     mkdirSync(join(distDir, 'compare'), { recursive: true });
     writeFileSync(
+      join(distDir, '404.html'),
+      '<html><head><meta name="robots" content="noindex,follow"><link rel="canonical" href="https://amnabd.com/404"></head></html>'
+    );
+    writeFileSync(
       join(distDir, 'compare', 'index.html'),
       '<html><head><meta name="robots" content="noindex,follow"></head><body><div id="root"></div></body></html>'
     );

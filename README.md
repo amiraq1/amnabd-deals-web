@@ -131,8 +131,9 @@ VITE_SUPABASE_URL='' VITE_SUPABASE_ANON_KEY='' npm run dev -- --host 127.0.0.1 -
 AMN_DEV_PREVIEW_URL=http://127.0.0.1:4174 CHROMIUM_PATH=/path/to/chromium node tests/browser-smoke.cjs
 ```
 
-اختبارات الجودة هنا محلية؛ لم تُضف حواجز CI إلى workflow ضمن release، ولم يُنجز
-SEO/SSG أو بقية تحسينات quality/product/discoverability/later. لا تُغلق تلك المهام تلقائياً.
+بوابة الإصدار الحالية هي [Verify & Deploy](https://github.com/amiraq1/amnabd-deals-web/actions/workflows/deploy.yml):
+تشغّل typecheck وlint والاختبارات وحارس إعداد البناء، ثم بناء Vite مع SEO/PWA و`verify-dist` قبل نشر `main` إلى GitHub Pages.
+الرابط العام الحالي هو [amnabd.com](https://amnabd.com/).
 
 ## دفعة تحسين التجربة: الفئات والبطاقات ونسخ الرابط
 
@@ -156,8 +157,8 @@ SEO/SSG أو بقية تحسينات quality/product/discoverability/later. لا
   دون إخفاء اسم الموقع أو إجراءات التنقل. تحسنت مؤشرات التركيز والتفاف بطاقة العرض أيضاً.
 
 لا تغييرات في backend أو البيانات أو RLS أو migrations أو workflow، ولا اعتماديات جديدة.
-هذه دفعة جزئية: لا ملخص قرار أو فصل زر التسجيل عن المصدر بعد، ولا حفظ للفلاتر في الرابط،
-ولا فرز أو مفضلة أو مشاركة Web Share أو SEO/SSG أو تعميم إصلاحات الوصول لكل المكونات.
+كان نطاق هذه الدفعة جزئيًا: لا ملخص قرار أو فصل زر التسجيل عن المصدر، ولا حفظ للفلاتر في الرابط،
+ولا مشاركة Web Share أو تعميم إصلاحات الوصول لكل المكونات.
 
 اختبارات وحدات الدفعة ضمن `npm test`. لفحص المتصفح الاختياري، مع تشغيل preview
 لنسخة بناء صناعية كما في القسم السابق:

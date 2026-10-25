@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { BookOpen, Globe, Heart, History, Menu, Tag, X, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -82,6 +82,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
 
   const t = translations[lang] ?? translations.ar;
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const languageQuery = languageSearchForLocation('', lang, window.location.search);
   const localizedPath = (path: string) => `${path}${languageQuery ? `?${languageQuery}` : ''}`;
 
@@ -111,7 +112,11 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
   useEffect(() => {
     if (!menuOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -177,6 +182,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
           {/* زر قائمة الجوال */}
           <button
             type="button"
+            ref={menuButtonRef}
             onClick={() => setMenuOpen((open) => !open)}
             className={`relative rounded-lg p-2 text-slate-300 transition hover:bg-slate-800 hover:text-slate-100 sm:hidden ${focusRing}`}
             aria-expanded={menuOpen}

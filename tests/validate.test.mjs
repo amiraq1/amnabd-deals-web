@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 const { validateDeals, validateGuides, validateConfig } = await import(
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/validate.js'))
 );
+const { parseInstant } = await import(pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/instants.js')));
 const deal = (changes = {}) => ({
   id: 'real-id',
   slug: 'real-slug',
@@ -138,6 +139,20 @@ test('dates: valid leap day/zoned deadline retained; invalid dates omitted', () 
       null
     );
   }
+});
+test('deadline validation agrees with instant parsing and rejects unknown -00:00 offsets', () => {
+  for (const date of ['2026-10-31T16:00:00Z', '2026-10-31T19:00:00+03:00', '2026-10-31T16:00:00+00:00']) {
+    const parsed = validateDeals([deal({ registration: { deadline: { date, status: 'known' } } })]).values[0];
+    assert.equal(parsed.registration.deadline.date, date);
+    assert.notEqual(parseInstant(parsed.registration.deadline.date), null);
+  }
+
+  const unknownOffset = '2026-10-31T16:00:00-00:00';
+  const parsed = validateDeals([
+    deal({ registration: { deadline: { date: unknownOffset, status: 'known' } } }),
+  ]).values[0];
+  assert.equal(parseInstant(unknownOffset), null);
+  assert.equal(parsed.registration.deadline.date, null);
 });
 test('partial guides receive all four safe sections', () => {
   const result = validateGuides([

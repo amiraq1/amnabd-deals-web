@@ -316,6 +316,26 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
   checkSiteFiles(report, distDir, deals);
   checkLlmsDealRoutes(report, distDir, deals);
 
+  const notFoundHtml = readIfExists(join(distDir, '404.html'));
+  if (notFoundHtml === null) {
+    report('404.html: static not-found route is missing');
+  } else {
+    const expectedCanonical = `${sharedSeo.DEFAULT_SITE_URL.replace(/\/+$/, '')}/404`;
+    const canonicalCount = (notFoundHtml.match(/<link\s+rel=["']canonical["']/gi) ?? []).length;
+    if (!/<meta\s+name=["']robots["']\s+content=["']noindex,follow["']/i.test(notFoundHtml)) {
+      report('404.html: route must be explicitly noindex');
+    }
+    if (
+      canonicalCount !== 1 ||
+      !notFoundHtml.includes(`<link rel="canonical" href="${expectedCanonical}">`)
+    ) {
+      report('404.html: route must have only its own /404 canonical URL');
+    }
+    if (/ItemList|<script\s+type=["']application\/ld\+json["']/i.test(notFoundHtml)) {
+      report('404.html: route must not inherit homepage JSON-LD or ItemList claims');
+    }
+  }
+
   const comparisonShell = readIfExists(join(distDir, 'compare', 'index.html'));
   if (comparisonShell === null) {
     report('compare/index.html: generic noindex route shell is missing');

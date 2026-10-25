@@ -287,6 +287,8 @@ function fixtureDist(files) {
   const defaults = {
     'compare/index.html':
       '<!doctype html><html><head><title>AMNABD Deals</title><meta name="robots" content="noindex,follow"></head><body><div id="root"></div></body></html>',
+    '404.html':
+      '<!doctype html><html><head><title>AMNABD Deals</title><meta name="robots" content="noindex,follow"><link rel="canonical" href="https://amnabd.com/404"></head><body><div id="root"></div></body></html>',
   };
   for (const [rel, body] of Object.entries({ ...defaults, ...files })) {
     const full = join(root, rel);
@@ -313,6 +315,18 @@ test('verify-dist passes a clean build and fails a build with unproven claims', 
     assert.equal(error.status, 1);
     assert.match(String(error.stderr), /verify-dist: FAIL/);
     assert.match(String(error.stderr), /متاح للجميع/);
+    return true;
+  });
+});
+
+test('verify-dist rejects a 404 that inherits homepage canonical or structured data', () => {
+  const invalid = fixtureDist({
+    '404.html':
+      '<html><head><meta name="robots" content="noindex,follow"><link rel="canonical" href="https://amnabd.com/"><script type="application/ld+json">{"@type":"ItemList"}</script></head></html>',
+  });
+  assert.throws(() => runVerifyDist(invalid), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /404\.html/);
     return true;
   });
 });
