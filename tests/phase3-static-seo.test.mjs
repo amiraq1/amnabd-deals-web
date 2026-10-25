@@ -73,6 +73,25 @@ test('injectSeoIntoHtml replaces existing title and meta tags without duplicatio
   assert.ok(output.includes('data-deal-jsonld="true"'));
 });
 
+test('homepage ItemList publishes canonical deal paths rather than stale hash routes', () => {
+  const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
+  const scriptStart = html.indexOf('<script type="application/ld+json">');
+  assert.notEqual(scriptStart, -1, 'homepage JSON-LD script exists');
+  const contentStart = html.indexOf('>', scriptStart) + 1;
+  const contentEnd = html.indexOf('</script>', contentStart);
+  const schema = JSON.parse(html.slice(contentStart, contentEnd));
+  const itemList = schema['@graph'].find((node) => node['@type'] === 'ItemList');
+  assert.ok(itemList, 'homepage JSON-LD contains an ItemList');
+  assert.ok(itemList.itemListElement.length > 0);
+  assert.equal(itemList.itemListElement.length, itemList.numberOfItems);
+  for (const item of itemList.itemListElement) {
+    const url = new URL(item.url);
+    assert.equal(url.origin, 'https://amnabd.com');
+    assert.match(url.pathname, new RegExp('^/deal/[^/]+$'));
+    assert.equal(url.hash, '');
+  }
+});
+
 test('comparison app shell returns a noindex route without homepage SEO claims', () => {
   const homepageHtml = sampleBaseHtml.replace(
     '</head>',
@@ -174,6 +193,7 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     assert.match(notFoundHtml, /<link rel="canonical" href="https:\/\/deals\.example\.com\/404">/);
     assert.equal((notFoundHtml.match(/<link\s+rel=["']canonical["']/gi) ?? []).length, 1);
     assert.doesNotMatch(notFoundHtml, /href="https:\/\/deals\.example\.com\/"/);
+    assert.doesNotMatch(notFoundHtml, /<meta\s+(?:property|name)=["'](?:og:|twitter:)/i);
     assert.doesNotMatch(notFoundHtml, /ItemList|application\/ld\+json/i);
   } finally {
     rmSync(rootDir, { recursive: true, force: true });

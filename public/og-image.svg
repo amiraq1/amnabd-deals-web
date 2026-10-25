@@ -46,8 +46,8 @@
 
   <!-- Title & Subtitle -->
   <text x="100" y="280" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="800" letter-spacing="-1">AMNABD Deals</text>
-  <text x="100" y="360" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="700">عروض ومنافع أدوات الذكاء الاصطناعي الموثقة</text>
-  <text x="100" y="420" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="400">Verified AI Tools, Cloud Credits &amp; Developer Benefits</text>
+  <text x="100" y="360" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="700">دليل عروض ومنافع أدوات الذكاء الاصطناعي</text>
+  <text x="100" y="420" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="400">AI Tool Offers, Cloud Credits &amp; Developer Benefits</text>
 
   <!-- Bottom Pills -->
   <g transform="translate(100, 480)">
@@ -56,7 +56,7 @@
   </g>
   <g transform="translate(330, 480)">
     <rect width="200" height="42" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
-    <text x="24" y="27" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">✓ شروط أهلية موثقة</text>
+    <text x="24" y="27" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">تحقق من شروط كل عرض</text>
   </g>
   <g transform="translate(550, 480)">
     <rect width="180" height="42" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
