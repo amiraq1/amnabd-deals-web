@@ -1,4 +1,4 @@
-# AMNABD Deals
+# نبض
 
 > Arabic-first directory of verified free AI-tool deals for students and developers.
 > Every deal is verified against its official source, with terms, eligibility and evidence documented in Arabic and English.

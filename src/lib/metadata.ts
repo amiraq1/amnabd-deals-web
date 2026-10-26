@@ -21,7 +21,11 @@ export interface RouteMetadata {
   jsonLd: Record<string, unknown>;
 }
 
-const SUFFIX = 'AMNABD Deals';
+// One platform, two official names: «نبض» in Arabic surfaces and "AMNABD Deals"
+// in English ones. Titles carry the name of the language the page is rendered
+// in, so an Arabic page never ends with an English suffix.
+const BRAND: Record<Lang, string> = { ar: 'نبض', en: 'AMNABD Deals' };
+const brandFor = (lang: Lang): string => BRAND[lang] ?? BRAND.ar;
 
 function siteBase(baseUrl: string): string {
   return baseUrl.replace(/\/+$/, '');
@@ -33,7 +37,7 @@ interface RouteCopy {
 }
 
 const HOME_COPY: RouteCopy = {
-  title: { ar: 'AMNABD Deals — دليل عروض الذكاء الاصطناعي والسحابة', en: 'AMNABD Deals — AI & Cloud Deals Directory' },
+  title: { ar: 'نبض — دليل عروض الذكاء الاصطناعي والسحابة', en: 'AMNABD Deals — AI & Cloud Deals Directory' },
   description: {
     ar: 'دليل ثنائي اللغة يربطك مباشرة بالمصادر الرسمية لعروض أدوات الذكاء الاصطناعي والحوسبة السحابية.',
     en: 'A bilingual directory linking you to the official sources of AI-tool and cloud-computing offers.',
@@ -109,11 +113,11 @@ export function routeMetadata(
     const canonicalUrl = dealMissing ? `${base}/404` : `${base}${routePath(route)}`;
     const copy = dealMissing ? NOT_FOUND_COPY : null;
     return {
-      title: copy ? `${copy.title[lang]} — ${SUFFIX}` : SUFFIX,
+      title: copy ? `${copy.title[lang]} — ${brandFor(lang)}` : brandFor(lang),
       description: copy ? copy.description[lang] : lang === 'ar' ? 'جارٍ تحميل هذا العرض.' : 'Loading this deal.',
       canonicalUrl,
       ogImageUrl,
-      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: SUFFIX, url: canonicalUrl },
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name: brandFor(lang), url: canonicalUrl },
     };
   }
 
@@ -123,15 +127,15 @@ export function routeMetadata(
   const path = isNotFound ? '/404' : routePath(route);
   // The home title already names the site; suffixing it again would read
   // "AMNABD Deals — … — AMNABD Deals".
-  const title = copy.title[lang].includes(SUFFIX)
+  const title = copy.title[lang].includes(brandFor(lang))
     ? copy.title[lang]
-    : `${copy.title[lang]} — ${SUFFIX}`;
+    : `${copy.title[lang]} — ${brandFor(lang)}`;
 
   if (route.name === 'collection' && route.collectionKey) {
     const agg = getAggregationConfig(route.collectionKey);
     if (agg) {
       return {
-        title: `${lang === 'ar' ? agg.titleAr : agg.titleEn} — ${SUFFIX}`,
+        title: `${lang === 'ar' ? agg.titleAr : agg.titleEn} — ${brandFor(lang)}`,
         description: lang === 'ar' ? agg.metaDescriptionAr : agg.metaDescriptionEn,
         canonicalUrl: `${base}${agg.path}`,
         ogImageUrl,

@@ -77,8 +77,8 @@ export async function generatePwaArtifacts({
   const maskable512Url = `/${maskable512Filename}`;
   const manifest = {
     id: '/',
-    name: 'AMNABD Deals — نبض',
-    short_name: 'AMNABD',
+    name: 'نبض',
+    short_name: 'نبض',
     description: 'A bilingual, source-linked guide to AI and cloud offers.',
     lang: 'ar',
     dir: 'rtl',

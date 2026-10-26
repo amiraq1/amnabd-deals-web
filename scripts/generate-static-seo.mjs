@@ -473,7 +473,7 @@ export function generateRssFeedXml(deals, baseUrl = DEFAULT_SITE_URL, referenceN
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>عروض وأرصدة الذكاء الاصطناعي — AMNABD Deals</title>
+    <title>عروض وأرصدة الذكاء الاصطناعي — نبض</title>
     <link>${escapeHtml(cleanBase)}/</link>
     <description>أحدث عروض وأرصدة أدوات الذكاء الاصطناعي مع روابط مصادرها</description>
     <language>ar</language>
@@ -581,7 +581,7 @@ export function injectSeoIntoHtml(baseHtml, seo) {
 
 export function buildNoIndexAppShell(baseHtml) {
   let html = baseHtml
-    .replace(/<title>[\s\S]*?<\/title>/i, '<title>AMNABD Deals</title>')
+    .replace(/<title>[\s\S]*?<\/title>/i, '<title>نبض</title>')
     .replace(/<meta\s+name=["']description["'][^>]*\/?\s*>/gi, '')
     .replace(/<meta\s+name=["']robots["'][^>]*\/?\s*>/gi, '')
     .replace(/<link\s+rel=["']canonical["'][^>]*\/?\s*>/gi, '')

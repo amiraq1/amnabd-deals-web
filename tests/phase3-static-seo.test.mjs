@@ -102,7 +102,7 @@ test('comparison app shell returns a noindex route without homepage SEO claims',
   );
   const shell = buildNoIndexAppShell(homepageHtml);
   assert.match(shell, /<meta name="robots" content="noindex,follow">/);
-  assert.match(shell, /<title>AMNABD Deals<\/title>/);
+  assert.match(shell, /<title>نبض<\/title>/);
   assert.match(shell, /<div id="root"><\/div>/);
   assert.doesNotMatch(shell, /name="description"|rel="canonical"|property="og:|name="twitter:|application\/ld\+json|homepage claim|homepage title/);
 });
