@@ -55,9 +55,44 @@ export function compileQuery(query: string): string[][] {
   return extractTokens(query).map(tokenVariants);
 }
 
+/**
+ * AMN-007 — matching policy C from `docs/search-matching-policy.md`.
+ *
+ * A token matches when it starts a word: at a boundary (`^` or a non-word
+ * character) or as the prefix of a longer word. Substring matching let the
+ * query `ai` match inside `paid`; starting-at-a-word keeps prefix search, which
+ * Arabic users rely on, and drops the accidental mid-word hits.
+ *
+ * Deliberate consequences, both asserted in `tests/search-matching.test.mjs`:
+ *   - `ai` no longer matches `openai` (not a boundary, not a prefix)
+ *   - `ai` still matches `ai`, `aim`, `airtable`
+ *
+ * Arabic proclitics are allowed in front of the token, so `ذكاء` still finds
+ * `الذكاء`, `بالذكاء`, `والذكاء` and `للذكاء`. Only the definite-article family
+ * is stripped; bare single-letter prefixes are not, because `ب` + `رمجة` would
+ * invent a stem that is not in the language.
+ */
+const ARABIC_CLITIC = '(?:(?:[وفبكل])?ال|لل)?';
+const matcherCache = new Map<string, RegExp>();
+
+function wordStartMatcher(token: string): RegExp {
+  const cached = matcherCache.get(token);
+  if (cached) return cached;
+  const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`(?:^|[^\\p{L}\\p{N}])${ARABIC_CLITIC}${escaped}`, 'u');
+  if (matcherCache.size > 200) matcherCache.clear();
+  matcherCache.set(token, pattern);
+  return pattern;
+}
+
+export function matchesToken(corpus: string, token: string): boolean {
+  if (!corpus || !token) return false;
+  return wordStartMatcher(token).test(corpus);
+}
+
 export function matchesQuery(haystack: string, query: string): boolean {
   if (!query || !query.trim()) return true;
   const groups = compileQuery(query);
   const expandedHaystack = expandTextWithVariants(haystack);
-  return groups.every((variants) => variants.some((v) => expandedHaystack.includes(v)));
+  return groups.every((variants) => variants.some((v) => matchesToken(expandedHaystack, v)));
 }

@@ -9,7 +9,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadEnv } from 'vite';
 import { loadSharedSeo } from './load-shared.mjs';
 import { isStaticDealSlug, loadDealSlugSnapshot, verifySeoParity } from './seo-parity.mjs';
 
@@ -42,7 +41,11 @@ function explicitText(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : '';
 }
 
-function routeLookupConfig(rootDir, { publicUrl, publicKey } = {}) {
+async function routeLookupConfig(rootDir, { publicUrl, publicKey } = {}) {
+  // Imported lazily: `vite` costs seconds to load, and every test that imports
+  // this module for its pure helpers would otherwise pay that cost. Only the
+  // live-slug path needs env loading.
+  const { loadEnv } = await import('vite');
   const env = loadEnv('production', rootDir, 'VITE_');
   const rawUrl = publicUrl ?? process.env.VITE_SUPABASE_URL ?? env.VITE_SUPABASE_URL;
   const rawKey = publicKey ?? process.env.VITE_SUPABASE_ANON_KEY ?? env.VITE_SUPABASE_ANON_KEY;
@@ -148,7 +151,7 @@ async function loadPublicDealRows({
   pageSize,
   select,
 }) {
-  const config = routeLookupConfig(rootDir, { publicUrl, publicKey });
+  const config = await routeLookupConfig(rootDir, { publicUrl, publicKey });
   if (typeof fetchImpl !== 'function') throw new Error('Static deal-route lookup requires fetch.');
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000)
     throw new RangeError('Static deal-route page size must be from 1 to 1000.');
