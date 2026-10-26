@@ -201,7 +201,7 @@ export default function DealCard({
         )}
         {keyCondition && (
           <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-slate-300">
-            <span className="text-slate-500">{isAr ? 'الشرط: ' : 'Condition: '}</span>
+            <span className="text-slate-400">{isAr ? 'الشرط: ' : 'Condition: '}</span>
             {keyCondition}
           </p>
         )}

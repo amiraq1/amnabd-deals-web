@@ -111,78 +111,39 @@ concurrency:
 وداخل وظيفة `build` (قبل خطوة `npm run build` مباشرةً):
 
 ```yaml
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    # تُعرَّف على مستوى الوظيفة فترثها كل الخطوات، بدل تكرارها في كل step
+    env:
+      VITE_SUPABASE_URL: ${{ github.event_name == 'pull_request' && 'https://audit-fixture.supabase.co' || secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ github.event_name == 'pull_request' && 'sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001' || secrets.VITE_SUPABASE_ANON_KEY }}
+    steps:
+      # يفشل على main قبل البناء إن غاب أي سر، بدل البناء بقيم صناعية
       - name: Validate production secrets on non-PR builds
         if: github.event_name != 'pull_request'
-        env:
-          SUPABASE_URL_CHECK: ${{ secrets.VITE_SUPABASE_URL }}
-          SUPABASE_KEY_CHECK: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          if [ -z "$SUPABASE_URL_CHECK" ] || [ -z "$SUPABASE_KEY_CHECK" ]; then
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
             echo "::error::Missing required production Supabase secrets on ${{ github.ref }}."
             exit 1
           fi
-
-      - name: Build application
-        env:
-          VITE_SUPABASE_URL: ${{ github.event_name == 'pull_request' && 'https://audit-fixture.supabase.co' || secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ github.event_name == 'pull_request' && 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.audit-fixture' || secrets.VITE_SUPABASE_ANON_KEY }}
-        run: npm run build
-
 ```
 
 ### ب. تأمين جدول `deal_reports` ومعدل الإرسال (معالجة REC-08)
 
 ملف الهجرة المقترح `supabase/migrations/20261026120000_deal_reports_hardening.sql`:
 
-```sql
--- 1. فهرس لتسريع فحص الحدّ الزمني ومنع المسح المتسلسل أثناء الإغراق
-create index if not exists idx_deal_reports_slug_created_at
-  on public.deal_reports (deal_slug, created_at desc);
+الهجرة النهائية في `supabase/migrations/20261026120000_deal_reports_hardening.sql`، وهي المصدر الوحيد — لا تُنسخ هنا لتجنّب نسختين تتباعدان.
 
-create index if not exists idx_deal_reports_created_at
-  on public.deal_reports (created_at desc);
+خلاصة ما تفعله:
 
--- 2. دالة فحص المعدل بصلاحية المالك لأن anon لا يملك صلاحية SELECT على الجدول
-create or replace function public.deal_reports_throttle()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  -- التحقق من طول الملاحظة وصحة الحقول على مستوى قاعدة البيانات أيضاً
-  if char_length(coalesce(new.note, '')) > 1000 then
-    raise exception 'note_too_long' using errcode = '22001';
-  end if;
+- فهرس `idx_deal_reports_created_at` للنافذة الساعية (فهرس الـslug موجود مسبقاً).
+- `deal_reports_throttle()` بـ`SECURITY DEFINER` + `set search_path = public`، حدّ الملاحظة **280** حرفاً.
+- `pg_advisory_xact_lock(hashtext(...deal_slug))` لتسلسل الإدراجات المتوازية لنفس العرض (ثغرة TOCTOU تحت `READ COMMITTED`).
+- عدّ مقيّد بـ`LIMIT 5`/`LIMIT 300` ليتوقف مسح الفهرس عند العتبة.
+- `revoke ... from public, anon, authenticated` حتى لا تُستدعى الدالة عبر `/rest/v1/rpc`.
 
-  if (
-    select count(*)
-    from public.deal_reports
-    where deal_slug = new.deal_slug
-      and created_at > now() - interval '10 minutes'
-  ) >= 5
-  or (
-    select count(*)
-    from public.deal_reports
-    where created_at > now() - interval '1 hour'
-  ) >= 300 then
-    raise exception 'rate_limited' using errcode = 'P0001';
-  end if;
-
-  return new;
-end;
-$$;
-
--- منع استدعاء الدالة مباشرة عبر واجهة RPC العلنية
-revoke all on function public.deal_reports_throttle() from public, anon, authenticated;
-
-drop trigger if exists trg_deal_reports_throttle on public.deal_reports;
-create trigger trg_deal_reports_throttle
-  before insert on public.deal_reports
-  for each row
-  execute function public.deal_reports_throttle();
-
-```
+**حدّ متبقٍ موثّق بقصد:** السقف الساعي ليس متسلسلاً؛ إدراجان متوازيان لعرضين مختلفين قد يقرأ كلٌّ منهما 299 وينجحان، فيتجاوز السقف بمقدار عدد المعاملات المتوازية. تسلسل كل الإدراجات على قفل عام واحد يجعل السقف دقيقاً لكنه يصطفّ كل بلاغ خلف كل بلاغ آخر.
 
 وفي عميل الإرسال (`src/lib/dealReports.ts`)، تأكد من إرسال الترويسة `Prefer: return=minimal` (أو عدم استدعاء `.select()` في عميل PostgREST المخصص) مع تمرير `AbortSignal.timeout(8000)` حتى لا يرفض RLS عملية الإدراج بسبب محاولة قراءة الصف بعد كتابته.
 
@@ -276,7 +237,8 @@ npm audit
 
 # 3. البناء الكامل والتحقق من مخرجات dist ومطابقة SEO
 npm run build
-npm run verify:dist
+node scripts/verify-dist.mjs
+npm run test:bundle
 
 # 4. فحص تاريخ Git بالكامل بحثاً عن أي أسرار قديمة مسربة
 npx --yes gitleaks detect --source . --verbose
@@ -327,4 +289,22 @@ npx --yes gitleaks detect --source . --verbose
 
 ---
 
-*حُفظ في 26 أكتوبر 2026. مراجعة قراءة فقط — لا تغييرات على الشيفرة أو البيانات أو الإنتاج.*
+## ملحق (ب) — ما نُفِّذ في الجولة التالية
+
+| البند | ما تغيّر |
+| --- | --- |
+| **REC-05** | مجموعة التزامن صارت لكل مرجع: `${{ github.workflow }}-${{ github.head_ref || github.ref }}`، و`cancel-in-progress` مفعّل لطلبات السحب فقط. لم يبقَ لطلب سحب أن يُلغي نشراً جارياً على `main`. |
+| **REC-06** | متغيرات البيئة انتقلت إلى `build.env` على مستوى الوظيفة، فترثها كل الخطوات بدل تكرارها في خطوتين؛ وأُضيفت خطوة تحقق تفشل **قبل** البناء على `main` عند غياب السر. |
+| **REC-07** | `.github/dependabot.yml` أسبوعي لـ`npm` (مجموعة dev) و`github-actions`. **لم يُنفَّذ** تثبيت الـActions بـSHA كامل: يظل تغييراً منفصلاً يستحق مراجعته لأنه يمسّ قابلية التحديث. |
+| **REC-04** | `sample-deal.json` أُعيد كتابته على المخطط الفعلي: كل سعر و`headline_value` بـ`null`، والأهلية `unknown` (fail-closed)، ومفردات يفهمها `format.ts` (`feature_access` / `one_time`). يحرسه `tests/sample-deal.test.mjs`. |
+| **REC-08** | الهجرة صارت تستخدم `pg_advisory_xact_lock` لكل `deal_slug` (سدّ TOCTOU تحت `READ COMMITTED`) و`LIMIT` في استعلامَي العدّ. السقف الساعي العام يبقى غير متسلسل — موثّق بقصد في رأس الهجرة. |
+| **REC-19** | 15 موضعاً من `text-slate-500` على نص صغير رُفع إلى `text-slate-400`. الأربعة الباقية أيقونات زخرفية، وحدّها 3:1 لا 4.5:1. |
+
+**مؤجَّل بقصد:**
+
+* **REC-15 (تضمين خط عربي في المستودع):** الـSVG الآن يثبّت `Tahoma, Segoe UI, system-ui`، و`DejaVu Sans` على عدّاء Linux يغطي العربية — أي أن المسارين المعروفين يُنتجان نصاً سليماً. تضمين ملف `.ttf` ثابت (لا Variable) يضمن التطابق التام لكنه يضيف أصلاً ثنائياً وترخيصاً، ويستحق قراراً مستقلاً. البديل المؤقت: `npm run build:og` يُعيد التوليد عند تغيير الـSVG.
+* **REC-01 (توليد `ItemList` وقت البناء):** القائمة الحالية في `index.html` صحيحة المسارات لكنها مكتوبة يدوياً. حذفها كما اقترح التقرير يخسر البيانات المنظمة؛ الصواب توليدها من الكتالوج، وهو تغيير في مولّد الـSEO يحتاج جولة مستقلة.
+
+---
+
+*حُفظ في 26 أكتوبر 2026. المراجعة قراءة فقط؛ ما ورد في الملحق (ب) نُفِّذ في فروع منفصلة.*

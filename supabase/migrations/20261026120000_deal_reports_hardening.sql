@@ -4,12 +4,26 @@
 -- every guard has to live in the database: the browser cooldown is per-device
 -- and trivially bypassed.
 --
--- Two corrections against the shape proposed in the architecture audit:
+-- Corrections against the shape proposed in the architecture audit:
 --   1. The per-slug index already exists as `idx_deal_reports_slug_created`
 --      from 20261020210000_deal_reports.sql. Only the global window index is new.
 --   2. The note limit stays 280 characters, matching the existing CHECK
---      constraint and the client's own slice(0, 280). A 1000-character limit in
---      the trigger would never be reachable and would read as the real rule.
+--      constraint and the client's own slice(0, 280).
+--
+-- Hardening beyond the proposed version:
+--   3. A transaction-scoped advisory lock per slug. Under READ COMMITTED (the
+--      default) thirty parallel inserts for one slug would each read a count
+--      below the limit before any of them commits, and all thirty would land.
+--      The lock serialises inserts for the same slug only.
+--   4. The counting queries are bounded with LIMIT, so the index scan stops at
+--      the threshold instead of counting the whole window.
+--
+-- Residual, deliberately not hidden: the global ceiling is not serialised. Two
+-- concurrent inserts for *different* slugs can both read 299 and both succeed,
+-- so the hourly cap can be exceeded by at most the number of concurrent
+-- transactions. Serialising every insert on one global lock would make the cap
+-- exact and would also queue every report behind every other report; at this
+-- volume (300/hour) the per-slug lock plus the bounded scan is the better trade.
 --
 -- Applying this migration is an operator action: it touches production data
 -- policies and cannot be verified from the repository.
@@ -37,18 +51,29 @@ begin
     raise exception 'note_too_long' using errcode = '22001';
   end if;
 
+  -- Serialise concurrent inserts for this slug for the rest of the transaction.
+  perform pg_advisory_xact_lock(hashtext('deal_reports:' || coalesce(new.deal_slug, '')));
+
   select count(*) into per_slug
-  from public.deal_reports
-  where deal_slug = new.deal_slug
-    and created_at > now() - interval '10 minutes';
+  from (
+    select 1
+    from public.deal_reports
+    where deal_slug = new.deal_slug
+      and created_at > now() - interval '10 minutes'
+    limit 5
+  ) recent_slug_reports;
 
   if per_slug >= 5 then
     raise exception 'rate_limited' using errcode = 'P0001';
   end if;
 
   select count(*) into global_hour
-  from public.deal_reports
-  where created_at > now() - interval '1 hour';
+  from (
+    select 1
+    from public.deal_reports
+    where created_at > now() - interval '1 hour'
+    limit 300
+  ) recent_global_reports;
 
   if global_hour >= 300 then
     raise exception 'rate_limited' using errcode = 'P0001';

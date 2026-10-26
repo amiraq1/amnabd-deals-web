@@ -22,7 +22,7 @@ export default function Footer() {
                 : 'This site aggregates public information about AI tool offers as shown on their official pages. We do not guarantee that any offer is ongoing or that its terms apply to you, and we accept no liability for any use. Verify current terms with the official provider before registering or using paid services.'}
             </p>
           </div>
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-slate-400">
             <p className="font-heading font-semibold text-slate-300">
               {lang === 'ar' ? 'نبض' : 'AMNABD Deals'}
             </p>

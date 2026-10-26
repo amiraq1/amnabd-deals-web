@@ -1,0 +1,25 @@
+version: 2
+# Weekly dependency updates (REC-07). Actions are pinned by tag in the workflow,
+# so Dependabot is what keeps those tags moving without manual checking.
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Baghdad'
+    open-pull-requests-limit: 5
+    groups:
+      # Dev tooling moves together; it cannot reach a visitor.
+      dev-dependencies:
+        dependency-type: 'development'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Baghdad'
+    open-pull-requests-limit: 5
