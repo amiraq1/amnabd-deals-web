@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { loadConfig, loadDeals, loadGuides } from '@/lib/loadResources';
 import {
@@ -25,19 +25,20 @@ import ResourceNotice from '@/components/ResourceNotice';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import HomePage from '@/pages/HomePage';
-import DealDetailPage from '@/pages/DealDetailPage';
-import UsageGuidePage from '@/pages/UsageGuidePage';
-import NotFoundPage from '@/pages/NotFoundPage';
-import FavoritesPage from '@/pages/FavoritesPage';
-import ChangelogPage from '@/pages/ChangelogPage';
-import CollectionPage from '@/pages/CollectionPage';
 import { buildDealSeo, applyDocumentMetadata } from '@/lib/seo';
 import { routeMetadata } from '@/lib/metadata';
 import { languageSearchForLocation } from '@/lib/languageStorage';
 import { comparisonSearch, parseComparisonSlugs, toggleComparisonSelection } from '@/lib/comparison';
-import ComparisonPage from '@/pages/ComparisonPage';
 import OfflineNotice from '@/components/OfflineNotice';
 import PwaControls from '@/components/PwaControls';
+
+const DealDetailPage = lazy(() => import('@/pages/DealDetailPage'));
+const UsageGuidePage = lazy(() => import('@/pages/UsageGuidePage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const FavoritesPage = lazy(() => import('@/pages/FavoritesPage'));
+const ChangelogPage = lazy(() => import('@/pages/ChangelogPage'));
+const CollectionPage = lazy(() => import('@/pages/CollectionPage'));
+const ComparisonPage = lazy(() => import('@/pages/ComparisonPage'));
 
 function AppInner() {
   const { lang } = useLanguage();
@@ -510,7 +511,19 @@ function AppInner() {
           resetKey={`${route.name}:${route.slug ?? ''}:${lang}:${offers.status}:${guides.status}`}
           lang={lang}
         >
-          {content}
+          <Suspense
+            fallback={
+              <main
+                className="mx-auto max-w-4xl px-4 py-10"
+                aria-busy="true"
+                aria-label={lang === 'ar' ? 'جارٍ التحميل' : 'Loading'}
+              >
+                <div className="skeleton h-64 w-full" />
+              </main>
+            }
+          >
+            {content}
+          </Suspense>
         </ContentErrorBoundary>
       </div>
       <Footer />
