@@ -20,6 +20,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  isAuditFixtureEnv,
   isStaticDealSlug,
   loadDealsCatalog,
   loadPublicDealRecords,
@@ -27,6 +28,7 @@ import {
   sharedSeo,
 } from './generate-static-seo.mjs';
 import { inspectDealDeadlineCoverage } from './deal-deadline-guard.mjs';
+
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { dealFacts } = sharedSeo;
@@ -117,6 +119,14 @@ function checkDealPage(report, distDir, slug, facts) {
   const rel = `deal/${slug}/index.html`;
   const html = readIfExists(join(distDir, rel));
   if (html === null) return;
+
+  // E3: the flat file must exist alongside the directory index and have matching content.
+  const flatPath = join(distDir, 'deal', `${slug}.html`);
+  if (!existsSync(flatPath)) {
+    report(`deal/${slug}: flat file deal/${slug}.html missing (E3 dual-write incomplete)`);
+  } else if (readFileSync(flatPath, 'utf8') !== html) {
+    report(`deal/${slug}: flat file deal/${slug}.html diverges from deal/${slug}/index.html`);
+  }
 
   const allow = (claim) => claim.allowed(facts);
   checkText(report, rel, metaContent(html, 'name', 'description'), DEAL_CLAIMS, allow);
@@ -406,7 +416,11 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
         continue;
       }
       const slug = decodeURIComponent(url.split('/deal/')[1] ?? '');
-      if (!slug || !existsSync(join(dealPagesDir, slug, 'index.html'))) {
+      // E3: require both the flat file (canonical 200 OK path) and the directory
+      // index (trailing-slash path) to exist to prevent partial dual-write regressions.
+      const flatExists = slug && existsSync(join(dealPagesDir, `${slug}.html`));
+      const indexExists = slug && existsSync(join(dealPagesDir, slug, 'index.html'));
+      if (!slug || !flatExists || !indexExists) {
         report(`REC-01: ItemList تشير إلى صفحة غير مولّدة: ${url}`);
       }
     }
@@ -421,14 +435,21 @@ if (isMain) {
   try {
     const index = process.argv.indexOf('--dist');
     const distDir = index > -1 && process.argv[index + 1] ? resolve(process.argv[index + 1]) : undefined;
-    const source = process.env.SEO_PARITY_SOURCE || 'live';
     let liveDeals;
-    if (source === 'live') {
-      liveDeals = await loadPublicDealRecords({ rootDir: ROOT });
-    } else if (source === 'snapshot') {
-      console.warn('verify-dist: F-04 live-data guard skipped (snapshot build has no live ends_at fields).');
+    // Mirror generate-static-seo.mjs: in audit-fixture / snapshot mode skip the
+    // live fetch so `npm run build` succeeds on PRs and local fixture builds.
+    // isAuditFixtureEnv() throws if audit-fixture is used on refs/heads/main.
+    if (isAuditFixtureEnv()) {
+      console.warn('verify-dist: F-04 live-data guard skipped (audit-fixture / snapshot mode).');
     } else {
-      throw new Error(`SEO_PARITY_SOURCE must be "live" or "snapshot" (received "${source}").`);
+      const source = process.env.SEO_PARITY_SOURCE || 'live';
+      if (source === 'live') {
+        liveDeals = await loadPublicDealRecords({ rootDir: ROOT });
+      } else if (source === 'snapshot') {
+        console.warn('verify-dist: F-04 live-data guard skipped (snapshot build has no live ends_at fields).');
+      } else {
+        throw new Error(`SEO_PARITY_SOURCE must be "live" or "snapshot" (received "${source}").`);
+      }
     }
 
     const { violations, warnings, deadlineWarnings, deadlineCoverage } = verifyDist({

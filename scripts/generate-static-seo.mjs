@@ -41,6 +41,30 @@ function explicitText(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : '';
 }
 
+// ---------------------------------------------------------------------------
+// Audit-fixture / snapshot guard
+// ---------------------------------------------------------------------------
+// Fail-closed: the snapshot path is allowed ONLY in two explicit cases:
+//   1. SEO_SOURCE=snapshot (explicit local override)
+//   2. VITE_SUPABASE_URL === AUDIT_FIXTURE_URL *and* not on refs/heads/main
+// Any other failure (network down on main) still throws and kills the build.
+const AUDIT_FIXTURE_URL = 'https://audit-fixture.supabase.co';
+
+export function isAuditFixtureEnv(env = process.env) {
+  if (env.SEO_SOURCE === 'snapshot') return true;
+  const url = (env.VITE_SUPABASE_URL || env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  if (url === AUDIT_FIXTURE_URL) {
+    if (env.GITHUB_REF === 'refs/heads/main') {
+      throw new Error(
+        '[SEO Error] Refusing to use audit-fixture URL on refs/heads/main. ' +
+        'Set real production credentials in VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY.'
+      );
+    }
+    return true;
+  }
+  return false;
+}
+
 async function routeLookupConfig(rootDir, { publicUrl, publicKey } = {}) {
   // Imported lazily: `vite` costs seconds to load, and every test that imports
   // this module for its pure helpers would otherwise pay that cost. Only the
@@ -190,6 +214,11 @@ async function loadPublicDealRows({
 }
 
 async function loadBuildDealData({ rootDir = ROOT } = {}) {
+  // isAuditFixtureEnv() throws if audit-fixture URL is used on refs/heads/main.
+  if (isAuditFixtureEnv()) {
+    console.log('[SEO] Using local catalog snapshot (audit-fixture / snapshot mode).');
+    return { slugs: loadDealSlugSnapshot(rootDir), records: null };
+  }
   const source = process.env.SEO_PARITY_SOURCE || 'live';
   if (source === 'snapshot') return { slugs: loadDealSlugSnapshot(rootDir), records: null };
   if (source !== 'live') {
@@ -211,9 +240,14 @@ export function writeMissingDealRoutePages({
 }) {
   const existing = new Set(catalogSlugs);
   const written = new Set();
+  const dealRootDir = join(distDir, 'deal');
+  mkdirSync(dealRootDir, { recursive: true });
   for (const slug of databaseSlugs) {
     if (!isStaticDealSlug(slug) || existing.has(slug) || written.has(slug)) continue;
-    const indexPath = join(distDir, 'deal', slug, 'index.html');
+    // E3: write the flat file so GitHub Pages serves /deal/<slug> with 200 OK
+    // (no 301 redirect). The directory index handles /deal/<slug>/ with slash.
+    writeFileSync(join(dealRootDir, `${slug}.html`), baseHtml, 'utf8');
+    const indexPath = join(dealRootDir, slug, 'index.html');
     mkdirSync(dirname(indexPath), { recursive: true });
     writeFileSync(indexPath, baseHtml, 'utf8');
     written.add(slug);
@@ -821,12 +855,20 @@ export async function runStaticSeoGeneration({
   let generatedHtmlCount = 0;
   let generatedPngCount = 0;
 
+  const dealRootDir = join(distDir, 'deal');
+  mkdirSync(dealRootDir, { recursive: true });
   for (const deal of seoDeals) {
     const facts = dealFacts(deal);
     const seo = buildDealSeo(deal, baseUrl);
-    const dealDir = join(distDir, 'deal', deal.slug);
+    const htmlContent = injectSeoIntoHtml(baseHtml, seo);
+    // E3: write dist/deal/<slug>.html so GitHub Pages serves /deal/<slug> with
+    // HTTP 200 directly. Without it, Pages issues a 301 to /deal/<slug>/ because
+    // it finds a directory but no matching flat file.
+    writeFileSync(join(dealRootDir, `${deal.slug}.html`), htmlContent, 'utf8');
+    // Also write the directory index so /deal/<slug>/ (with trailing slash) works.
+    const dealDir = join(dealRootDir, deal.slug);
     mkdirSync(dealDir, { recursive: true });
-    writeFileSync(join(dealDir, 'index.html'), injectSeoIntoHtml(baseHtml, seo), 'utf8');
+    writeFileSync(join(dealDir, 'index.html'), htmlContent, 'utf8');
     generatedHtmlCount += 1;
 
     const svgContent = buildDealOgSvg(deal, facts);

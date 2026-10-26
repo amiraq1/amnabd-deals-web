@@ -187,11 +187,17 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     });
 
     const generated = readFileSync(join(distDir, 'llms.txt'), 'utf8');
-    const pageSlugs = readdirSync(join(distDir, 'deal'));
     const llmsSlugs = [...generated.matchAll(/\]\(https:\/\/deals\.example\.com\/deal\/([^)?#]+)\)/g)].map(
       (match) => match[1]
     );
+    const pageSlugs = readdirSync(join(distDir, 'deal'), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+    const flatFiles = readdirSync(join(distDir, 'deal'), { withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name);
     assert.deepEqual(llmsSlugs.sort(), pageSlugs.sort());
+    assert.deepEqual(flatFiles.sort(), pageSlugs.map((slug) => `${slug}.html`).sort());
     assert.equal(llmsSlugs.length, 2);
     assert.doesNotMatch(generated, /#\/deal|stale hash route/);
     const feed = readFileSync(join(distDir, 'feed.xml'), 'utf8');
