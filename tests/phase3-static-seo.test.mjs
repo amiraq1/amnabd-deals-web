@@ -15,6 +15,8 @@ const {
   injectSeoIntoHtml,
   buildNoIndexAppShell,
   buildNotFoundPage,
+  buildHomeItemList,
+  injectHomeItemList,
   escapeHtml,
   loadDealsCatalog,
 } = await import(pathToFileURL(join(process.cwd(), 'scripts/generate-static-seo.mjs')));
@@ -73,23 +75,36 @@ test('injectSeoIntoHtml replaces existing title and meta tags without duplicatio
   assert.ok(output.includes('data-deal-jsonld="true"'));
 });
 
-test('homepage ItemList publishes canonical deal paths rather than stale hash routes', () => {
+test('homepage ItemList is a build-time placeholder the generator fills with canonical paths', () => {
   const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
-  const scriptStart = html.indexOf('<script type="application/ld+json">');
-  assert.notEqual(scriptStart, -1, 'homepage JSON-LD script exists');
-  const contentStart = html.indexOf('>', scriptStart) + 1;
-  const contentEnd = html.indexOf('</script>', contentStart);
-  const schema = JSON.parse(html.slice(contentStart, contentEnd));
-  const itemList = schema['@graph'].find((node) => node['@type'] === 'ItemList');
-  assert.ok(itemList, 'homepage JSON-LD contains an ItemList');
-  assert.ok(itemList.itemListElement.length > 0);
-  assert.equal(itemList.itemListElement.length, itemList.numberOfItems);
-  for (const item of itemList.itemListElement) {
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(
+    (match) => JSON.parse(match[1])
+  );
+
+  // REC-01: the source ships an empty list. A hand-maintained copy already
+  // drifted once (stale `#/deal/` URLs), so the build owns it now.
+  const placeholder = blocks.find((block) => block['@type'] === 'ItemList');
+  assert.ok(placeholder, 'index.html ships an ItemList placeholder');
+  assert.equal(placeholder.numberOfItems, 0, 'the source list must stay empty');
+  assert.deepEqual(placeholder.itemListElement, []);
+  assert.doesNotMatch(html, /#\/deal\//);
+
+  const generated = buildHomeItemList(loadDealsCatalog(process.cwd()), 'https://amnabd.com');
+  assert.ok(generated.numberOfItems > 0);
+  assert.equal(generated.itemListElement.length, generated.numberOfItems);
+  for (const item of generated.itemListElement) {
     const url = new URL(item.url);
     assert.equal(url.origin, 'https://amnabd.com');
-    assert.match(url.pathname, new RegExp('^/deal/[^/]+$'));
+    assert.match(url.pathname, /^\/deal\/[^/]+$/);
     assert.equal(url.hash, '');
   }
+
+  const filled = injectHomeItemList(html, generated);
+  const filledList = [...filled.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map((match) => JSON.parse(match[1]))
+    .find((block) => block['@type'] === 'ItemList');
+  assert.equal(filledList.numberOfItems, generated.numberOfItems);
+  assert.equal(filledList.itemListElement[0].url, generated.itemListElement[0].url);
 });
 
 test('comparison app shell returns a noindex route without homepage SEO claims', () => {
@@ -102,7 +117,7 @@ test('comparison app shell returns a noindex route without homepage SEO claims',
   );
   const shell = buildNoIndexAppShell(homepageHtml);
   assert.match(shell, /<meta name="robots" content="noindex,follow">/);
-  assert.match(shell, /<title>AMNABD Deals<\/title>/);
+  assert.match(shell, /<title>نبض<\/title>/);
   assert.match(shell, /<div id="root"><\/div>/);
   assert.doesNotMatch(shell, /name="description"|rel="canonical"|property="og:|name="twitter:|application\/ld\+json|homepage claim|homepage title/);
 });
@@ -172,17 +187,27 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     });
 
     const generated = readFileSync(join(distDir, 'llms.txt'), 'utf8');
-    const pageSlugs = readdirSync(join(distDir, 'deal'));
     const llmsSlugs = [...generated.matchAll(/\]\(https:\/\/deals\.example\.com\/deal\/([^)?#]+)\)/g)].map(
       (match) => match[1]
     );
+    const pageSlugs = readdirSync(join(distDir, 'deal'), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+    const flatFiles = readdirSync(join(distDir, 'deal'), { withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name);
     assert.deepEqual(llmsSlugs.sort(), pageSlugs.sort());
+    assert.deepEqual(flatFiles.sort(), pageSlugs.map((slug) => `${slug}.html`).sort());
     assert.equal(llmsSlugs.length, 2);
     assert.doesNotMatch(generated, /#\/deal|stale hash route/);
     const feed = readFileSync(join(distDir, 'feed.xml'), 'utf8');
     assert.doesNotMatch(feed, /bolt-builders-week/);
     assert.match(feed, /second-deal/);
-    assert.equal(readFileSync(join(distDir, 'ending-soon', 'index.html'), 'utf8'), sampleHomepageHtml);
+    // The shell is a byte copy of the built homepage. Since REC-01 the homepage
+    // is rewritten during generation (the ItemList is filled), so the reference
+    // is the finished document, not the input.
+    const builtHomepage = readFileSync(join(distDir, 'index.html'), 'utf8');
+    assert.equal(readFileSync(join(distDir, 'ending-soon', 'index.html'), 'utf8'), builtHomepage);
     const comparisonShell = readFileSync(join(distDir, 'compare', 'index.html'), 'utf8');
     assert.equal(comparisonShell, buildNoIndexAppShell(sampleHomepageHtml));
     assert.match(comparisonShell, /name="robots" content="noindex,follow"/);

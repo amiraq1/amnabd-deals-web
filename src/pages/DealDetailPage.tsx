@@ -228,7 +228,7 @@ export default function DealDetailPage({
                   value={requirementLabel(e.phone_required, lang)}
                 />
               </dl>
-              <p className="mt-4 text-xs leading-relaxed text-slate-500">{e.conditions[lang]}</p>
+              <p className="mt-4 text-xs leading-relaxed text-slate-400">{e.conditions[lang]}</p>
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
@@ -301,7 +301,7 @@ export default function DealDetailPage({
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                   {src.context && (
-                    <p className="mt-1 text-xs italic leading-relaxed text-slate-500">
+                    <p className="mt-1 text-xs italic leading-relaxed text-slate-400">
                       {src.context}
                     </p>
                   )}
@@ -319,7 +319,7 @@ export default function DealDetailPage({
                 </div>
               ))}
             </div>
-            <p className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-500">
+            <p className="mt-5 border-t border-slate-800 pt-4 text-xs text-slate-400">
               {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}:{' '}
               <bdi>{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
               {' · '}
@@ -395,7 +395,7 @@ export default function DealDetailPage({
 
         {activationGuide && <ActivationGuide guide={activationGuide} officialUrl={offerUrl} />}
 
-        <ReportDealBox dealSlug={deal.slug} />
+        <ReportDealBox key={deal.slug} dealSlug={deal.slug} />
       </main>
 
       {/* Sticky Mobile Action Bar */}
@@ -464,7 +464,7 @@ function FactRow({ label, value }: { label: string; value: string }) {
       <dt className="text-slate-400">{label}</dt>
       <dd
         className={`font-medium ${
-          value === 'Unknown' || value === 'غير معلوم' ? 'text-slate-500' : 'text-slate-100'
+          value === 'Unknown' || value === 'غير معلوم' ? 'text-slate-400' : 'text-slate-100'
         }`}
       >
         {value}

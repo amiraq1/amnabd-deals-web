@@ -12,6 +12,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "node scripts/test.mjs",
     "test:build-env": "node scripts/check-build-env.mjs",
+    "test:bundle": "node scripts/check-bundle-budget.mjs",
+    "build:og": "node scripts/build-og-image.mjs",
+    "test:reflow": "node tests/reflow-browser.cjs",
     "review:queue": "node scripts/review-queue.mjs"
   },
   "dependencies": {

@@ -89,7 +89,7 @@ export default function ChangelogPage({
                 ? 'آخر مراجعة محفوظة لكل عرض، وأحداث انتهاء محسوبة من موعد الانتهاء المسجّل. لا يحتفظ السجل بنسخ سابقة لإظهار فروق الحقول، ولا تعني المراجعة أن الشروط تغيّرت.'
                 : 'The latest saved review for each offer, plus expiry events calculated from recorded end dates. Previous field values are not stored here; a review does not mean the terms changed.'}
             </p>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-slate-400">
               {lang === 'ar' ? 'تواريخ أحداث الانتهاء بتوقيت UTC.' : 'Expiry event dates use UTC.'}
             </p>
           </div>
@@ -139,7 +139,7 @@ export default function ChangelogPage({
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
                   <span>{lang === 'ar' ? 'سجلات ' : 'Records for '}<time dateTime={group.date} dir="ltr">{group.date}</time></span>
                 </h2>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-slate-400">
                   {group.entries.length}{' '}{lang === 'ar' ? (group.entries.length === 1 ? 'سجل' : 'سجلات') : (group.entries.length === 1 ? 'record' : 'records')}
                 </span>
               </div>

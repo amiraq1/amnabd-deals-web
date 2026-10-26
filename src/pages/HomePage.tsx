@@ -961,7 +961,7 @@ export default function HomePage({
                 onChange={(event) => onFilterChange({ country: event.target.value }, 'replace')}
                 placeholder={lang === 'ar' ? 'مثال: العراق' : 'Example: Iraq'}
                 aria-describedby="country-evidence-note"
-                className="min-w-36 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-200 outline-none transition-colors placeholder:text-slate-500 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="min-w-36 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-200 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               />
               <datalist id="recorded-country-options">
                 {countryOptions.map((country) => <option key={country} value={country} />)}
@@ -988,7 +988,7 @@ export default function HomePage({
                   {lang === 'ar' ? 'مستثنى صراحةً' : 'Explicitly excluded'}
                 </option>
               </select>
-              <p id="country-evidence-note" className="basis-full text-[11px] leading-relaxed text-slate-500">
+              <p id="country-evidence-note" className="basis-full text-[11px] leading-relaxed text-slate-400">
                 {lang === 'ar'
                   ? 'يعتمد التصنيف على حقل بلد ومصدر رسمي مُراجع فقط. غياب قيود البلدان لا يعني أن العرض متاح عالميًا؛ وما لا يثبته المصدر يبقى غير معلوم.'
                   : 'Classification requires a reviewed country field and an official source. Missing country restrictions do not mean worldwide availability; unsupported cases remain unknown.'}
@@ -1124,7 +1124,7 @@ export default function HomePage({
           </div>
         </div>
 
-        <p className="mt-2.5 text-xs text-slate-500" id="saved-deals-scope">
+        <p className="mt-2.5 text-xs text-slate-400" id="saved-deals-scope">
           {lang === 'ar'
             ? 'المحفوظات تخص هذا المتصفح ولا تنتقل مع رابط البحث. فلتر المحفوظة يعمل مع بقية الفلاتر.'
             : 'Saved deals belong to this browser and are not included in shared search links.'}
@@ -1367,7 +1367,7 @@ export default function HomePage({
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
             {overview.distinction ?? ''}
           </p>
-          <div className="mt-4 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 text-xs text-slate-400 sm:grid-cols-2">
             <p>
               {lang === 'ar' ? 'آخر مراجعة للمصادر' : 'Last reviewed'}:{' '}
               <bdi>{reviewDateLabel(config.last_reviewed, lang)}</bdi>

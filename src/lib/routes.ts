@@ -70,6 +70,21 @@ export function routeHash(route: Route): string {
   return '#/404';
 }
 
+/**
+ * A stable identity for the *view*, ignoring query state (REC-16).
+ *
+ * Route focus and the screen-reader announcement must fire only when the
+ * logical page changes. Toggling the language (`?lang=en`) or editing filters
+ * keeps the same view, and moving focus to the heading there would pull it away
+ * from the control the visitor just used.
+ */
+export function routeIdentity(route: Route | null | undefined): string {
+  if (!route) return 'unknown';
+  if (route.name === 'deal') return `deal:${route.slug ?? ''}`;
+  if (route.name === 'collection') return `collection:${route.collectionKey ?? ''}`;
+  return route.name;
+}
+
 export function routePath(route: Route): string {
   if (route.name === 'home') return '/';
   if (route.name === 'guide') return '/guide';

@@ -126,7 +126,7 @@ export default function ComparisonPage({
         <table className="w-full table-fixed border-collapse">
           <thead>
             <tr className="border-b border-slate-700 bg-slate-900/90">
-              <th scope="col" className="w-[28%] p-2 text-start text-[11px] font-medium text-slate-500 sm:p-4 sm:text-xs">
+              <th scope="col" className="w-[28%] p-2 text-start text-[11px] font-medium text-slate-400 sm:p-4 sm:text-xs">
                 {lang === 'ar' ? 'الحقل' : 'Field'}
               </th>
               {([first, second] as const).map((deal, index) => (
@@ -136,7 +136,7 @@ export default function ComparisonPage({
                     onClick={() => onOpenDeal(deal.slug)}
                     className="text-start font-heading text-xs font-bold leading-snug text-emerald-300 underline decoration-emerald-500/30 underline-offset-4 hover:text-emerald-200 sm:text-sm"
                   >
-                    <span className="mb-1 block text-[10px] font-medium text-slate-500 sm:text-[11px]">
+                    <span className="mb-1 block text-[10px] font-medium text-slate-400 sm:text-[11px]">
                       {lang === 'ar' ? `العرض ${index === 0 ? 'الأول' : 'الثاني'}` : `Offer ${index + 1}`}
                     </span>
                     <bdi>{names[index]}</bdi>
@@ -162,7 +162,7 @@ export default function ComparisonPage({
         </table>
       </section>
 
-      <p className="mt-4 text-xs leading-relaxed text-slate-500">
+      <p className="mt-4 text-xs leading-relaxed text-slate-400">
         {lang === 'ar'
           ? 'تحقق من المصدر الرسمي قبل اتخاذ القرار؛ ظهور الحقول هنا لا يضمن استمرار العرض أو انطباق الأهلية.'
           : 'Check the official source before deciding; these recorded fields do not guarantee that an offer remains available or that you qualify.'}

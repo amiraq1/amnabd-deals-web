@@ -1,6 +1,6 @@
 import type { Deal, Lang } from '@/types';
 import { benefitAmount, benefitTypeLabel, durationLabel, frequencyLabel } from './format.js';
-import { compileQuery, expandTextWithVariants } from './normalize.js';
+import { compileQuery, expandTextWithVariants, matchesToken } from './normalize.js';
 
 // Categories come only from category.value, never inferred from marketing text.
 // Case/spacing variants share a key; unrelated categories are not merged.
@@ -87,11 +87,12 @@ export function buildDealCorpus(deal: Deal): string {
 }
 
 // Matches a query against a pre-built corpus with token-level AND semantics
-// and variant-level OR semantics.
+// and variant-level OR semantics. Token matching follows the word-start policy
+// in `normalize.ts` (AMN-007), so short queries no longer match mid-word.
 export function matchesCorpus(
   corpus: string,
   query: string | readonly (readonly string[])[]
 ): boolean {
   const groups = typeof query === 'string' ? compileQuery(query) : query;
-  return groups.every((variants) => variants.some((value) => corpus.includes(value)));
+  return groups.every((variants) => variants.some((value) => matchesToken(corpus, value)));
 }

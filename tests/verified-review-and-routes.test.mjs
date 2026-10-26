@@ -8,7 +8,7 @@ import { test } from 'node:test';
 const { isVerifiedReview } = await import(
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/verification.js'))
 );
-const { loadPublicDealSlugs, writeMissingDealRoutePages } = await import(
+const { isAuditFixtureEnv, loadPublicDealSlugs, writeMissingDealRoutePages } = await import(
   pathToFileURL(join(process.cwd(), 'scripts/generate-static-seo.mjs'))
 );
 
@@ -109,8 +109,36 @@ test('uncatalogued public deal slugs receive safe static route shells', () => {
       readFileSync(join(distDir, 'deal', 'modal-30-monthly', 'index.html'), 'utf8'),
       '<!doctype html><html><div id="root"></div></html>'
     );
+    // E3: verify the flat file was also generated and is identical to index.html
+    assert.equal(
+      readFileSync(join(distDir, 'deal', 'modal-30-monthly.html'), 'utf8'),
+      '<!doctype html><html><div id="root"></div></html>'
+    );
     assert.equal(existsSync(join(distDir, 'escape', 'index.html')), false);
   } finally {
     rmSync(distDir, { recursive: true, force: true });
   }
+});
+
+test('isAuditFixtureEnv enforces fail-closed guard on refs/heads/main', () => {
+  assert.equal(
+    isAuditFixtureEnv({ VITE_SUPABASE_URL: 'https://audit-fixture.supabase.co', GITHUB_REF: 'refs/pull/123/merge' }),
+    true
+  );
+  assert.equal(
+    isAuditFixtureEnv({ SEO_SOURCE: 'snapshot' }),
+    true
+  );
+  assert.equal(
+    isAuditFixtureEnv({ VITE_SUPABASE_URL: 'https://xyz.supabase.co' }),
+    false
+  );
+  assert.throws(
+    () => isAuditFixtureEnv({ VITE_SUPABASE_URL: 'https://audit-fixture.supabase.co', GITHUB_REF: 'refs/heads/main' }),
+    /Refusing to use audit-fixture URL on refs\/heads\/main/
+  );
+  assert.throws(
+    () => isAuditFixtureEnv({ SUPABASE_URL: 'https://audit-fixture.supabase.co/', GITHUB_REF: 'refs/heads/main' }),
+    /Refusing to use audit-fixture URL on refs\/heads\/main/
+  );
 });

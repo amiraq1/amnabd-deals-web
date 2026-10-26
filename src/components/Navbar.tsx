@@ -132,17 +132,17 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-x-2 gap-y-1 px-4 py-2 sm:px-6">
         {/* الشعار */}
         <a
           href={localizedPath('/')}
           onClick={(e) => go(e, { name: 'home' })}
-          className={`flex items-center gap-2.5 rounded-lg ${focusRing}`}
+          className={`flex min-w-0 items-center gap-2.5 rounded-lg ${focusRing}`}
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-md shadow-emerald-950/50">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-md shadow-emerald-950/50">
             <Sparkles className="h-4 w-4 text-white" aria-hidden="true" />
           </span>
-          <span className="font-heading text-xl font-bold tracking-tight text-slate-100">
+          <span className="truncate font-heading text-xl font-bold tracking-tight text-slate-100">
             {t.brand}
           </span>
         </a>
@@ -168,7 +168,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
         </nav>
 
         {/* الإجراءات */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={onLangToggle}

@@ -110,8 +110,16 @@ export async function submitDealReport(
         ? {}
         : { Authorization: `Bearer ${supabaseKey}` };
 
+      // A stalled connection must not leave the reader on a spinner: nothing
+      // else bounds this request, and PostgREST can hold the socket open.
+      const timeoutSignal =
+        typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+          ? AbortSignal.timeout(8000)
+          : undefined;
+
       const response = await fetch(endpoint, {
         method: 'POST',
+        signal: timeoutSignal,
         headers: {
           'Content-Type': 'application/json',
           apikey: supabaseKey,

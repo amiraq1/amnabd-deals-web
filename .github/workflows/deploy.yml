@@ -11,8 +11,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  # One group per branch/PR: a pull request must not cancel a deploy that is
+  # already running on main, which the old workflow-wide `pages` group allowed.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+  # Stale pull-request runs are worth cancelling; a main deploy is not.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Gate: every change (PR or main) must typecheck, lint and pass tests.
@@ -32,13 +35,25 @@ jobs:
       # Proves the public-key guard still rejects private/malformed config.
       # Synthetic fixtures only — no production secrets involved.
       - run: npm run test:build-env
+      # AMN-001: runtime dependencies must stay clean. Dev-tool advisories are
+      # tolerated until the Vite/Tailwind major upgrade lands, but nothing that
+      # ships to a visitor may be flagged.
+      - run: npm audit --omit=dev --audit-level=high
 
   build:
     needs: verify
-    # Builds on pull requests too, so `verify-dist` gates the claims before
-    # merge. Publishing stays gated below.
+    # Builds on pull requests too, so verify-dist gates the claims before merge.
+    # Publishing stays gated below.
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Declared once: every step inherits these. Fork PRs never receive
+    # repository secrets, so they build against the same public fixtures
+    # test:build-env uses; a production run without secrets must fail rather
+    # than quietly build the fixture.
+    env:
+      VITE_SUPABASE_URL: ${{ github.event_name == 'pull_request' && 'https://audit-fixture.supabase.co' || secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ github.event_name == 'pull_request' && 'sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001' || secrets.VITE_SUPABASE_ANON_KEY }}
+      SEO_PARITY_SOURCE: ${{ github.event_name == 'pull_request' && 'snapshot' || 'live' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,24 +61,20 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # Fails before the build instead of producing a fixture build on main.
+      - name: Validate production secrets on non-PR builds
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Missing required production Supabase secrets on ${{ github.ref }}."
+            exit 1
+          fi
       - run: npm run build
-        env:
-          # PRs from forks never receive repository secrets, so fall back to the
-          # public fixtures `test:build-env` already uses. Only the deploy job
-          # publishes, and it never runs on a pull request.
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://audit-fixture.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001' }}
-          # Fork PRs cannot read repository secrets; compare those builds with
-          # the reviewed slug-only snapshot. Main/deploy builds read live slugs.
-          SEO_PARITY_SOURCE: ${{ github.event_name == 'pull_request' && 'snapshot' || 'live' }}
       # Fails the build if dist/ publishes a claim the catalog cannot prove.
       - run: node scripts/verify-dist.mjs
-        env:
-          # The F-04 guard reads only public deal fields with the anon key on
-          # deploy builds. Fork PRs use the slug snapshot and unit fixtures.
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://audit-fixture.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AUDIT_FIXTURE_NOT_A_REAL_KEY_0001' }}
-          SEO_PARITY_SOURCE: ${{ github.event_name == 'pull_request' && 'snapshot' || 'live' }}
+      # Stops the initial payload from growing unnoticed while no Lighthouse
+      # baseline exists yet (audit AMN-011). Raise budgets in a commit, not here.
+      - run: npm run test:bundle
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:

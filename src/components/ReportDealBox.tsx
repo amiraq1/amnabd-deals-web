@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Flag, Check, AlertCircle, X } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -14,20 +14,44 @@ interface ReportDealBoxProps {
 
 export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
   const { lang } = useLanguage();
+  // REC-17: the note field needs an explicit label; the placeholder is a hint,
+  // not an accessible name.
+  const noteId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedReason, setSelectedReason] = useState<ReportReason>('expired');
-  const [note, setNote] = useState('');
+  // C2: restore a draft note from sessionStorage so a catalog-reload (which is
+  // intentional — see App.tsx:52) does not silently discard the visitor's text.
+  const draftKey = `amnabd:report-draft:${dealSlug}`;
+  const [note, setNote] = useState(() => {
+    try {
+      return sessionStorage.getItem(draftKey) ?? '';
+    } catch {
+      return '';
+    }
+  });
   const [honeypot, setHoneypot] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(() => hasRecentlyReported(dealSlug));
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // B2: receives programmatic focus after a successful submission so keyboard
+  // and screen-reader users know the form state changed.
+  const successRef = useRef<HTMLDivElement>(null);
+
+  // B2: move focus to the confirmation banner as soon as it mounts.
+  useEffect(() => {
+    if (submitted) {
+      successRef.current?.focus({ preventScroll: true });
+    }
+  }, [submitted]);
 
   if (submitted) {
     return (
       <div
+        ref={successRef}
+        tabIndex={-1}
         role="status"
         aria-live="polite"
-        className="mt-6 flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 text-xs font-medium text-emerald-300"
+        className="mt-6 flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 text-xs font-medium text-emerald-300 outline-none"
       >
         <Check className="h-4 w-4 shrink-0 text-emerald-400" />
         <span>
@@ -65,6 +89,12 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
         );
         return;
       }
+      // C2: report stored — discard the saved draft.
+      try {
+        sessionStorage.removeItem(draftKey);
+      } catch {
+        // ignore private-browsing errors
+      }
       setSubmitted(true);
       setIsOpen(false);
     } catch {
@@ -75,6 +105,7 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
       );
     } finally {
       setIsSubmitting(false);
+
     }
   };
 
@@ -118,31 +149,37 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
           </div>
 
           {/* Quick reason options */}
-          <div className="flex flex-wrap gap-2">
-            {REPORT_REASON_OPTIONS.map((opt) => {
-              const active = selectedReason === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setSelectedReason(opt.value)}
-                  className={`rounded-xl border px-3 py-1.5 text-xs font-medium transition ${
-                    active
-                      ? 'border-amber-500 bg-amber-500/15 text-amber-300 font-semibold shadow-sm shadow-amber-950/30'
-                      : 'border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 hover:text-white'
-                  }`}
-                >
-                  {lang === 'ar' ? opt.label : opt.labelEn}
-                </button>
-              );
-            })}
-          </div>
+          <fieldset>
+            <legend className="sr-only">
+              {lang === 'ar' ? 'سبب البلاغ' : 'Reason for the report'}
+            </legend>
+            <div className="flex flex-wrap gap-2">
+              {REPORT_REASON_OPTIONS.map((opt) => {
+                const active = selectedReason === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setSelectedReason(opt.value)}
+                    className={`rounded-xl border px-3 py-1.5 text-xs font-medium transition ${
+                      active
+                        ? 'border-amber-500 bg-amber-500/15 text-amber-300 font-semibold shadow-sm shadow-amber-950/30'
+                        : 'border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 hover:text-white'
+                    }`}
+                  >
+                    {lang === 'ar' ? opt.label : opt.labelEn}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
 
-          {/* Hidden honeypot anti-bot field */}
+          {/* Hidden honeypot anti-bot field — D3: name must be non-semantic
+              (not website_url / email / phone) to avoid browser autofill. */}
           <input
             type="text"
-            name="website_url"
+            name="org_ref"
             tabIndex={-1}
             autoComplete="off"
             value={honeypot}
@@ -152,11 +189,27 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
           />
 
           <div>
+            <label htmlFor={noteId} className="sr-only">
+              {lang === 'ar' ? 'ملاحظة إضافية أو رابط التحديث (اختياري)' : 'Optional note or update link'}
+            </label>
             <input
+              id={noteId}
               type="text"
               maxLength={280}
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              onChange={(e) => {
+                setNote(e.target.value);
+                // C2: persist draft so a forced catalog-reload does not lose text.
+                try {
+                  if (e.target.value) {
+                    sessionStorage.setItem(draftKey, e.target.value);
+                  } else {
+                    sessionStorage.removeItem(draftKey);
+                  }
+                } catch {
+                  // ignore private-browsing errors
+                }
+              }}
               placeholder={
                 lang === 'ar'
                   ? 'ملاحظة إضافية أو رابط التحديث (اختياري)...'
@@ -167,7 +220,7 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
           </div>
 
           {errorMsg && (
-            <p className="flex items-center gap-1.5 text-xs text-rose-400">
+            <p role="alert" className="flex items-center gap-1.5 text-xs text-rose-400">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" />
               <span>{errorMsg}</span>
             </p>

@@ -41,25 +41,25 @@
   <g transform="translate(210, 132)">
     <rect width="150" height="40" rx="20" fill="#0f172a" stroke="#334155" stroke-width="1.5" />
     <circle cx="24" cy="20" r="5" fill="#10b981" />
-    <text x="40" y="25" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600">amnabd.com</text>
+    <text x="40" y="25" fill="#94a3b8" font-family="Tahoma, Segoe UI, system-ui, sans-serif" font-size="16" font-weight="600">amnabd.com</text>
   </g>
 
   <!-- Title & Subtitle -->
-  <text x="100" y="280" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="800" letter-spacing="-1">AMNABD Deals</text>
-  <text x="100" y="360" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="700">دليل عروض ومنافع أدوات الذكاء الاصطناعي</text>
-  <text x="100" y="420" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="400">AI Tool Offers, Cloud Credits &amp; Developer Benefits</text>
+  <text x="100" y="280" fill="#ffffff" font-family="Tahoma, Segoe UI, system-ui, sans-serif" font-size="64" font-weight="800">نبض</text>
+  <text x="100" y="360" fill="#34d399" font-family="Tahoma, Segoe UI, system-ui, sans-serif" font-size="36" font-weight="700">دليل عروض ومنافع أدوات الذكاء الاصطناعي</text>
+  <text x="100" y="420" fill="#94a3b8" font-family="Tahoma, Segoe UI, system-ui, sans-serif" font-size="24" font-weight="400">AI Tool Offers, Cloud Credits &amp; Developer Benefits</text>
 
   <!-- Bottom Pills -->
   <g transform="translate(100, 480)">
     <rect width="210" height="42" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
-    <text x="24" y="27" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">✓ مصادر وأدلة رسمية</text>
+    <text x="24" y="27" fill="#cbd5e1" font-family="Tahoma, Segoe UI, system-ui, sans-serif" font-size="16" font-weight="500">✓ مصادر وأدلة رسمية</text>
   </g>
   <g transform="translate(330, 480)">
     <rect width="200" height="42" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
-    <text x="24" y="27" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">تحقق من شروط كل عرض</text>
+    <text x="24" y="27" fill="#cbd5e1" font-family="Tahoma, Segoe UI, system-ui, sans-serif" font-size="16" font-weight="500">تحقق من شروط كل عرض</text>
   </g>
   <g transform="translate(550, 480)">
     <rect width="180" height="42" rx="12" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
-    <text x="24" y="27" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">✓ تحديث دوري مستمر</text>
+    <text x="24" y="27" fill="#cbd5e1" font-family="Tahoma, Segoe UI, system-ui, sans-serif" font-size="16" font-weight="500">✓ تحديث دوري مستمر</text>
   </g>
 </svg>

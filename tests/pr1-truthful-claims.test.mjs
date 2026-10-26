@@ -294,6 +294,10 @@ function fixtureDist(files) {
     const full = join(root, rel);
     mkdirSync(join(full, '..'), { recursive: true });
     writeFileSync(full, body);
+    if (rel.startsWith('deal/') && rel.endsWith('/index.html')) {
+      const flat = rel.replace(/\/index\.html$/, '.html');
+      writeFileSync(join(root, flat), body);
+    }
   }
   return root;
 }

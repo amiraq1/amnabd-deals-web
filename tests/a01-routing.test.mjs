@@ -191,7 +191,9 @@ test('A12: leaving a deal page restores the destination metadata', () => {
   // The deal's Offer must not survive the navigation.
   assert.equal(home.jsonLd['@type'], 'WebSite');
   assert.notEqual(home.jsonLd['@type'], 'Offer');
-  assert.match(home.title, /AMNABD Deals/);
+  assert.match(home.title, /نبض/);
+  // The Arabic page must not end with the English brand.
+  assert.doesNotMatch(home.title, /AMNABD Deals/);
   assert.ok(home.description.length > 0);
 });
 

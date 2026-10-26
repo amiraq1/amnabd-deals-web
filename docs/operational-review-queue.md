@@ -15,3 +15,28 @@ The report flags review dates more than 30 calendar days old (and missing/invali
 User reports are deliberately omitted. The checked live public schema contained `deals`, `usage_guides`, and `site_config`, but no `deal_reports` table; the repository migration is not proof that the production table exists. The local tool has no safe non-public read path, so it does not try an elevated credential or query report data.
 
 No database migration is needed for this tool. It is not wired into `build`, `postbuild`, or GitHub Actions. Preserve the app's existing Arabic/English offer structures and official-evidence requirements when acting on any queue item.
+
+## Ownership and cadence (AMN-010 — decision pending)
+
+The 30-day policy only holds if someone actually runs the tool. Nothing schedules
+it, and nothing will notice if it is never run. This section exists so the gap is
+visible rather than implied.
+
+| Field | Value |
+| --- | --- |
+| Owner | **unassigned** |
+| Cadence | **undecided** — monthly is the natural fit for a 30-day window |
+| Last recorded run | none recorded in the repository |
+| Escalation | none defined |
+
+Two things are needed, and both are human decisions rather than code:
+
+1. **A named owner.** Without one, "the operator" is nobody in particular.
+2. **A cadence, and somewhere it is recorded.** A dated line in this file after
+   each run is enough; a non-mutating CI reminder is optional and only worth
+   adding once the cadence exists.
+
+The audit deliberately did not pick a name or a schedule on the owner's behalf,
+and did not add a scheduled job: a cron that silently fails, or that runs with a
+credential nobody renewed, is worse than a documented manual step.
+

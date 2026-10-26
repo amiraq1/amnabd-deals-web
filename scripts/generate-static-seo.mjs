@@ -9,7 +9,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadEnv } from 'vite';
 import { loadSharedSeo } from './load-shared.mjs';
 import { isStaticDealSlug, loadDealSlugSnapshot, verifySeoParity } from './seo-parity.mjs';
 
@@ -42,7 +41,35 @@ function explicitText(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : '';
 }
 
-function routeLookupConfig(rootDir, { publicUrl, publicKey } = {}) {
+// ---------------------------------------------------------------------------
+// Audit-fixture / snapshot guard
+// ---------------------------------------------------------------------------
+// Fail-closed: the snapshot path is allowed ONLY in two explicit cases:
+//   1. SEO_SOURCE=snapshot (explicit local override)
+//   2. VITE_SUPABASE_URL === AUDIT_FIXTURE_URL *and* not on refs/heads/main
+// Any other failure (network down on main) still throws and kills the build.
+const AUDIT_FIXTURE_URL = 'https://audit-fixture.supabase.co';
+
+export function isAuditFixtureEnv(env = process.env) {
+  if (env.SEO_SOURCE === 'snapshot') return true;
+  const url = (env.VITE_SUPABASE_URL || env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  if (url === AUDIT_FIXTURE_URL) {
+    if (env.GITHUB_REF === 'refs/heads/main') {
+      throw new Error(
+        '[SEO Error] Refusing to use audit-fixture URL on refs/heads/main. ' +
+        'Set real production credentials in VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY.'
+      );
+    }
+    return true;
+  }
+  return false;
+}
+
+async function routeLookupConfig(rootDir, { publicUrl, publicKey } = {}) {
+  // Imported lazily: `vite` costs seconds to load, and every test that imports
+  // this module for its pure helpers would otherwise pay that cost. Only the
+  // live-slug path needs env loading.
+  const { loadEnv } = await import('vite');
   const env = loadEnv('production', rootDir, 'VITE_');
   const rawUrl = publicUrl ?? process.env.VITE_SUPABASE_URL ?? env.VITE_SUPABASE_URL;
   const rawKey = publicKey ?? process.env.VITE_SUPABASE_ANON_KEY ?? env.VITE_SUPABASE_ANON_KEY;
@@ -148,7 +175,7 @@ async function loadPublicDealRows({
   pageSize,
   select,
 }) {
-  const config = routeLookupConfig(rootDir, { publicUrl, publicKey });
+  const config = await routeLookupConfig(rootDir, { publicUrl, publicKey });
   if (typeof fetchImpl !== 'function') throw new Error('Static deal-route lookup requires fetch.');
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000)
     throw new RangeError('Static deal-route page size must be from 1 to 1000.');
@@ -187,6 +214,11 @@ async function loadPublicDealRows({
 }
 
 async function loadBuildDealData({ rootDir = ROOT } = {}) {
+  // isAuditFixtureEnv() throws if audit-fixture URL is used on refs/heads/main.
+  if (isAuditFixtureEnv()) {
+    console.log('[SEO] Using local catalog snapshot (audit-fixture / snapshot mode).');
+    return { slugs: loadDealSlugSnapshot(rootDir), records: null };
+  }
   const source = process.env.SEO_PARITY_SOURCE || 'live';
   if (source === 'snapshot') return { slugs: loadDealSlugSnapshot(rootDir), records: null };
   if (source !== 'live') {
@@ -208,9 +240,14 @@ export function writeMissingDealRoutePages({
 }) {
   const existing = new Set(catalogSlugs);
   const written = new Set();
+  const dealRootDir = join(distDir, 'deal');
+  mkdirSync(dealRootDir, { recursive: true });
   for (const slug of databaseSlugs) {
     if (!isStaticDealSlug(slug) || existing.has(slug) || written.has(slug)) continue;
-    const indexPath = join(distDir, 'deal', slug, 'index.html');
+    // E3: write the flat file so GitHub Pages serves /deal/<slug> with 200 OK
+    // (no 301 redirect). The directory index handles /deal/<slug>/ with slash.
+    writeFileSync(join(dealRootDir, `${slug}.html`), baseHtml, 'utf8');
+    const indexPath = join(dealRootDir, slug, 'index.html');
     mkdirSync(dirname(indexPath), { recursive: true });
     writeFileSync(indexPath, baseHtml, 'utf8');
     written.add(slug);
@@ -470,7 +507,7 @@ export function generateRssFeedXml(deals, baseUrl = DEFAULT_SITE_URL, referenceN
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>عروض وأرصدة الذكاء الاصطناعي — AMNABD Deals</title>
+    <title>عروض وأرصدة الذكاء الاصطناعي — نبض</title>
     <link>${escapeHtml(cleanBase)}/</link>
     <description>أحدث عروض وأرصدة أدوات الذكاء الاصطناعي مع روابط مصادرها</description>
     <language>ar</language>
@@ -578,7 +615,7 @@ export function injectSeoIntoHtml(baseHtml, seo) {
 
 export function buildNoIndexAppShell(baseHtml) {
   let html = baseHtml
-    .replace(/<title>[\s\S]*?<\/title>/i, '<title>AMNABD Deals</title>')
+    .replace(/<title>[\s\S]*?<\/title>/i, '<title>نبض</title>')
     .replace(/<meta\s+name=["']description["'][^>]*\/?\s*>/gi, '')
     .replace(/<meta\s+name=["']robots["'][^>]*\/?\s*>/gi, '')
     .replace(/<link\s+rel=["']canonical["'][^>]*\/?\s*>/gi, '')
@@ -598,6 +635,62 @@ export function buildNotFoundPage(baseHtml, baseUrl = DEFAULT_SITE_URL) {
     '</head>',
     `  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">\n</head>`
   );
+}
+
+/**
+ * REC-01 — the home page's ItemList is generated from the same catalog rows that
+ * produce the /deal/<slug> pages, the sitemap and llms.txt.
+ *
+ * The hand-written list in index.html had already drifted once: it still carried
+ * `#/deal/` URLs after the routing change, and it could not follow a deal that
+ * expired in the database. The build now owns it, and index.html ships an empty
+ * placeholder that this function fills.
+ */
+export function buildHomeItemList(deals, baseUrl = DEFAULT_SITE_URL) {
+  const base = String(baseUrl).replace(/\/+$/, '');
+  const live = (Array.isArray(deals) ? deals : []).filter(
+    (deal) => isStaticDealSlug(deal?.slug) && deal?.status !== 'expired'
+  );
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'عروض نبض',
+    numberOfItems: live.length,
+    itemListElement: live.map((deal, index) => {
+      const seo = buildDealSeo(deal, base);
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: dealDisplayName(deal, deal.slug),
+        url: seo.canonicalUrl,
+        description: seo.description,
+      };
+    }),
+  };
+}
+
+/**
+ * Replaces the ItemList block inside a built index.html and leaves every other
+ * JSON-LD block untouched. `<` is escaped so a description containing
+ * `</script>` cannot break out of the tag.
+ */
+export function injectHomeItemList(html, itemList) {
+  const json = JSON.stringify(itemList).replace(/</g, '\\u003c');
+  const open = '<script type="application/ld+json">';
+  const scripts = [...String(html).matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+  const target = scripts.find((match) => {
+    try {
+      return JSON.parse(match[1])['@type'] === 'ItemList';
+    } catch {
+      return false;
+    }
+  });
+  if (!target) return html;
+
+  const start = target.index + open.length;
+  const end = start + target[1].length;
+  return `${html.slice(0, start)}\n${json}\n    ${html.slice(end)}`;
 }
 
 function toCatalogRow(item) {
@@ -670,7 +763,7 @@ export async function runStaticSeoGeneration({
     return;
   }
 
-  const baseHtml = readFileSync(indexHtmlPath, 'utf8');
+  let baseHtml = readFileSync(indexHtmlPath, 'utf8');
   const deals = loadDealsCatalog(rootDir);
   const seoDeals = deals.filter((deal) => isStaticDealSlug(deal?.slug));
   const liveBuildData =
@@ -694,6 +787,13 @@ export async function runStaticSeoGeneration({
           : [];
       })
     : seoDeals;
+
+  // REC-01: fill the home ItemList from the same rows that produce the deal
+  // pages, and do it before any shell is written. Live-only slugs are served as
+  // an exact copy of index.html and verify-dist compares them byte for byte, so
+  // the shell source has to be the finished document, not the placeholder.
+  baseHtml = injectHomeItemList(baseHtml, buildHomeItemList(feedDeals, baseUrl));
+  writeFileSync(indexHtmlPath, baseHtml, 'utf8');
 
   writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'robots.txt'), generateRobotsTxt(baseUrl), 'utf8');
@@ -755,12 +855,20 @@ export async function runStaticSeoGeneration({
   let generatedHtmlCount = 0;
   let generatedPngCount = 0;
 
+  const dealRootDir = join(distDir, 'deal');
+  mkdirSync(dealRootDir, { recursive: true });
   for (const deal of seoDeals) {
     const facts = dealFacts(deal);
     const seo = buildDealSeo(deal, baseUrl);
-    const dealDir = join(distDir, 'deal', deal.slug);
+    const htmlContent = injectSeoIntoHtml(baseHtml, seo);
+    // E3: write dist/deal/<slug>.html so GitHub Pages serves /deal/<slug> with
+    // HTTP 200 directly. Without it, Pages issues a 301 to /deal/<slug>/ because
+    // it finds a directory but no matching flat file.
+    writeFileSync(join(dealRootDir, `${deal.slug}.html`), htmlContent, 'utf8');
+    // Also write the directory index so /deal/<slug>/ (with trailing slash) works.
+    const dealDir = join(dealRootDir, deal.slug);
     mkdirSync(dealDir, { recursive: true });
-    writeFileSync(join(dealDir, 'index.html'), injectSeoIntoHtml(baseHtml, seo), 'utf8');
+    writeFileSync(join(dealDir, 'index.html'), htmlContent, 'utf8');
     generatedHtmlCount += 1;
 
     const svgContent = buildDealOgSvg(deal, facts);

@@ -5,6 +5,7 @@ import {
   isHashOnlyLocationChange,
   parseHash,
   resolveLocationChange,
+  routeIdentity,
   routeUrl,
   type Route,
 } from '@/lib/routes';
@@ -153,10 +154,17 @@ function AppInner() {
   );
   useEffect(() => {
     const onLocationChange = () => {
-      // A01 regression: an in-page anchor fires `popstate` too. It changes only
-      // the hash, so it must not cancel a debounced filter write — doing that
-      // reverted the search box to the previous query.
+      // A01 / A4: cancel any pending debounced filter write before inspecting the
+      // new location. `hadPending` must be captured first so that a back-press
+      // during an in-flight navigation (e.g. user presses Back before
+      // `lastAppliedPath` updates to `/deal/x`) still cancels the pending write
+      // AND forces `resolveLocationChange` to apply the location.
+      const hadPending = cancelPending();
+      // An in-page anchor fires `popstate` too. It changes only the hash, so it
+      // must not apply a location change — unless a navigation was pending, in
+      // which case we still need to process it.
       if (
+        !hadPending &&
         isHashOnlyLocationChange(
           window.location.pathname,
           window.location.search,
@@ -165,7 +173,6 @@ function AppInner() {
         )
       )
         return;
-      const hadPending = cancelPending();
       const decision = resolveLocationChange({
         pathname: window.location.pathname,
         search: window.location.search,
@@ -177,6 +184,7 @@ function AppInner() {
       applyLocation();
       window.scrollTo({ top: 0 });
     };
+
     // Only `popstate` navigates. An in-page anchor (`#main-content`) fires
     // `hashchange`, not `popstate`, so the skip link leaves the filters and the
     // scroll position exactly as they are (H-10).
@@ -186,6 +194,49 @@ function AppInner() {
       window.removeEventListener('popstate', onLocationChange);
     };
   }, [applyLocation, cancelPending]);
+
+  // REC-16: a route change is a page change for keyboard and screen-reader
+  // users. `navigate()` already scrolls to the top, but focus stayed on the
+  // link that was clicked and nothing announced the new page. The effect keys
+  // on the view identity, so `?lang=` toggles and filter edits do not steal
+  // focus from the control the visitor is using.
+  const viewIdentity = useMemo(() => routeIdentity(route), [route]);
+  const lastViewIdentity = useRef(viewIdentity);
+  const [routeAnnouncement, setRouteAnnouncement] = useState('');
+
+  useEffect(() => {
+    if (lastViewIdentity.current === viewIdentity) return;
+    lastViewIdentity.current = viewIdentity;
+
+    const container = document.getElementById('main-content');
+    if (!container) return;
+    // Move focus off the clicked link immediately: the next page may still be
+    // loading its heading, and leaving focus behind is the bug being fixed.
+    container.focus({ preventScroll: true });
+
+    const focusHeading = (): boolean => {
+      const heading = container.querySelector('h1');
+      if (!heading) return false;
+      if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+      heading.focus({ preventScroll: true });
+      setRouteAnnouncement(heading.textContent?.trim() || document.title);
+      return true;
+    };
+
+    let timer = 0;
+    const frame = requestAnimationFrame(() => {
+      if (focusHeading()) return;
+      // Content that renders asynchronously (a deal page, the guide) has no
+      // heading on the first frame. One short retry is enough to catch it.
+      setRouteAnnouncement(document.title);
+      timer = window.setTimeout(focusHeading, 200);
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+    };
+  }, [viewIdentity]);
 
   const currentDiscoverySearch = useCallback(
     () => buildDiscoverySearch(validateFilterState(filtersRef.current, categoriesRef.current)),
@@ -415,6 +466,10 @@ function AppInner() {
       >
         {lang === 'ar' ? 'تخطي إلى المحتوى الرئيسي' : 'Skip to main content'}
       </a>
+      {/* Announce the new page once focus has moved to its heading. */}
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {routeAnnouncement}
+      </div>
       <PwaControls lang={lang} />
       <Navbar route={route} navigate={navigate} savedCount={isOnline ? validSavedCount : 0} />
       {isOnline && comparisonSelection.length === 1 && route.name !== 'home' && route.name !== 'compare' && (
