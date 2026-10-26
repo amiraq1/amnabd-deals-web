@@ -395,7 +395,7 @@ export default function DealDetailPage({
 
         {activationGuide && <ActivationGuide guide={activationGuide} officialUrl={offerUrl} />}
 
-        <ReportDealBox dealSlug={deal.slug} />
+        <ReportDealBox key={deal.slug} dealSlug={deal.slug} />
       </main>
 
       {/* Sticky Mobile Action Bar */}

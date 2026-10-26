@@ -154,10 +154,17 @@ function AppInner() {
   );
   useEffect(() => {
     const onLocationChange = () => {
-      // A01 regression: an in-page anchor fires `popstate` too. It changes only
-      // the hash, so it must not cancel a debounced filter write — doing that
-      // reverted the search box to the previous query.
+      // A01 / A4: cancel any pending debounced filter write before inspecting the
+      // new location. `hadPending` must be captured first so that a back-press
+      // during an in-flight navigation (e.g. user presses Back before
+      // `lastAppliedPath` updates to `/deal/x`) still cancels the pending write
+      // AND forces `resolveLocationChange` to apply the location.
+      const hadPending = cancelPending();
+      // An in-page anchor fires `popstate` too. It changes only the hash, so it
+      // must not apply a location change — unless a navigation was pending, in
+      // which case we still need to process it.
       if (
+        !hadPending &&
         isHashOnlyLocationChange(
           window.location.pathname,
           window.location.search,
@@ -166,7 +173,6 @@ function AppInner() {
         )
       )
         return;
-      const hadPending = cancelPending();
       const decision = resolveLocationChange({
         pathname: window.location.pathname,
         search: window.location.search,
@@ -178,6 +184,7 @@ function AppInner() {
       applyLocation();
       window.scrollTo({ top: 0 });
     };
+
     // Only `popstate` navigates. An in-page anchor (`#main-content`) fires
     // `hashchange`, not `popstate`, so the skip link leaves the filters and the
     // scroll position exactly as they are (H-10).
