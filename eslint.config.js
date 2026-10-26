@@ -5,8 +5,8 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  // Build output and vendored bundles are never linted.
-  { ignores: ['dist', 'dist-ssr', 'node_modules'] },
+  // Build output, vendored bundles, and Vite compilation cache are never linted.
+  { ignores: ['dist', 'dist-ssr', 'node_modules', '*.timestamp-*.mjs'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

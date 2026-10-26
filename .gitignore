@@ -29,3 +29,11 @@ dist-ssr
 # Tool and bundle artifacts
 bundle-batch*.txt
 .commandcode/
+.workbuddy-ai/
+
+# Vite config compilation cache — recreated on every build, never committed.
+vite.config.ts.timestamp-*.mjs
+vite.config.js.timestamp-*.mjs
+
+# Local session notes and audit drafts
+.session-notes/
