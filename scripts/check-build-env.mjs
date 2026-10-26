@@ -38,7 +38,7 @@ try {
         encoding: 'utf8',
         // A cold, cache-less runner needs well over a minute for the one full
         // build case; a shorter timeout turns a slow machine into a red gate.
-        timeout: 180000,
+        timeout: 300000,
       }
     );
     if (result.error) throw result.error;
