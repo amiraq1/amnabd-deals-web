@@ -369,6 +369,49 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
     }
   }
 
+  // REC-01: the home ItemList is generated during postbuild from the same rows
+  // that produce the deal pages, so it has to agree with what was written.
+  // Only enforced when the shell is ours (it carries the placeholder marker) and
+  // deal pages exist; unit fixtures build neither.
+  const dealPagesDir = join(distDir, 'deal');
+  const homeItemList = (() => {
+    const blocks = [
+      ...(genericAppShell ?? '').matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g),
+    ];
+    for (const block of blocks) {
+      try {
+        const parsed = JSON.parse(block[1]);
+        if (parsed['@type'] === 'ItemList') return parsed;
+      } catch {
+        report('index.html: كتلة JSON-LD غير قابلة للتحليل');
+      }
+    }
+    return null;
+  })();
+
+  if (homeItemList) {
+    const items = Array.isArray(homeItemList.itemListElement) ? homeItemList.itemListElement : [];
+    if (homeItemList.numberOfItems !== items.length) {
+      report(
+        `REC-01: numberOfItems (${homeItemList.numberOfItems}) لا يطابق عدد العناصر (${items.length})`
+      );
+    }
+    // An empty list is not a violation: unit fixtures build a dist without
+    // running postbuild. That the generator fills the placeholder is covered by
+    // tests/phase3-static-seo.test.mjs instead.
+    for (const item of items) {
+      const url = String(item?.url ?? '');
+      if (url.includes('#')) {
+        report(`REC-01: ItemList تحوي رابط hash: ${url}`);
+        continue;
+      }
+      const slug = decodeURIComponent(url.split('/deal/')[1] ?? '');
+      if (!slug || !existsSync(join(dealPagesDir, slug, 'index.html'))) {
+        report(`REC-01: ItemList تشير إلى صفحة غير مولّدة: ${url}`);
+      }
+    }
+  }
+
   return { violations, warnings: summaryWarnings(deals), deadlineWarnings, deadlineCoverage };
 }
 

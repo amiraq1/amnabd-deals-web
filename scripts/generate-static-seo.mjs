@@ -603,6 +603,62 @@ export function buildNotFoundPage(baseHtml, baseUrl = DEFAULT_SITE_URL) {
   );
 }
 
+/**
+ * REC-01 — the home page's ItemList is generated from the same catalog rows that
+ * produce the /deal/<slug> pages, the sitemap and llms.txt.
+ *
+ * The hand-written list in index.html had already drifted once: it still carried
+ * `#/deal/` URLs after the routing change, and it could not follow a deal that
+ * expired in the database. The build now owns it, and index.html ships an empty
+ * placeholder that this function fills.
+ */
+export function buildHomeItemList(deals, baseUrl = DEFAULT_SITE_URL) {
+  const base = String(baseUrl).replace(/\/+$/, '');
+  const live = (Array.isArray(deals) ? deals : []).filter(
+    (deal) => isStaticDealSlug(deal?.slug) && deal?.status !== 'expired'
+  );
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'عروض نبض',
+    numberOfItems: live.length,
+    itemListElement: live.map((deal, index) => {
+      const seo = buildDealSeo(deal, base);
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: dealDisplayName(deal, deal.slug),
+        url: seo.canonicalUrl,
+        description: seo.description,
+      };
+    }),
+  };
+}
+
+/**
+ * Replaces the ItemList block inside a built index.html and leaves every other
+ * JSON-LD block untouched. `<` is escaped so a description containing
+ * `</script>` cannot break out of the tag.
+ */
+export function injectHomeItemList(html, itemList) {
+  const json = JSON.stringify(itemList).replace(/</g, '\\u003c');
+  const open = '<script type="application/ld+json">';
+  const scripts = [...String(html).matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+  const target = scripts.find((match) => {
+    try {
+      return JSON.parse(match[1])['@type'] === 'ItemList';
+    } catch {
+      return false;
+    }
+  });
+  if (!target) return html;
+
+  const start = target.index + open.length;
+  const end = start + target[1].length;
+  return `${html.slice(0, start)}\n${json}\n    ${html.slice(end)}`;
+}
+
 function toCatalogRow(item) {
   const url = typeof item?.url === 'string' ? item.url : '';
   const match = url.match(/deal\/([^/?#]+)/);
@@ -673,7 +729,7 @@ export async function runStaticSeoGeneration({
     return;
   }
 
-  const baseHtml = readFileSync(indexHtmlPath, 'utf8');
+  let baseHtml = readFileSync(indexHtmlPath, 'utf8');
   const deals = loadDealsCatalog(rootDir);
   const seoDeals = deals.filter((deal) => isStaticDealSlug(deal?.slug));
   const liveBuildData =
@@ -697,6 +753,13 @@ export async function runStaticSeoGeneration({
           : [];
       })
     : seoDeals;
+
+  // REC-01: fill the home ItemList from the same rows that produce the deal
+  // pages, and do it before any shell is written. Live-only slugs are served as
+  // an exact copy of index.html and verify-dist compares them byte for byte, so
+  // the shell source has to be the finished document, not the placeholder.
+  baseHtml = injectHomeItemList(baseHtml, buildHomeItemList(feedDeals, baseUrl));
+  writeFileSync(indexHtmlPath, baseHtml, 'utf8');
 
   writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'robots.txt'), generateRobotsTxt(baseUrl), 'utf8');
