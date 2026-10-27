@@ -104,7 +104,7 @@ export default function DealDetailPage({
         .deal-detail-content { padding-bottom: calc(var(--amnabd-mobile-actions-height, 7rem) + 1rem); }
         footer { padding-bottom: calc(var(--amnabd-mobile-actions-height, 7rem) + 1rem); }
       }`}</style>
-      <main className="deal-detail-content mx-auto max-w-4xl px-4 pb-8 pt-8 sm:px-6">
+      <main className="deal-detail-content mx-auto max-w-4xl px-4 pb-8 pt-8 sm:px-6 [overflow-wrap:anywhere]">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-white"
@@ -115,12 +115,12 @@ export default function DealDetailPage({
 
         <header className="animate-fade-up mt-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <DealIcon deal={deal} size="lg" />
-              <div>
-                <h1 className="font-heading text-3xl font-extrabold text-white">{displayName}</h1>
+            <div className="flex min-w-0 flex-1 items-center gap-3.5">
+              <DealIcon deal={deal} size="lg" className="shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h1 className="font-heading text-3xl font-extrabold text-white [overflow-wrap:anywhere]">{displayName}</h1>
                 {lang === 'ar' && deal.name_ar && deal.name_ar !== displayName && (
-                  <p className="mt-0.5 text-sm font-medium text-slate-400">{deal.name_ar}</p>
+                  <p className="mt-0.5 text-sm font-medium text-slate-400 [overflow-wrap:anywhere]">{deal.name_ar}</p>
                 )}
               </div>
             </div>
@@ -205,8 +205,8 @@ export default function DealDetailPage({
                 : 'A summary of eligibility and review facts supported by evidence. Check it before following any guide.'}
             </p>
           </div>
-          <section className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+          <section className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2">
+            <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
               <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
                 {lang === 'ar' ? 'شروط الأهلية' : 'Eligibility facts'}
               </h3>
@@ -231,7 +231,7 @@ export default function DealDetailPage({
               <p className="mt-4 text-xs leading-relaxed text-slate-400">{e.conditions[lang]}</p>
             </div>
 
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+            <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
               <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
                 {lang === 'ar' ? 'المنافع' : 'Benefits'}
               </h3>
@@ -265,6 +265,7 @@ export default function DealDetailPage({
             <section className="mt-8">
               <InfoBanner
                 kind="info"
+                textClassName="min-w-0 [overflow-wrap:anywhere]"
                 text={
                   lang === 'ar'
                     ? `حقول غير مثبتة بالأدلة (${unknownCount.toLocaleString('ar-EG')}): ${unknownFieldNames.join('، ')}. تعني «غير معلوم» أن المصادر المتاحة لا تؤكد القيمة أو القاعدة.`
@@ -287,7 +288,7 @@ export default function DealDetailPage({
             </h3>
             <div className="mt-4 space-y-5">
               {deal.official_sources.map((src, i) => (
-                <div key={i}>
+                <div key={i} className="min-w-0">
                   <a
                     href={safeUrl(src.url) ?? '#'}
                     target="_blank"
@@ -295,9 +296,9 @@ export default function DealDetailPage({
                     onClick={(ev) => {
                       if (!safeUrl(src.url)) ev.preventDefault();
                     }}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300"
+                    className="inline-flex max-w-full items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300"
                   >
-                    <bdi>{src.title}</bdi>
+                    <bdi className="min-w-0 [overflow-wrap:anywhere]">{src.title}</bdi>
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                   {src.context && (
@@ -312,7 +313,7 @@ export default function DealDetailPage({
                         className="flex items-start gap-2 text-xs leading-relaxed text-slate-400"
                       >
                         <FileText className="mt-0.5 h-3 w-3 shrink-0 text-slate-600" />
-                        <span>{claim.evidence}</span>
+                        <span className="min-w-0 [overflow-wrap:anywhere]">{claim.evidence}</span>
                       </li>
                     ))}
                   </ul>
@@ -330,7 +331,7 @@ export default function DealDetailPage({
             </p>
           </section>
 
-          <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+          <section className="mt-8 min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
               {lang === 'ar' ? 'ملاحظات المراجعة' : 'Review notes'}
             </h3>

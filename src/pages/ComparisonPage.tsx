@@ -23,9 +23,9 @@ function renderCell(cell: ComparisonCell) {
               href={source.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-start gap-1.5 text-emerald-300 underline decoration-emerald-500/40 underline-offset-2 hover:text-emerald-200"
+              className="inline-flex max-w-full items-start gap-1.5 text-emerald-300 underline decoration-emerald-500/40 underline-offset-2 hover:text-emerald-200"
             >
-              <span>{source.title}</span>
+              <span className="min-w-0 [overflow-wrap:anywhere]">{source.title}</span>
               <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             </a>
           ) : (
@@ -66,7 +66,7 @@ export default function ComparisonPage({
           {lang === 'ar' ? 'العودة إلى العروض' : 'Back to offers'}
         </button>
         <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-          <h1 className="font-heading text-2xl font-bold text-white">
+          <h1 className="font-heading text-2xl font-bold text-white [overflow-wrap:anywhere]">
             {lang === 'ar' ? 'المقارنة تحتاج عرضين محددين' : 'A comparison needs two selected offers'}
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-300">
@@ -112,7 +112,7 @@ export default function ComparisonPage({
       </div>
 
       <header className="mt-6 rounded-3xl border border-slate-800 bg-slate-900/60 p-5 sm:p-7">
-        <h1 className="font-heading text-2xl font-extrabold text-white sm:text-3xl">
+        <h1 className="font-heading text-2xl font-extrabold text-white sm:text-3xl [overflow-wrap:anywhere]">
           {lang === 'ar' ? 'مقارنة عرضين' : 'Compare two offers'}
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-300">
@@ -134,7 +134,7 @@ export default function ComparisonPage({
                   <button
                     type="button"
                     onClick={() => onOpenDeal(deal.slug)}
-                    className="text-start font-heading text-xs font-bold leading-snug text-emerald-300 underline decoration-emerald-500/30 underline-offset-4 hover:text-emerald-200 sm:text-sm"
+                    className="block w-full min-w-0 text-start font-heading text-xs font-bold leading-snug text-emerald-300 underline decoration-emerald-500/30 underline-offset-4 hover:text-emerald-200 sm:text-sm [overflow-wrap:anywhere]"
                   >
                     <span className="mb-1 block text-[10px] font-medium text-slate-400 sm:text-[11px]">
                       {lang === 'ar' ? `العرض ${index === 0 ? 'الأول' : 'الثاني'}` : `Offer ${index + 1}`}
@@ -148,11 +148,11 @@ export default function ComparisonPage({
           <tbody>
             {rows.map((row) => (
               <tr key={row.key} className="border-b border-slate-800 last:border-b-0">
-                <th scope="row" className="w-[28%] p-2 text-start align-top text-[11px] font-semibold leading-relaxed text-slate-400 sm:p-4 sm:text-xs">
+                <th scope="row" className="w-[28%] p-2 text-start align-top text-[11px] font-semibold leading-relaxed text-slate-400 sm:p-4 sm:text-xs [overflow-wrap:anywhere]">
                   {row.label[lang]}
                 </th>
                 {row.values.map((value, index) => (
-                  <td key={`${row.key}-${index}`} className="w-[36%] break-words p-2 align-top text-[11px] leading-relaxed text-slate-100 sm:p-4 sm:text-sm">
+                  <td key={`${row.key}-${index}`} className="w-[36%] break-words p-2 align-top text-[11px] leading-relaxed text-slate-100 sm:p-4 sm:text-sm [overflow-wrap:anywhere]">
                     {renderCell(value)}
                   </td>
                 ))}

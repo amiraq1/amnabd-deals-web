@@ -5,9 +5,10 @@ interface InfoBannerProps {
   kind: 'warning' | 'success' | 'info';
   text: string;
   sourceUrl?: string;
+  textClassName?: string;
 }
 
-export default function InfoBanner({ kind, text, sourceUrl }: InfoBannerProps) {
+export default function InfoBanner({ kind, text, sourceUrl, textClassName = '' }: InfoBannerProps) {
   const { lang } = useLanguage();
 
   const styles = {
@@ -28,7 +29,7 @@ export default function InfoBanner({ kind, text, sourceUrl }: InfoBannerProps) {
   return (
     <div className={`flex items-start gap-3 rounded-xl border p-4 ${styles.wrap}`}>
       <span className="mt-0.5 shrink-0">{styles.icon}</span>
-      <p className="flex-1 text-sm leading-relaxed text-slate-200">{text}</p>
+      <p className={`flex-1 text-sm leading-relaxed text-slate-200 ${textClassName}`}>{text}</p>
       {sourceUrl && (
         <a
           href={sourceUrl}
