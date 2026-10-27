@@ -29,6 +29,11 @@ test('spotlight is CSS-only, non-intercepting and keyboard/touch aware', () => {
   assert.match(card, /relative z-10/);
 });
 
+test('reduced motion disables infinite animation instead of accelerating it', () => {
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation: none !important/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.skeleton\s*\{\s*background-image: none;/);
+});
+
 test('visual enhancement preserves chronological spotlight and root deployment base', () => {
   assert.match(home, /hasAnyActiveFilter \? \[\] : sorted\.slice\(0, 3\)/);
   assert.match(home, /sorted\.filter\(\(d\) => !newSlugs\.has\(d\.slug\)\)/);

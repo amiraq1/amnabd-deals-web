@@ -42,6 +42,7 @@ const deals = [
     async function run(name, opt, check) {
       const context = await browser.newContext({
         viewport: opt.viewport || { width: 1280, height: 900 },
+        ...(opt.reducedMotion ? { reducedMotion: opt.reducedMotion } : {}),
       });
       const page = await context.newPage();
       const errors = [];
@@ -137,16 +138,17 @@ const deals = [
         'true'
       );
       await p.getByRole('searchbox').fill('Two');
+      await p.waitForFunction(() => document.querySelectorAll('article').length === 1);
       assert.equal(await p.locator('article').count(), 1);
-      await p.getByRole('button', { name: 'تصفية', exact: true }).click();
+      await p.getByRole('button', { name: 'تصفية وترتيب', exact: true }).click();
       assert.equal(
-        await p.getByRole('button', { name: 'تصفية', exact: true }).getAttribute('aria-expanded'),
+        await p.getByRole('button', { name: 'تصفية وترتيب', exact: true }).getAttribute('aria-expanded'),
         'true'
       );
       await p.locator('#card-select').selectOption('not_required');
-      await p.getByRole('button', { name: 'مسح الفلاتر والبحث', exact: true }).waitFor();
+      await p.getByRole('button', { name: 'مسح كل الفلاتر', exact: true }).waitFor();
       assert.equal(await p.locator('article').count(), 0);
-      await p.getByRole('button', { name: 'مسح الفلاتر والبحث', exact: true }).click();
+      await p.getByRole('button', { name: 'مسح كل الفلاتر', exact: true }).click();
       assert.equal(await p.locator('article').count(), 5);
       assert.equal(await p.getByRole('searchbox').inputValue(), '');
       assert.equal(
@@ -315,6 +317,17 @@ const deals = [
         );
       }
     );
+    await run('UX reduced motion disables skeleton shimmer', { reducedMotion: 'reduce' }, async (p) => {
+      const styles = await p.evaluate(() => {
+        const skeleton = document.createElement('div');
+        skeleton.className = 'skeleton';
+        document.body.append(skeleton);
+        const computed = getComputedStyle(skeleton);
+        return { animationName: computed.animationName, backgroundImage: computed.backgroundImage };
+      });
+      assert.equal(styles.animationName, 'none');
+      assert.equal(styles.backgroundImage, 'none');
+    });
     if (process.env.AMN_UX_REPORT)
       fs.writeFileSync(process.env.AMN_UX_REPORT, JSON.stringify(results, null, 2));
     console.log(JSON.stringify(results, null, 2));
