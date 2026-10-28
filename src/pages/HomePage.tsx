@@ -222,7 +222,7 @@ export default function HomePage({
 
   // Safe calculation of days since last review
   const daysSinceLastReview = useMemo(() => {
-    const now = Date.now();
+    const now = referenceNow.getTime();
     const validDays = deals
       .map((d) => {
         if (!d.review?.reviewed_on) return null;
@@ -233,7 +233,7 @@ export default function HomePage({
       .filter((days): days is number => days !== null);
 
     return validDays.length > 0 ? Math.min(...validDays) : null;
-  }, [deals]);
+  }, [deals, referenceNow]);
 
   // Available use-cases extracted from active deals
   const useCaseOptions = useMemo(() => {
@@ -635,8 +635,11 @@ export default function HomePage({
                 <button
                   type="button"
                   onClick={() => {
+                    const knownSlugs = new Set(deals.map((d) => d.slug));
                     for (const s of sharedListSlugs) {
-                      saveDeal(s);
+                      if (knownSlugs.has(s)) {
+                        saveDeal(s);
+                      }
                     }
                     setSharedSaveSuccess(true);
                   }}

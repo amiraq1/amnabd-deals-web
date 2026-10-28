@@ -1,5 +1,5 @@
 import type { Deal } from '@/types';
-import { resolveDealOfficialUrl } from './safeUrl.js';
+import { resolveDealOfficialUrl, safeUrl } from './safeUrl.js';
 
 export const OFFICIAL_TOOL_NAMES: Record<string, string> = {
   'antigravity-ultra-scientists': 'Google Antigravity',
@@ -64,18 +64,7 @@ export function extractDomainFromUrl(rawUrl?: string | null): string | null {
 export function getDealOfficialDomain(deal: Deal): string | null {
   const official = resolveDealOfficialUrl(deal);
   if (official) {
-    const d = extractDomainFromUrl(official);
-    if (d) return d;
-  }
-  const firstSource = deal.official_sources?.[0]?.url;
-  if (firstSource) {
-    const d = extractDomainFromUrl(firstSource);
-    if (d) return d;
-  }
-  const offerUrl = deal.get_offer?.url;
-  if (offerUrl) {
-    const d = extractDomainFromUrl(offerUrl);
-    if (d) return d;
+    return extractDomainFromUrl(official);
   }
   return null;
 }
@@ -83,6 +72,17 @@ export function getDealOfficialDomain(deal: Deal): string | null {
 export function getDealDisplayName(deal: Deal): string {
   if (deal.name && deal.name.trim()) {
     return deal.name.trim();
+  }
+  if (deal.name_en && deal.name_en.trim()) {
+    // If name_en contains a separator (e.g. "Bolt — free GLM..."), extract the short prefix
+    const parts = deal.name_en.split(/\s+[—–-]\s+/);
+    const prefix = parts[0]?.trim();
+    if (parts.length > 1 && prefix && prefix.length < 30) {
+      return prefix;
+    }
+    if (deal.name_en.trim().length < 30) {
+      return deal.name_en.trim();
+    }
   }
   const fromSlug = deal.slug ? OFFICIAL_TOOL_NAMES[deal.slug] : undefined;
   if (fromSlug) {
@@ -93,12 +93,6 @@ export function getDealDisplayName(deal: Deal): string {
     return fromId;
   }
   if (deal.name_en && deal.name_en.trim()) {
-    // If name_en contains a separator (e.g. "Bolt — free GLM..."), extract the short prefix
-    const parts = deal.name_en.split(/\s+[—–-]\s+/);
-    const prefix = parts[0]?.trim();
-    if (parts.length > 1 && prefix && prefix.length < 30) {
-      return prefix;
-    }
     return deal.name_en.trim();
   }
   return deal.name_ar;
@@ -112,15 +106,15 @@ export function getDealHeadlineValue(deal: Deal, lang: 'ar' | 'en' = 'ar'): stri
   }
   const benefit = deal.benefits?.[0];
   const amount = benefit?.amount;
-  // A zero amount is not a benefit. Rendering "0$ رصيد مجاني" announced a
-  // credit the record does not grant, so absent or zero means no headline.
+  // A zero amount is not a benefit. Stating an invented "رصيد مجاني / free credit"
+  // announced a claim the record does not grant, so absent or zero means no headline.
   if (typeof amount?.value === 'number' && Number.isFinite(amount.value) && amount.value > 0) {
     const unit = amount.unit || (amount.currency === 'USD' ? '$' : '');
     const val = amount.value;
     if (amount.currency === 'USD') {
-      return `${val}$ ${lang === 'ar' ? 'رصيد مجاني' : 'free credit'}`;
+      return `${val}$`;
     }
-    return `${val} ${unit}`;
+    return `${val} ${unit}`.trim();
   }
   if (benefit?.description) {
     const desc = lang === 'ar' ? benefit.description.ar : benefit.description.en;
@@ -159,9 +153,10 @@ export function getDealIconSources(deal: Deal): DealIconSources {
   const domain = getDealOfficialDomain(deal);
   const googleFavicon = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null;
 
-  if (deal.icon_url && deal.icon_url.trim()) {
+  const safeIcon = deal.icon_url ? safeUrl(deal.icon_url.trim()) : null;
+  if (safeIcon) {
     return {
-      primary: deal.icon_url.trim(),
+      primary: safeIcon,
       fallback: googleFavicon,
     };
   }

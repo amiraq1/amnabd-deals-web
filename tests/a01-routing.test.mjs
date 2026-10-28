@@ -14,6 +14,7 @@ const load = (rel) =>
 const {
   routeUrl,
   migrateLegacyHashLocation,
+  hasFilterParams,
   resolveLocationChange,
   isHashOnlyLocationChange,
 } = await load('routes');
@@ -122,6 +123,20 @@ test('A01: a legacy hash link becomes a path URL exactly once', () => {
     migrateLegacyHashLocation({ pathname: '/', search: '?lang=ar', hash: '#/deal/alpha?lang=en' }),
     '/deal/alpha?lang=ar'
   );
+  assert.equal(
+    migrateLegacyHashLocation({
+      pathname: '/',
+      search: '',
+      hash: '#/?country=Iraq&country_status=supported',
+    }),
+    '/?country=Iraq&country_status=supported'
+  );
+});
+
+test('A01: hasFilterParams recognizes country and country_status filters', () => {
+  assert.equal(hasFilterParams('?country=Iraq'), true);
+  assert.equal(hasFilterParams('?country_status=supported'), true);
+  assert.equal(hasFilterParams('?list=alpha'), false);
 });
 
 test('A01: an in-page anchor is not a navigation', () => {

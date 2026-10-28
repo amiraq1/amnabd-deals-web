@@ -11,6 +11,8 @@ const {
   getDealDisplayName,
   getDealHeadlineValue,
   getDealKeyCondition,
+  getDealIconSources,
+  getDealOfficialDomain,
   OFFICIAL_TOOL_NAMES,
 } = await import(
   pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/dealMetadata.js'))
@@ -86,6 +88,38 @@ test('Phase 0: getDealDisplayName extracts short name from OFFICIAL_TOOL_NAMES o
     name_en: 'Docker — $250 Cloud Sandbox compute credit',
   });
   assert.equal(getDealDisplayName(dealFromMap), 'Docker');
+
+  const dealWithShortNameEn = dealFixture({
+    slug: 'custom-slug',
+    name_en: 'Acme Cloud',
+  });
+  assert.equal(getDealDisplayName(dealWithShortNameEn), 'Acme Cloud');
+});
+
+test('REC-10: getDealIconSources and getDealOfficialDomain reject unsafe URLs and blocked hosts', () => {
+  const unsafeDeal = dealFixture({
+    icon_url: 'http://insecure.com/icon.png',
+    official_sources: [{ url: 'http://insecure.com/page' }],
+  });
+  const sources = getDealIconSources(unsafeDeal);
+  assert.notEqual(sources.primary, 'http://insecure.com/icon.png');
+  assert.equal(getDealOfficialDomain(unsafeDeal), null);
+
+  const blockedHostDeal = dealFixture({
+    icon_url: 'https://studentoffers.co/icon.png',
+    official_sources: [{ url: 'https://studentoffers.co/deal' }],
+  });
+  const blockedSources = getDealIconSources(blockedHostDeal);
+  assert.notEqual(blockedSources.primary, 'https://studentoffers.co/icon.png');
+  assert.equal(getDealOfficialDomain(blockedHostDeal), null);
+
+  const safeDeal = dealFixture({
+    icon_url: 'https://cdn.example.com/icon.svg',
+    official_sources: [{ url: 'https://example.com/offer' }],
+  });
+  const safeSources = getDealIconSources(safeDeal);
+  assert.equal(safeSources.primary, 'https://cdn.example.com/icon.svg');
+  assert.equal(getDealOfficialDomain(safeDeal), 'example.com');
 });
 
 test('Phase 0: all 27 core deals are registered with official short names', () => {
@@ -144,6 +178,6 @@ test('Phase 0: getDealHeadlineValue and getDealKeyCondition supply guaranteed fa
       },
     ],
   });
-  assert.equal(getDealHeadlineValue(emptyDeal, 'ar'), '100$ رصيد مجاني');
+  assert.equal(getDealHeadlineValue(emptyDeal, 'ar'), '100$');
   assert.equal(getDealKeyCondition(emptyDeal, 'ar'), 'بدون بطاقة ائتمان');
 });

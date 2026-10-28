@@ -124,7 +124,16 @@ export interface LegacyLocation {
   hash: string;
 }
 
-const FILTER_KEYS = ['q', 'category', 'uncategorized', 'applicant', 'card', 'sort'] as const;
+export const FILTER_KEYS = [
+  'q',
+  'category',
+  'uncategorized',
+  'applicant',
+  'card',
+  'country',
+  'country_status',
+  'sort',
+] as const;
 
 /**
  * A pre-A01 link put the route and its filters in the hash (`/#/deal/x?q=…`).
