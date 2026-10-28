@@ -9,11 +9,16 @@ const { getDealNumericValue, sortDeals } = await import(
 
 const ref = new Date('2026-10-20T12:00:00Z');
 
-test('getDealNumericValue correctly extracts benefits amount', () => {
+test('getDealNumericValue correctly extracts benefits amount in USD only', () => {
   const deal = {
     benefits: [{ amount: { value: 250, currency: 'USD' } }],
   };
   assert.equal(getDealNumericValue(deal), 250);
+
+  const nonUsdDeal = {
+    benefits: [{ amount: { value: 250, currency: 'EUR' } }],
+  };
+  assert.equal(getDealNumericValue(nonUsdDeal), null);
 });
 
 test('getDealNumericValue handles k and m suffixes and currency symbols', () => {

@@ -79,7 +79,7 @@ export async function submitDealReport(
   }
 
   const cleanSlug = payload.dealSlug.trim();
-  if (!cleanSlug) {
+  if (!cleanSlug || cleanSlug.length < 2 || cleanSlug.length > 120) {
     throw new Error('معرّف العرض غير صالح');
   }
 

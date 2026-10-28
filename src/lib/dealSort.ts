@@ -64,9 +64,13 @@ export function deadlineTierLabel(
 }
 export function getDealNumericValue(deal: Deal): number | null {
   // 1. The first recorded benefit amount is an explicit credit figure.
-  const benefitValue = deal.benefits?.[0]?.amount?.value;
-  if (typeof benefitValue === 'number' && benefitValue > 0) {
-    return benefitValue;
+  // Avoid comparing numeric amounts across different currencies:
+  const amount = deal.benefits?.[0]?.amount;
+  if (amount && (amount.currency === 'USD' || amount.unit === '$' || !amount.currency)) {
+    const benefitValue = amount.value;
+    if (typeof benefitValue === 'number' && benefitValue > 0) {
+      return benefitValue;
+    }
   }
 
   // 2. A headline that states an amount ("$1,000", "$100k") is explicit too.

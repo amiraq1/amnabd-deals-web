@@ -84,6 +84,24 @@ test('submitDealReport rejects empty or invalid deal slug', async () => {
     },
     { message: 'معرّف العرض غير صالح' }
   );
+  await assert.rejects(
+    async () => {
+      await submitDealReport({
+        dealSlug: 'a',
+        reason: 'expired',
+      });
+    },
+    { message: 'معرّف العرض غير صالح' }
+  );
+  await assert.rejects(
+    async () => {
+      await submitDealReport({
+        dealSlug: 'a'.repeat(121),
+        reason: 'expired',
+      });
+    },
+    { message: 'معرّف العرض غير صالح' }
+  );
 });
 
 test('submitDealReport reports failure when no backend is configured', async () => {

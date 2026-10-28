@@ -9,7 +9,7 @@ export interface Route {
 export function isValidSlug(value: string): boolean {
   return (
     value.length > 0 &&
-    value.length <= 200 &&
+    value.length <= 120 &&
     !/[/\\?#]/.test(value) &&
     !Array.from(value).some((char) => char.charCodeAt(0) <= 32 || char.charCodeAt(0) === 127)
   );
