@@ -148,12 +148,18 @@ test('meaningful control borders pass non-text AA on raised and base surfaces', 
   for (const surface of [colors.surface.DEFAULT, colors.surface.raised])
     assert.ok(contrast(colors.line.control.slice(1), surface.slice(1)) >= 3);
 });
-test('audited surfaces have no remote fonts, provider images or urgency claims', () => {
+test('audited surfaces have no remote fonts, automatic provider discovery or urgency claims', () => {
   assert.doesNotMatch(read('index.html'), /fonts\.google|preconnect/);
   assert.doesNotMatch(
     read('src/components/DealIcon.tsx'),
-    /<img|getDealIconSources|https:\/\//,
+    /getDealIconSources|https:\/\//,
   );
+  assert.match(
+    read('src/components/DealIcon.tsx'),
+    /selfHostedIconUrl\(deal.icon_url, window.location.origin\)/,
+  );
+  assert.match(read('src/components/DealIcon.tsx'), /src=\{safeIcon\}/);
+  assert.match(read('src/components/DealIcon.tsx'), /referrerPolicy="no-referrer"/);
   assert.doesNotMatch(read('src/components/Footer.tsx'), /<img|src="https:/);
   assert.doesNotMatch(
     read('src/components/DealCard.tsx'),

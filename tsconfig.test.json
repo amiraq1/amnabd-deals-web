@@ -8,6 +8,7 @@
   "include": [
     "src/lib/format.ts",
     "src/lib/offerPresentation.ts",
+    "src/lib/selfHostedIcon.ts",
     "src/lib/validate.ts",
     "src/lib/eligibility.ts",
     "src/lib/tristate.ts",
