@@ -10,19 +10,25 @@
 
   body {
     @apply bg-slate-950 text-slate-100 antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-
-  [dir='rtl'] body {
-    font-family: 'Tajawal', system-ui, sans-serif;
+    font-family:
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Arial,
+      sans-serif;
+    line-height: 1.7;
   }
 
   .font-heading {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: inherit;
   }
 
-  [dir='rtl'] .font-heading {
-    font-family: 'Tajawal', system-ui, sans-serif;
+  [dir='rtl'] [class*='tracking-'] {
+    letter-spacing: normal;
+  }
+  [dir='rtl'] .italic {
+    font-style: normal;
   }
 
   ::selection {
@@ -30,7 +36,7 @@
   }
 
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-emerald-400;
+    @apply outline outline-2 outline-offset-2 outline-emerald-400;
   }
 }
 
@@ -101,36 +107,90 @@
   }
 }
 
-/* Original, dependency-free adaptation of 21st.dev's Bento / Spotlight ideas.
-   No animation loop or pointer listeners; links and save buttons stay untouched. */
+/* Shared, quiet surfaces. Keyboard/touch state never relies on motion. */
 .discovery-hero {
-  background-image: radial-gradient(ellipse at 85% 0%, rgba(16, 185, 129, 0.11), transparent 58%),
-    linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.95));
+  background-image: none;
 }
-
 .deal-spotlight {
   isolation: isolate;
-  background-image: radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.065), transparent 65%);
 }
-
 .deal-spotlight::before {
   content: '';
   pointer-events: none;
   position: absolute;
-  inset: 0;
-  z-index: -1;
+  inset: -1px;
+  border: 1px solid transparent;
   border-radius: inherit;
-  background: radial-gradient(ellipse at 50% 0%, rgba(52, 211, 153, 0.14), transparent 70%);
-  opacity: 0;
-  transition: opacity 180ms ease;
 }
-
 .deal-spotlight:focus-within::before {
-  opacity: 1;
+  border-color: #34d399;
 }
-
 @media (hover: hover) and (pointer: fine) {
   .deal-spotlight:hover::before {
-    opacity: 1;
+    border-color: #64748b;
   }
+}
+
+/* All six text/background pairs exceed AA for normal text. */
+.offer-tone-0 {
+  @apply text-identity-0-ink bg-identity-0-surface border-identity-0-line;
+}
+.offer-tone-1 {
+  @apply text-identity-1-ink bg-identity-1-surface border-identity-1-line;
+}
+.offer-tone-2 {
+  @apply text-identity-2-ink bg-identity-2-surface border-identity-2-line;
+}
+.offer-tone-3 {
+  @apply text-identity-3-ink bg-identity-3-surface border-identity-3-line;
+}
+.offer-tone-4 {
+  @apply text-identity-4-ink bg-identity-4-surface border-identity-4-line;
+}
+.offer-tone-5 {
+  @apply text-identity-5-ink bg-identity-5-surface border-identity-5-line;
+}
+.category-badge {
+  @apply text-ink-secondary;
+}
+.category-cloud {
+  @apply text-identity-1-ink;
+}
+.category-code,
+.category-ai {
+  @apply text-identity-0-ink;
+}
+.category-design {
+  @apply text-identity-2-ink;
+}
+.category-education {
+  @apply text-identity-3-ink;
+}
+
+/* Keep long literal values within their own direction and layout boundary. */
+bdi {
+  unicode-bidi: isolate;
+}
+.offer-facts li {
+  min-height: 1.5rem;
+}
+
+/* The audited controls keep a real 44px target, including text-only retries. */
+main button,
+main input,
+main select {
+  min-height: 2.75rem;
+}
+footer a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+}
+
+/* Meaningful control outlines meet 3:1; card dividers remain decorative. */
+button[class*='border'],
+input,
+select,
+a[class*='border'] {
+  @apply border-line-control;
 }

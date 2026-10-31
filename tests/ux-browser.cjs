@@ -177,7 +177,7 @@ const deals = [
         assert.match(text, /موعد التسجيل: 2026-10-31T19:00:00\+03:00/);
         assert.doesNotMatch(text, /وفر|100%|١٠٠٪|مجاني دائم/);
         assert.equal(
-          await p.locator('article').first().locator('bdi[dir="ltr"]').innerText(),
+          await p.locator('article').first().locator('bdi[dir="ltr"]').filter({ hasText: /^2026-10-31T19:00:00\+03:00$/ }).innerText(),
           '2026-10-31T19:00:00+03:00'
         );
       }

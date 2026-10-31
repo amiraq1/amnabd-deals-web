@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { BookOpen, Globe, Heart, History, Menu, Tag, X, Sparkles } from 'lucide-react';
+import {
+  BookOpen,
+  Globe,
+  Heart,
+  History,
+  Menu,
+  Tag,
+  X,
+  Sparkles,
+} from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { routePath, type Route } from '@/lib/routes';
@@ -54,21 +63,36 @@ interface NavItem {
 
 const navItems: readonly NavItem[] = [
   { key: 'offers', icon: Tag, routeTarget: { name: 'home' }, path: '/' },
-  { key: 'favorites', icon: Heart, routeTarget: { name: 'favorites' }, path: '/favorites' },
-  { key: 'guide', icon: BookOpen, routeTarget: { name: 'guide' }, path: '/guide' },
-  { key: 'changelog', icon: History, routeTarget: { name: 'changelog' }, path: '/changelog' },
+  {
+    key: 'favorites',
+    icon: Heart,
+    routeTarget: { name: 'favorites' },
+    path: '/favorites',
+  },
+  {
+    key: 'guide',
+    icon: BookOpen,
+    routeTarget: { name: 'guide' },
+    path: '/guide',
+  },
+  {
+    key: 'changelog',
+    icon: History,
+    routeTarget: { name: 'changelog' },
+    path: '/changelog',
+  },
 ] as const;
 
 const focusRing =
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400';
-const baseLink = `flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${focusRing}`;
+const baseLink = `flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${focusRing}`;
 const idleLink = 'text-slate-300 hover:bg-slate-800 hover:text-slate-100';
 const activeLink = 'bg-slate-800 text-slate-100 font-semibold';
 
 function CountBadge({ count, label }: { count: number; label: string }) {
   if (count <= 0) return null;
   return (
-    <span className="ms-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-emerald-500/20 px-1.5 text-xs font-bold text-emerald-300">
+    <span className="ms-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-emerald-500/20 px-1.5 text-sm font-bold text-emerald-300">
       {count}
       <span className="sr-only"> {label}</span>
     </span>
@@ -83,8 +107,13 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
   const t = translations[lang] ?? translations.ar;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const languageQuery = languageSearchForLocation('', lang, window.location.search);
-  const localizedPath = (path: string) => `${path}${languageQuery ? `?${languageQuery}` : ''}`;
+  const languageQuery = languageSearchForLocation(
+    '',
+    lang,
+    window.location.search,
+  );
+  const localizedPath = (path: string) =>
+    `${path}${languageQuery ? `?${languageQuery}` : ''}`;
 
   const handleNavigate = (target: Route) => {
     if (navigate) {
@@ -96,7 +125,8 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
 
   // نقرة عادية = تنقل داخل التطبيق. Ctrl/Cmd/Shift/Alt أو الزر الأوسط = يتولاها المتصفح (تبويب جديد).
   const go = (e: MouseEvent<HTMLAnchorElement>, target: Route) => {
-    const plainClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+    const plainClick =
+      e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
     if (!plainClick) return;
     e.preventDefault();
     handleNavigate(target);
@@ -137,9 +167,9 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
         <a
           href={localizedPath('/')}
           onClick={(e) => go(e, { name: 'home' })}
-          className={`flex min-w-0 items-center gap-2.5 rounded-lg ${focusRing}`}
+          className={`flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg ${focusRing}`}
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-md shadow-emerald-950/50">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-700">
             <Sparkles className="h-4 w-4 text-white" aria-hidden="true" />
           </span>
           <span className="truncate font-heading text-xl font-bold tracking-tight text-slate-100">
@@ -148,7 +178,10 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
         </a>
 
         {/* التنقل الرئيسي (سطح المكتب) */}
-        <nav aria-label={t.mainNav} className="hidden items-center gap-1 sm:flex">
+        <nav
+          aria-label={t.mainNav}
+          className="hidden items-center gap-1 sm:flex"
+        >
           {navItems.map(({ routeTarget, key, icon: Icon, path }) => {
             const active = isRouteActive(routeTarget);
             return (
@@ -159,9 +192,13 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
                 aria-current={active ? 'page' : undefined}
                 className={`${baseLink} ${active ? activeLink : idleLink}`}
               >
-                {key !== 'offers' && <Icon className="h-4 w-4" aria-hidden="true" />}
+                {key !== 'offers' && (
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                )}
                 <span>{t[key]}</span>
-                {key === 'favorites' && <CountBadge count={count} label={t.savedDeals} />}
+                {key === 'favorites' && (
+                  <CountBadge count={count} label={t.savedDeals} />
+                )}
               </a>
             );
           })}
@@ -172,7 +209,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
           <button
             type="button"
             onClick={onLangToggle}
-            className={`flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-800/60 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition hover:border-slate-600 hover:text-slate-100 ${focusRing}`}
+            className={`flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg border border-slate-700 bg-slate-800/60 px-2.5 py-1.5 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:text-slate-100 ${focusRing}`}
             aria-label={t.switchLang}
           >
             <Globe className="h-3.5 w-3.5" aria-hidden="true" />
@@ -184,7 +221,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
             type="button"
             ref={menuButtonRef}
             onClick={() => setMenuOpen((open) => !open)}
-            className={`relative rounded-lg p-2 text-slate-300 transition hover:bg-slate-800 hover:text-slate-100 sm:hidden ${focusRing}`}
+            className={`relative flex h-11 w-11 items-center justify-center rounded-lg p-2 text-slate-300 transition hover:bg-slate-800 hover:text-slate-100 sm:hidden ${focusRing}`}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
             aria-label={menuOpen ? t.closeMenu : t.openMenu}
@@ -226,7 +263,9 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
                   >
                     <Icon className="h-4 w-4" aria-hidden="true" />
                     <span>{t[key]}</span>
-                    {key === 'favorites' && <CountBadge count={count} label={t.savedDeals} />}
+                    {key === 'favorites' && (
+                      <CountBadge count={count} label={t.savedDeals} />
+                    )}
                   </a>
                 </li>
               );
