@@ -4,8 +4,13 @@ import { languageSearchForLocation } from '@/lib/languageStorage';
 
 export default function Footer() {
   const { lang } = useLanguage();
-  const languageQuery = languageSearchForLocation('', lang, window.location.search);
-  const localizedPath = (path: string) => `${path}${languageQuery ? `?${languageQuery}` : ''}`;
+  const languageQuery = languageSearchForLocation(
+    '',
+    lang,
+    window.location.search,
+  );
+  const localizedPath = (path: string) =>
+    `${path}${languageQuery ? `?${languageQuery}` : ''}`;
 
   return (
     <footer className="mt-16 border-t border-slate-800/80 bg-slate-950">
@@ -31,29 +36,43 @@ export default function Footer() {
                 ? 'دليل مراجعي بسرية — البيانات من صفحات الجهات المزوّدة'
                 : 'A review-first directory — data from official sources'}
             </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-slate-400 font-semibold">{lang === 'ar' ? 'مجموعات مميزة:' : 'Collections:'}</span>
-              <a href={localizedPath('/for-students')} className="text-slate-400 hover:text-emerald-400">
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-slate-400 font-semibold">
+                {lang === 'ar' ? 'مجموعات مميزة:' : 'Collections:'}
+              </span>
+              <a
+                href={localizedPath('/for-students')}
+                className="text-slate-400 hover:text-emerald-400"
+              >
                 {lang === 'ar' ? 'للطلاب' : 'For Students'}
               </a>
               <span className="text-slate-700">·</span>
-              <a href={localizedPath('/no-credit-card')} className="text-slate-400 hover:text-emerald-400">
+              <a
+                href={localizedPath('/no-credit-card')}
+                className="text-slate-400 hover:text-emerald-400"
+              >
                 {lang === 'ar' ? 'بدون بطاقة' : 'No Card'}
               </a>
               <span className="text-slate-700">·</span>
-              <a href={localizedPath('/coding')} className="text-slate-400 hover:text-emerald-400">
+              <a
+                href={localizedPath('/coding')}
+                className="text-slate-400 hover:text-emerald-400"
+              >
                 {lang === 'ar' ? 'أدوات البرمجة' : 'Coding Tools'}
               </a>
               <span className="text-slate-700">·</span>
-              <a href={localizedPath('/ending-soon')} className="text-slate-400 hover:text-amber-400">
-                {lang === 'ar' ? 'تنتهي قريباً' : 'Ending Soon'}
+              <a
+                href={localizedPath('/ending-soon')}
+                className="text-slate-400 hover:text-amber-400"
+              >
+                {lang === 'ar' ? 'حسب تاريخ الانتهاء' : 'Recorded end dates'}
               </a>
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <a
                 href={localizedPath('/changelog')}
-                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-400"
+                className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-emerald-400"
               >
                 {lang === 'ar' ? 'سجل المراجعات' : 'Review History'}
               </a>
@@ -62,7 +81,7 @@ export default function Footer() {
                 href="/feed.xml"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-400"
+                className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-emerald-400"
               >
                 {lang === 'ar' ? 'تغذية RSS' : 'RSS Feed'}
               </a>
@@ -71,7 +90,7 @@ export default function Footer() {
                 href="https://github.com/amiraq1/amnabd-deals"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-emerald-400 transition-colors hover:text-emerald-300"
+                className="inline-flex items-center gap-1 text-sm text-emerald-400 transition-colors hover:text-emerald-300"
               >
                 {lang === 'ar' ? 'المشروع الأصلي' : 'Original project'}
                 <ExternalLink className="h-3 w-3" />
@@ -84,13 +103,10 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 title="Follow Ammar Mohammed on F6S"
               >
-                <img
-                  src="https://www.f6s.com/images/f6s-follow-secondary.png"
-                  width={78}
-                  height={22}
-                  alt="Follow Ammar Mohammed on F6S"
-                  style={{ border: 0, width: '78px', height: '22px', padding: 0, margin: 0 }}
-                />
+                <span className="inline-flex min-h-11 items-center gap-2 text-sm text-slate-300">
+                  {lang === 'ar' ? 'متابعة على F6S' : 'Follow on F6S'}
+                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                </span>
               </a>
             </div>
           </div>

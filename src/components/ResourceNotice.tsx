@@ -1,3 +1,4 @@
+import { CircleAlert } from 'lucide-react';
 import type { Lang } from '@/types';
 import type { ResourceErrorKind } from '@/lib/resource';
 export type ResourceName = 'deals' | 'guides' | 'config';
@@ -33,7 +34,10 @@ export default function ResourceNotice({
         ? `تعذر عرض ${label} لأن البيانات غير صالحة.`
         : `The ${label} data could not be displayed because it is invalid.`;
   else if (error === 'timeout')
-    message = lang === 'ar' ? `انتهت مهلة تحميل ${label}.` : `Loading ${label} timed out.`;
+    message =
+      lang === 'ar'
+        ? `انتهت مهلة تحميل ${label}.`
+        : `Loading ${label} timed out.`;
   else
     message =
       lang === 'ar'
@@ -44,12 +48,17 @@ export default function ResourceNotice({
       className="mx-auto my-4 max-w-6xl rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm text-amber-100"
       role="alert"
     >
-      <p>{message}</p>
+      <div className="flex items-start gap-3">
+        <CircleAlert aria-hidden="true" className="h-6 w-6 shrink-0" />
+        <p>{message}</p>
+      </div>
       <button
-        className="mt-3 rounded-lg border border-amber-400/50 px-3 py-2 underline"
+        className="mt-3 min-h-11 rounded-control border border-amber-400/50 px-3 py-2 underline"
         onClick={retry}
       >
-        {lang === 'ar' ? `إعادة محاولة تحميل ${label}` : `Retry loading ${label}`}
+        {lang === 'ar'
+          ? `إعادة محاولة تحميل ${label}`
+          : `Retry loading ${label}`}
       </button>
     </section>
   );

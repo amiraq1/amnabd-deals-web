@@ -1,12 +1,31 @@
+import DealCardSkeleton from '@/components/DealCardSkeleton';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, X, SlidersHorizontal, Inbox, Share2, Check, Bookmark, Sparkles, Clock, GraduationCap, CreditCard, ArrowUpLeft, ArrowUpRight } from 'lucide-react';
+import {
+  Search,
+  X,
+  SlidersHorizontal,
+  Inbox,
+  Share2,
+  Check,
+  Bookmark,
+  Sparkles,
+  Clock,
+  GraduationCap,
+  CreditCard,
+  ArrowUpLeft,
+  ArrowUpRight,
+} from 'lucide-react';
 import type { Deal, FilterState, SiteConfig, SortOption } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { buildDealCorpus, categoryOptions, matchesCategory, matchesCorpus } from '@/lib/discovery';
+import {
+  buildDealCorpus,
+  categoryOptions,
+  matchesCategory,
+  matchesCorpus,
+} from '@/lib/discovery';
 import { matchesEligibility } from '@/lib/eligibility';
 import { compileQuery } from '@/lib/normalize';
 import { reviewDateLabel } from '@/lib/format';
-import { isVerifiedReview } from '@/lib/verification';
 import { tristateLabel } from '@/lib/tristate';
 import { classifyDeadline, deadlineTierLabel, sortDeals } from '@/lib/dealSort';
 import { getTimingState } from '@/lib/dealTiming';
@@ -28,7 +47,10 @@ interface HomePageProps {
   onOpenDeal: (slug: string) => void;
   filterState?: FilterState;
   getSearchLink?: () => string;
-  onFilterChange?: (update: Partial<FilterState>, method?: 'push' | 'replace') => void;
+  onFilterChange?: (
+    update: Partial<FilterState>,
+    method?: 'push' | 'replace',
+  ) => void;
   onResetFilters?: () => void;
   comparisonSelection: string[];
   onToggleComparison: (slug: string) => void;
@@ -37,11 +59,11 @@ interface HomePageProps {
 }
 
 const USE_CASE_LABELS: Record<string, { ar: string; en: string }> = {
-  'برمجة': { ar: 'برمجة وتطوير', en: 'Coding & Dev' },
-  'بحث': { ar: 'محادثة وبحث', en: 'Search & Chat' },
+  برمجة: { ar: 'برمجة وتطوير', en: 'Coding & Dev' },
+  بحث: { ar: 'محادثة وبحث', en: 'Search & Chat' },
   'وكلاء ذكاء اصطناعي': { ar: 'وكلاء ذكاء اصطناعي', en: 'AI Agents' },
-  'استضافة': { ar: 'استضافة ونشر سحابي', en: 'Cloud & Hosting' },
-  'صوت': { ar: 'صوتيات', en: 'Audio' },
+  استضافة: { ar: 'استضافة ونشر سحابي', en: 'Cloud & Hosting' },
+  صوت: { ar: 'صوتيات', en: 'Audio' },
   'فيديو وصور': { ar: 'تصميم وفيديو', en: 'Design & Video' },
   coding: { ar: 'برمجة وتطوير', en: 'Coding & Dev' },
   chat: { ar: 'محادثة وبحث', en: 'Search & Chat' },
@@ -77,7 +99,9 @@ export default function HomePage({
   const [endingSoon, setEndingSoon] = useState(false);
   const [selectedUseCases, setSelectedUseCases] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'success' | 'manual'>('idle');
+  const [copyStatus, setCopyStatus] = useState<
+    'idle' | 'copying' | 'success' | 'manual'
+  >('idle');
   const [manualLink, setManualLink] = useState('');
   const [sharedListDismissed, setSharedListDismissed] = useState(false);
   const [sharedSaveSuccess, setSharedSaveSuccess] = useState(false);
@@ -162,7 +186,10 @@ export default function HomePage({
     };
   }, []);
 
-  const queryGroups = useMemo(() => compileQuery(filterState.q), [filterState.q]);
+  const queryGroups = useMemo(
+    () => compileQuery(filterState.q),
+    [filterState.q],
+  );
   const categories = useMemo(() => categoryOptions(deals, lang), [deals, lang]);
   const countryOptions = useMemo(
     () =>
@@ -170,21 +197,22 @@ export default function HomePage({
         new Set(
           deals.flatMap((deal) =>
             (deal.eligibility?.countries?.values ?? []).filter(
-              (value): value is string => typeof value === 'string' && value.trim() !== ''
-            )
-          )
-        )
+              (value): value is string =>
+                typeof value === 'string' && value.trim() !== '',
+            ),
+          ),
+        ),
       ).sort((a, b) => a.localeCompare(b, 'en')),
-    [deals]
+    [deals],
   );
 
   const validSavedCount = useMemo(
     () =>
       countValidSavedDeals(
         savedList,
-        deals.map((deal) => deal.slug)
+        deals.map((deal) => deal.slug),
       ),
-    [savedList, deals]
+    [savedList, deals],
   );
 
   // Precompute searchable corpora once per deals load
@@ -201,24 +229,17 @@ export default function HomePage({
   // Active deals (excluding expired) for counters and hero stats
   const activeDeals = useMemo(
     // Expiry comes from the shared timing model, not from the status alone.
-    () => deals.filter((d) => getTimingState(d, referenceNow).offer.state !== 'expired'),
-    [deals, referenceNow]
+    () =>
+      deals.filter(
+        (d) => getTimingState(d, referenceNow).offer.state !== 'expired',
+      ),
+    [deals, referenceNow],
   );
 
-  // نصف بـ«موثّق» فقط ما حالته verified فعلًا، لا كل ما ليس منتهيًا.
-  const verifiedActiveCount = useMemo(
-    () => activeDeals.filter((d) => isVerifiedReview(d.review)).length,
-    [activeDeals]
-  );
-  const allActiveVerified = verifiedActiveCount === activeDeals.length;
   const activeCountLabel =
     lang === 'ar'
-      ? allActiveVerified
-        ? `${activeDeals.length} عرضًا نشطًا وموثّقًا`
-        : `${activeDeals.length} عرضًا نشطًا، ${verifiedActiveCount} منها موثّق`
-      : allActiveVerified
-        ? `${activeDeals.length} active verified offers`
-        : `${activeDeals.length} active offers, ${verifiedActiveCount} verified`;
+      ? `${deals.length.toLocaleString('ar-EG')} عرضًا في الدليل`
+      : `${deals.length.toLocaleString('en-US')} offers in the directory`;
 
   // Safe calculation of days since last review
   const daysSinceLastReview = useMemo(() => {
@@ -247,14 +268,18 @@ export default function HomePage({
       .sort((a, b) => b[1] - a[1])
       .map(([value, count]) => {
         const localized = USE_CASE_LABELS[value];
-        const label = localized ? (lang === 'ar' ? localized.ar : localized.en) : value;
+        const label = localized
+          ? lang === 'ar'
+            ? localized.ar
+            : localized.en
+          : value;
         return { value, label, count };
       });
   }, [activeDeals, lang]);
 
   const toggleUseCase = (uc: string) => {
     setSelectedUseCases((prev) =>
-      prev.includes(uc) ? prev.filter((item) => item !== uc) : [...prev, uc]
+      prev.includes(uc) ? prev.filter((item) => item !== uc) : [...prev, uc],
     );
   };
 
@@ -273,25 +298,45 @@ export default function HomePage({
         countryStatus?: FilterState['countryStatus'];
         endingSoon?: boolean;
         saved?: boolean;
-      }
+      },
     ) => {
       const q = overrides?.q !== undefined ? overrides.q : filterState.q;
-      const category = overrides?.category !== undefined ? overrides.category : filterState.category;
+      const category =
+        overrides?.category !== undefined
+          ? overrides.category
+          : filterState.category;
       const uncategorized =
-        overrides?.uncategorized !== undefined ? overrides.uncategorized : filterState.uncategorized;
-      const useCases = overrides?.useCases !== undefined ? overrides.useCases : selectedUseCases;
-      const applicant = overrides?.applicant !== undefined ? overrides.applicant : filterState.applicant;
-      const card = overrides?.card !== undefined ? overrides.card : filterState.card;
-      const country = overrides?.country !== undefined ? overrides.country : filterState.country;
-      const countryStatus = overrides?.countryStatus !== undefined
-        ? overrides.countryStatus
-        : filterState.countryStatus;
-      const isEndingSoon = overrides?.endingSoon !== undefined ? overrides.endingSoon : endingSoon;
-      const saved = overrides?.saved !== undefined ? overrides.saved : savedOnly;
+        overrides?.uncategorized !== undefined
+          ? overrides.uncategorized
+          : filterState.uncategorized;
+      const useCases =
+        overrides?.useCases !== undefined
+          ? overrides.useCases
+          : selectedUseCases;
+      const applicant =
+        overrides?.applicant !== undefined
+          ? overrides.applicant
+          : filterState.applicant;
+      const card =
+        overrides?.card !== undefined ? overrides.card : filterState.card;
+      const country =
+        overrides?.country !== undefined
+          ? overrides.country
+          : filterState.country;
+      const countryStatus =
+        overrides?.countryStatus !== undefined
+          ? overrides.countryStatus
+          : filterState.countryStatus;
+      const isEndingSoon =
+        overrides?.endingSoon !== undefined ? overrides.endingSoon : endingSoon;
+      const saved =
+        overrides?.saved !== undefined ? overrides.saved : savedOnly;
 
       if (saved && !savedSet.has(deal.slug)) return false;
-      if (uncategorized && !matchesCategory(deal.category.value, '')) return false;
-      if (category !== null && !matchesCategory(deal.category?.value, category)) return false;
+      if (uncategorized && !matchesCategory(deal.category.value, ''))
+        return false;
+      if (category !== null && !matchesCategory(deal.category?.value, category))
+        return false;
       if (!matchesEligibility(deal.eligibility, applicant, card)) return false;
       if (
         country.trim() &&
@@ -299,16 +344,23 @@ export default function HomePage({
         countryAvailability(deal, country) !== countryStatus
       )
         return false;
-      if (isEndingSoon && getTimingState(deal, referenceNow).offer.state !== 'ending_soon')
+      if (
+        isEndingSoon &&
+        getTimingState(deal, referenceNow).offer.state !== 'ending_soon'
+      )
         return false;
 
       // OR logic for multiple use_cases
-      if (useCases.length > 0 && !useCases.some((uc) => deal.use_cases?.includes(uc))) {
+      if (
+        useCases.length > 0 &&
+        !useCases.some((uc) => deal.use_cases?.includes(uc))
+      ) {
         return false;
       }
 
       if (q.trim()) {
-        const groups = overrides?.q !== undefined ? compileQuery(q) : queryGroups;
+        const groups =
+          overrides?.q !== undefined ? compileQuery(q) : queryGroups;
         const corpus = corpora.get(deal.id) ?? buildDealCorpus(deal);
         if (!matchesCorpus(corpus, groups)) return false;
       }
@@ -330,7 +382,7 @@ export default function HomePage({
       queryGroups,
       corpora,
       referenceNow,
-    ]
+    ],
   );
 
   const filtered = useMemo(() => {
@@ -354,7 +406,7 @@ export default function HomePage({
     filterState.sort !== 'default' ||
     filterState.q.trim() !== '' ||
     endingSoon ||
-    selectedUseCases.length > 0
+    selectedUseCases.length > 0,
   );
 
   const handleResetAll = () => {
@@ -370,59 +422,86 @@ export default function HomePage({
       {
         key: 'student' as const,
         label: lang === 'ar' ? 'أنا طالب' : 'Students',
-        count: activeDeals.filter((d) => d.eligibility?.student_status === 'required').length,
+        count: activeDeals.filter(
+          (d) => d.eligibility?.student_status === 'required',
+        ).length,
         isActive: filterState.applicant === 'student',
         onToggle: () =>
           onFilterChange(
-            { applicant: filterState.applicant === 'student' ? 'all' : 'student' },
-            'push'
+            {
+              applicant:
+                filterState.applicant === 'student' ? 'all' : 'student',
+            },
+            'push',
           ),
       },
       {
         key: 'noCard' as const,
         label: lang === 'ar' ? 'بدون بطاقة' : 'No card required',
-        count: activeDeals.filter((d) => d.eligibility?.card_required === 'not_required').length,
+        count: activeDeals.filter(
+          (d) => d.eligibility?.card_required === 'not_required',
+        ).length,
         isActive: filterState.card === 'not_required',
         onToggle: () =>
           onFilterChange(
-            { card: filterState.card === 'not_required' ? 'all' : 'not_required' },
-            'push'
+            {
+              card:
+                filterState.card === 'not_required' ? 'all' : 'not_required',
+            },
+            'push',
           ),
       },
       {
         key: 'endingSoon' as const,
         label: lang === 'ar' ? 'ينتهي قريبًا' : 'Ending soon',
         count: activeDeals.filter(
-          (d) => getTimingState(d, referenceNow).offer.state === 'ending_soon'
+          (d) => getTimingState(d, referenceNow).offer.state === 'ending_soon',
         ).length,
         isActive: endingSoon,
         onToggle: () => setEndingSoon((prev) => !prev),
       },
     ],
-    [activeDeals, filterState.applicant, filterState.card, endingSoon, lang, onFilterChange, referenceNow]
+    [
+      activeDeals,
+      filterState.applicant,
+      filterState.card,
+      endingSoon,
+      lang,
+      onFilterChange,
+      referenceNow,
+    ],
   );
 
   // The spotlight is a prefix of the same list, never a separate review-date sort.
   const newestDeals = useMemo(
     () => (hasAnyActiveFilter ? [] : sorted.slice(0, 3)),
-    [sorted, hasAnyActiveFilter]
+    [sorted, hasAnyActiveFilter],
   );
 
   // أحدث العروض تظهر في قسمها فقط وتستكمل القائمة الترتيب نفسه دون تكرار.
-  const newSlugs = useMemo(() => new Set(newestDeals.map((d) => d.slug)), [newestDeals]);
+  const newSlugs = useMemo(
+    () => new Set(newestDeals.map((d) => d.slug)),
+    [newestDeals],
+  );
   const listed = useMemo(
-    () => (newSlugs.size === 0 ? sorted : sorted.filter((d) => !newSlugs.has(d.slug))),
-    [sorted, newSlugs]
+    () =>
+      newSlugs.size === 0
+        ? sorted
+        : sorted.filter((d) => !newSlugs.has(d.slug)),
+    [sorted, newSlugs],
   );
 
   // Smart suggestion for empty states: calculates which active filter frees the most deals
   const mostRestrictiveFilter = useMemo(() => {
     if (sorted.length > 0) return null;
 
-    const candidates: { label: string; count: number; clear: () => void }[] = [];
+    const candidates: { label: string; count: number; clear: () => void }[] =
+      [];
 
     if (endingSoon) {
-      const count = deals.filter((d) => matchesAllCriteria(d, { endingSoon: false })).length;
+      const count = deals.filter((d) =>
+        matchesAllCriteria(d, { endingSoon: false }),
+      ).length;
       if (count > 0) {
         candidates.push({
           label: lang === 'ar' ? 'ينتهي قريبًا' : 'Ending soon',
@@ -433,7 +512,9 @@ export default function HomePage({
     }
 
     if (filterState.applicant === 'student') {
-      const count = deals.filter((d) => matchesAllCriteria(d, { applicant: 'all' })).length;
+      const count = deals.filter((d) =>
+        matchesAllCriteria(d, { applicant: 'all' }),
+      ).length;
       if (count > 0) {
         candidates.push({
           label: lang === 'ar' ? 'أنا طالب' : 'Students only',
@@ -444,7 +525,9 @@ export default function HomePage({
     }
 
     if (filterState.card === 'not_required') {
-      const count = deals.filter((d) => matchesAllCriteria(d, { card: 'all' })).length;
+      const count = deals.filter((d) =>
+        matchesAllCriteria(d, { card: 'all' }),
+      ).length;
       if (count > 0) {
         candidates.push({
           label: lang === 'ar' ? 'بدون بطاقة' : 'No credit card',
@@ -455,10 +538,13 @@ export default function HomePage({
     }
 
     if (filterState.country && filterState.countryStatus !== 'all') {
-      const count = deals.filter((d) => matchesAllCriteria(d, { countryStatus: 'all' })).length;
+      const count = deals.filter((d) =>
+        matchesAllCriteria(d, { countryStatus: 'all' }),
+      ).length;
       if (count > 0) {
         candidates.push({
-          label: lang === 'ar' ? 'حالة البلد المحدد' : 'Selected country status',
+          label:
+            lang === 'ar' ? 'حالة البلد المحدد' : 'Selected country status',
           count,
           clear: () => onFilterChange({ countryStatus: 'all' }, 'push'),
         });
@@ -466,7 +552,9 @@ export default function HomePage({
     }
 
     if (selectedUseCases.length > 0) {
-      const count = deals.filter((d) => matchesAllCriteria(d, { useCases: [] })).length;
+      const count = deals.filter((d) =>
+        matchesAllCriteria(d, { useCases: [] }),
+      ).length;
       if (count > 0) {
         candidates.push({
           label: lang === 'ar' ? 'حالات الاستخدام' : 'Use cases',
@@ -477,7 +565,9 @@ export default function HomePage({
     }
 
     if (filterState.category !== null) {
-      const count = deals.filter((d) => matchesAllCriteria(d, { category: null })).length;
+      const count = deals.filter((d) =>
+        matchesAllCriteria(d, { category: null }),
+      ).length;
       if (count > 0) {
         candidates.push({
           label: lang === 'ar' ? 'الفئة المحددة' : 'Selected category',
@@ -488,7 +578,9 @@ export default function HomePage({
     }
 
     if (savedOnly) {
-      const count = deals.filter((d) => matchesAllCriteria(d, { saved: false })).length;
+      const count = deals.filter((d) =>
+        matchesAllCriteria(d, { saved: false }),
+      ).length;
       if (count > 0) {
         candidates.push({
           label: lang === 'ar' ? 'المحفوظة فقط' : 'Saved deals only',
@@ -499,7 +591,9 @@ export default function HomePage({
     }
 
     if (filterState.q.trim()) {
-      const count = deals.filter((d) => matchesAllCriteria(d, { q: '' })).length;
+      const count = deals.filter((d) =>
+        matchesAllCriteria(d, { q: '' }),
+      ).length;
       if (count > 0) {
         candidates.push({
           label: lang === 'ar' ? 'نص البحث' : 'Search query',
@@ -533,11 +627,26 @@ export default function HomePage({
   ]);
 
   const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-    { value: 'default', label: lang === 'ar' ? 'الأحدث إضافةً' : 'Newest added' },
-    { value: 'reviewed', label: lang === 'ar' ? 'الأحدث مراجعة' : 'Recently reviewed' },
-    { value: 'ending_soon', label: lang === 'ar' ? 'الأقرب انتهاءً' : 'Ending soon' },
-    { value: 'highest_value', label: lang === 'ar' ? 'الأعلى قيمة' : 'Highest value' },
-    { value: 'deadline', label: lang === 'ar' ? 'موعد التسجيل' : 'Registration deadline' },
+    {
+      value: 'default',
+      label: lang === 'ar' ? 'الأحدث إضافةً' : 'Newest added',
+    },
+    {
+      value: 'reviewed',
+      label: lang === 'ar' ? 'الأحدث مراجعة' : 'Recently reviewed',
+    },
+    {
+      value: 'ending_soon',
+      label: lang === 'ar' ? 'تاريخ الانتهاء المسجّل' : 'Recorded end date',
+    },
+    {
+      value: 'highest_value',
+      label: lang === 'ar' ? 'الأعلى قيمة' : 'Highest value',
+    },
+    {
+      value: 'deadline',
+      label: lang === 'ar' ? 'موعد التسجيل' : 'Registration deadline',
+    },
   ];
 
   async function handleCopySearchLink() {
@@ -567,10 +676,18 @@ export default function HomePage({
         aria-busy="true"
         aria-label={lang === 'ar' ? 'جارٍ تحميل العروض' : 'Loading deals'}
       >
-        <div className="skeleton h-40 w-full" />
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div aria-hidden="true" className="skeleton h-[25rem] w-full rounded-card sm:h-[23rem] lg:h-[20rem]" />
+        <div aria-hidden="true" className="mt-8 space-y-5">
+          <div className="skeleton h-11 w-full" />
+          <div className="flex gap-2">
+            <div className="skeleton h-11 w-1/3" />
+            <div className="skeleton h-11 w-1/3" />
+          </div>
+          <div className="skeleton ms-auto h-11 w-1/2" />
+        </div>
+        <div className="mt-8 grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton h-56" />
+            <DealCardSkeleton key={i} />
           ))}
         </div>
       </main>
@@ -586,10 +703,11 @@ export default function HomePage({
   }
 
   const categoryButtonBase =
-    'min-h-11 shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors';
+    'inline-flex items-center gap-1.5 min-h-11 shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors';
   const categoryIdle =
-    'border border-slate-800 bg-slate-900/70 text-slate-400 hover:border-slate-700 hover:text-slate-200';
-  const categoryActive = 'bg-emerald-500 text-slate-950 font-semibold';
+    'border border-slate-800 bg-surface-raised text-slate-400 hover:border-slate-700 hover:text-slate-200';
+  const categoryActive =
+    'border border-brand bg-brand text-slate-950 font-semibold';
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-8 pt-6 sm:px-6">
@@ -598,7 +716,7 @@ export default function HomePage({
         <section
           role="region"
           aria-label={lang === 'ar' ? 'قائمة عروض مشاركة' : 'Shared deals list'}
-          className="mb-6 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-slate-900/60 to-slate-900/40 p-4 shadow-lg sm:p-5"
+          className="mb-6 rounded-2xl border border-emerald-500/30 bg-surface-raised p-4  sm:p-5"
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -608,16 +726,18 @@ export default function HomePage({
               <div>
                 <h2 className="text-sm font-bold text-white sm:text-base">
                   {lang === 'ar'
-                    ? `قائمة عروض مختارة تم مشاركتها معك (${sharedListSlugs.length} ${sharedListSlugs.length === 1
-                      ? 'عرض'
-                      : sharedListSlugs.length === 2
-                        ? 'عرضان'
-                        : 'عروض'
-                    })`
-                    : `Shared Deals Collection (${sharedListSlugs.length} ${sharedListSlugs.length === 1 ? 'deal' : 'deals'
-                    })`}
+                    ? `قائمة عروض مختارة تم مشاركتها معك (${sharedListSlugs.length} ${
+                        sharedListSlugs.length === 1
+                          ? 'عرض'
+                          : sharedListSlugs.length === 2
+                            ? 'عرضان'
+                            : 'عروض'
+                      })`
+                    : `Shared Deals Collection (${sharedListSlugs.length} ${
+                        sharedListSlugs.length === 1 ? 'deal' : 'deals'
+                      })`}
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-300">
+                <p className="mt-0.5 text-sm text-slate-300">
                   {lang === 'ar'
                     ? 'يمكنك حفظ هذه العروض مباشرة في مفضلتك المحلية للرجوع إليها لاحقاً.'
                     : 'You can save these deals directly to your local favorites for future reference.'}
@@ -627,9 +747,13 @@ export default function HomePage({
 
             <div className="flex items-center gap-2">
               {sharedSaveSuccess ? (
-                <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-4 py-2 text-xs font-semibold text-emerald-300">
+                <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300">
                   <Check className="h-4 w-4" />
-                  <span>{lang === 'ar' ? 'تم الحفظ في مفضلتك!' : 'Saved to favorites!'}</span>
+                  <span>
+                    {lang === 'ar'
+                      ? 'تم الحفظ في مفضلتك!'
+                      : 'Saved to favorites!'}
+                  </span>
                 </span>
               ) : (
                 <button
@@ -643,10 +767,14 @@ export default function HomePage({
                     }
                     setSharedSaveSuccess(true);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-600/20 px-4 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-600/30"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-600/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-600/30"
                 >
                   <Bookmark className="h-3.5 w-3.5" />
-                  <span>{lang === 'ar' ? 'حفظ الكل في مفضلتي' : 'Save all to favorites'}</span>
+                  <span>
+                    {lang === 'ar'
+                      ? 'حفظ الكل في مفضلتي'
+                      : 'Save all to favorites'}
+                  </span>
                 </button>
               )}
 
@@ -665,27 +793,19 @@ export default function HomePage({
 
       {/* 1. Hero Section with Interactive Prompts & Stats */}
       <section className="animate-fade-up">
-        <div className="discovery-hero relative grid gap-6 overflow-hidden rounded-3xl border border-emerald-500/20 bg-slate-900/60 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-10">
-          <div
-            className="pointer-events-none absolute -top-24 end-[-10%] h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute -bottom-24 start-[-5%] h-56 w-56 rounded-full bg-gold/5 blur-3xl"
-            aria-hidden
-          />
+        <div className="discovery-hero relative grid gap-6 overflow-hidden rounded-card border border-emerald-500/20 bg-surface-raised p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-10">
           <div className="relative min-w-0">
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/5 px-3 py-1.5 text-xs font-medium text-emerald-300">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              {lang === 'ar' ? 'اكتشف ما يناسب فكرتك القادمة' : 'Discover your next advantage'}
-            </p>
             <h1 className="font-heading text-2xl font-extrabold leading-tight text-white sm:text-3xl">
               {pick({
-                ar: overview.title ?? 'أرصدة وأدوات ذكاء اصطناعي مع روابط مصادرها',
-                en: config?.overview?.en?.title ?? 'AI Tool Deals, Credits & Benefits with Source Links',
+                ar:
+                  overview.title ??
+                  'أرصدة وأدوات ذكاء اصطناعي مع روابط مصادرها',
+                en:
+                  config?.overview?.en?.title ??
+                  'AI Tool Deals, Credits & Benefits with Source Links',
               })}
             </h1>
-            <p className="mt-2.5 text-sm leading-relaxed text-slate-300 sm:text-base">
+            <p className="mt-2.5 hidden text-sm leading-relaxed text-slate-300 sm:block sm:text-base">
               {pick({
                 ar:
                   overview.subtitle ??
@@ -696,13 +816,13 @@ export default function HomePage({
               })}
             </p>
 
-            <div className="mt-3.5 flex flex-wrap items-center gap-3 text-xs text-slate-300">
+            <div className="mt-3.5 flex flex-wrap items-center gap-3 text-sm text-slate-300">
               <span className="flex items-center gap-1.5 font-medium text-emerald-400">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 {activeCountLabel}
               </span>
               {daysSinceLastReview !== null && (
-                <span className="flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-slate-400">
+                <span className="hidden items-center gap-1 rounded-lg border border-slate-800 bg-surface-raised px-2.5 py-1 text-slate-400 sm:inline-flex">
                   <Clock className="h-3 w-3 text-slate-400" />
                   {lang === 'ar'
                     ? daysSinceLastReview === 0
@@ -717,17 +837,19 @@ export default function HomePage({
 
             {/* Interactive "What do you want to build?" Use-Case Prompt */}
             {useCaseOptions.length > 0 && (
-              <div className="mt-5 border-t border-slate-800/80 pt-4">
+              <div className="mt-5 border-t border-line pt-4">
                 <div className="mb-2.5 flex items-center justify-between">
-                  <p className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-slate-300 flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-                    {lang === 'ar' ? 'ماذا تريد أن تبني؟' : 'What are you building?'}
+                    {lang === 'ar'
+                      ? 'ماذا تريد أن تبني؟'
+                      : 'What are you building?'}
                   </p>
                   {selectedUseCases.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setSelectedUseCases([])}
-                      className="text-xs text-slate-400 transition hover:text-emerald-400"
+                      className="min-h-11 text-sm text-slate-400 transition hover:text-emerald-400"
                     >
                       {lang === 'ar'
                         ? `مسح الاختيار (${selectedUseCases.length})`
@@ -744,10 +866,11 @@ export default function HomePage({
                         type="button"
                         aria-pressed={isSelected}
                         onClick={() => toggleUseCase(uc.value)}
-                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${isSelected
-                            ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300 font-semibold shadow-sm shadow-emerald-950/40'
-                            : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:text-white'
-                          }`}
+                        className={`min-h-11 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                          isSelected
+                            ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300 font-semibold  '
+                            : 'border-slate-800 bg-surface-raised text-slate-300 hover:border-slate-700 hover:text-white'
+                        }`}
                       >
                         <span>{uc.label}</span>
                         <span className="ms-1.5 opacity-60">({uc.count})</span>
@@ -758,16 +881,29 @@ export default function HomePage({
               </div>
             )}
           </div>
-          <div className="relative min-w-0 rounded-2xl border border-slate-700/50 bg-slate-950/50 p-3 sm:p-4">
+          <div className="relative min-w-0 rounded-2xl border border-slate-700/50 bg-surface p-3 sm:p-4">
             <h2 className="px-1 text-sm font-semibold text-white">
               {lang === 'ar' ? 'ابدأ بما يناسبك' : 'Find your starting point'}
             </h2>
-            <p className="mb-3 mt-1 px-1 text-xs leading-relaxed text-slate-400">
-              {lang === 'ar' ? 'اختصارات لتصفية العروض حسب احتياجك' : 'Quick paths to offers that fit your needs'}
+            <p className="mb-3 mt-1 hidden px-1 text-sm leading-relaxed text-slate-400 sm:block">
+              {lang === 'ar'
+                ? 'اختصارات لتصفية العروض حسب احتياجك'
+                : 'Quick paths to offers that fit your needs'}
             </p>
-            <div className="grid grid-cols-3 gap-2 lg:grid-cols-1" role="group" aria-label={lang === 'ar' ? 'فلاتر سريعة' : 'Quick filters'}>
+            <div
+              className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1"
+              role="group"
+              aria-label={lang === 'ar' ? 'فلاتر سريعة' : 'Quick filters'}
+            >
               {quickFilterOptions.map((qf) => {
-                const Icon = qf.key === 'student' ? GraduationCap : qf.key === 'noCard' ? CreditCard : Clock;
+                // Hide the urgency shortcut; retain the existing filter/state implementation untouched.
+                if (qf.key === 'endingSoon') return null;
+                const Icon =
+                  qf.key === 'student'
+                    ? GraduationCap
+                    : qf.key === 'noCard'
+                      ? CreditCard
+                      : Clock;
                 const Arrow = lang === 'ar' ? ArrowUpLeft : ArrowUpRight;
                 return (
                   <button
@@ -776,17 +912,32 @@ export default function HomePage({
                     aria-pressed={qf.isActive}
                     disabled={qf.count === 0 && !qf.isActive}
                     onClick={qf.onToggle}
-                    className={`discovery-path relative flex min-h-16 flex-col items-center gap-2 rounded-xl border px-2 py-3 text-center transition-colors lg:flex-row lg:gap-3 lg:p-3 lg:text-start ${qf.isActive
-                      ? 'border-emerald-400/60 bg-emerald-500/10 text-emerald-200'
-                      : 'border-slate-800 bg-slate-900/70 text-slate-200 hover:border-emerald-500/40 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40'
+                    className={`discovery-path relative flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-start transition-colors lg:gap-3 lg:p-3 ${
+                      qf.isActive
+                        ? 'border-emerald-400/60 bg-emerald-500/10 text-emerald-200'
+                        : 'border-slate-800 bg-surface-raised text-slate-200 hover:border-emerald-500/40 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40'
                     }`}
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-400/10 bg-emerald-400/5 text-emerald-300">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-emerald-300 lg:h-9 lg:w-9 lg:border lg:border-emerald-400/10 lg:bg-emerald-400/5">
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="min-w-0 flex-1 text-xs font-semibold">{qf.label}</span>
-                    <span className="rounded-md bg-slate-950/60 px-2 py-1 text-xs tabular-nums text-slate-300">{qf.count}</span>
-                    {qf.isActive ? <Check className="absolute end-1 top-1 h-3.5 w-3.5 text-emerald-300 lg:static lg:shrink-0" aria-hidden="true" /> : <Arrow className="hidden h-3.5 w-3.5 shrink-0 text-slate-500 lg:block" aria-hidden="true" />}
+                    <span className="min-w-0 flex-1 text-sm font-semibold">
+                      {qf.label}
+                    </span>
+                    <span className="rounded-md bg-slate-950/60 px-2 py-1 text-sm tabular-nums text-slate-300">
+                      {qf.count}
+                    </span>
+                    {qf.isActive ? (
+                      <Check
+                        className="absolute end-1 top-1 h-3.5 w-3.5 text-emerald-300 lg:static lg:shrink-0"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Arrow
+                        className="hidden h-3.5 w-3.5 shrink-0 text-slate-500 lg:block"
+                        aria-hidden="true"
+                      />
+                    )}
                   </button>
                 );
               })}
@@ -812,7 +963,7 @@ export default function HomePage({
           <button
             type="button"
             onClick={handleResetAll}
-            className="rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-100 hover:bg-amber-500/30"
+            className="rounded-lg border border-amber-400/50 bg-amber-500/20 px-3 py-1 text-sm font-semibold text-amber-100 hover:bg-amber-500/30"
           >
             {lang === 'ar' ? 'مسح الفئة' : 'Clear category'}
           </button>
@@ -820,10 +971,10 @@ export default function HomePage({
       )}
 
       {/* 2. شريط لاصق بصف واحد: البحث والمشاركة والفلاتر */}
-      <section className="sticky top-16 z-30 -mx-4 mt-6 border-b border-slate-800/80 bg-slate-950/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
+      <section className="relative -mx-4 mt-6 border-b border-line bg-slate-950/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 ltr:left-3.5 rtl:right-3.5" />
+            <Search className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 start-3.5" />
             <input
               type="search"
               value={qDraft}
@@ -845,7 +996,7 @@ export default function HomePage({
                   setQDraft('');
                   onFilterChange({ q: '' }, 'replace');
                 }}
-                className="absolute top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-500 transition-colors hover:text-slate-300 ltr:right-3 rtl:left-3"
+                className="absolute top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full text-slate-400 transition-colors hover:text-slate-300 end-3"
                 aria-label={lang === 'ar' ? 'مسح البحث' : 'Clear search'}
               >
                 <X className="h-4 w-4" />
@@ -858,7 +1009,11 @@ export default function HomePage({
             onClick={handleCopySearchLink}
             disabled={copyStatus === 'copying'}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-3 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-500/50 hover:text-emerald-300 sm:px-4"
-            title={lang === 'ar' ? 'نسخ رابط البحث المفلتر' : 'Copy filtered search link'}
+            title={
+              lang === 'ar'
+                ? 'نسخ رابط البحث المفلتر'
+                : 'Copy filtered search link'
+            }
             aria-label={lang === 'ar' ? 'مشاركة البحث' : 'Share search'}
           >
             {copyStatus === 'success' ? (
@@ -883,10 +1038,11 @@ export default function HomePage({
             aria-expanded={showFilters}
             aria-controls="home-filter-panel"
             aria-label={lang === 'ar' ? 'تصفية وترتيب' : 'Filters & Sort'}
-            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition-colors sm:px-4 ${hasAnyActiveFilter
+            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition-colors sm:px-4 ${
+              hasAnyActiveFilter
                 ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
                 : 'border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-600'
-              }`}
+            }`}
           >
             <SlidersHorizontal className="h-4 w-4" />
             <span className="hidden sm:inline">
@@ -898,10 +1054,13 @@ export default function HomePage({
         {showFilters && (
           <div
             id="home-filter-panel"
-            className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-slate-800 bg-slate-900/60 p-4"
+            className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-slate-800 bg-surface-raised p-4"
           >
             <div className="flex items-center gap-2">
-              <label htmlFor="applicant-select" className="text-xs text-slate-400">
+              <label
+                htmlFor="applicant-select"
+                className="text-sm text-slate-400"
+              >
                 {lang === 'ar' ? 'فئة المتقدم:' : 'Applicant:'}
               </label>
               <select
@@ -912,21 +1071,25 @@ export default function HomePage({
                     {
                       applicant: e.target.value as 'all' | 'student' | 'any',
                     },
-                    'push'
+                    'push',
                   )
                 }
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               >
                 <option value="all">{lang === 'ar' ? 'الكل' : 'All'}</option>
-                <option value="student">{lang === 'ar' ? 'للطلاب' : 'Students'}</option>
+                <option value="student">
+                  {lang === 'ar' ? 'للطلاب' : 'Students'}
+                </option>
                 <option value="any">
-                  {lang === 'ar' ? 'متاح للجميع (مثبت)' : 'Open to all (verified)'}
+                  {lang === 'ar'
+                    ? 'متاح للجميع (مثبت)'
+                    : 'Open to all (verified)'}
                 </option>
               </select>
             </div>
 
             <div className="flex items-center gap-2">
-              <label htmlFor="card-select" className="text-xs text-slate-400">
+              <label htmlFor="card-select" className="text-sm text-slate-400">
                 {lang === 'ar' ? 'البطاقة:' : 'Card:'}
               </label>
               <select
@@ -937,10 +1100,10 @@ export default function HomePage({
                     {
                       card: e.target.value as 'all' | 'not_required',
                     },
-                    'push'
+                    'push',
                   )
                 }
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               >
                 <option value="all">{lang === 'ar' ? 'الكل' : 'All'}</option>
                 <option value="not_required">
@@ -950,8 +1113,10 @@ export default function HomePage({
             </div>
 
             <div className="flex min-w-[13rem] flex-1 flex-wrap items-center gap-2">
-              <label htmlFor="country-input" className="text-xs text-slate-400">
-                {lang === 'ar' ? 'البلد (اختيار يدوي):' : 'Country (choose manually):'}
+              <label htmlFor="country-input" className="text-sm text-slate-400">
+                {lang === 'ar'
+                  ? 'البلد (اختيار يدوي):'
+                  : 'Country (choose manually):'}
               </label>
               <input
                 id="country-input"
@@ -961,13 +1126,17 @@ export default function HomePage({
                 maxLength={80}
                 autoComplete="off"
                 dir="auto"
-                onChange={(event) => onFilterChange({ country: event.target.value }, 'replace')}
+                onChange={(event) =>
+                  onFilterChange({ country: event.target.value }, 'replace')
+                }
                 placeholder={lang === 'ar' ? 'مثال: العراق' : 'Example: Iraq'}
                 aria-describedby="country-evidence-note"
-                className="min-w-36 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-200 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="min-w-36 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               />
               <datalist id="recorded-country-options">
-                {countryOptions.map((country) => <option key={country} value={country} />)}
+                {countryOptions.map((country) => (
+                  <option key={country} value={country} />
+                ))}
               </datalist>
               <select
                 id="country-status-select"
@@ -975,23 +1144,37 @@ export default function HomePage({
                 disabled={!filterState.country.trim()}
                 onChange={(event) =>
                   onFilterChange(
-                    { countryStatus: event.target.value as FilterState['countryStatus'] },
-                    'push'
+                    {
+                      countryStatus: event.target
+                        .value as FilterState['countryStatus'],
+                    },
+                    'push',
                   )
                 }
-                aria-label={lang === 'ar' ? 'حالة توفر البلد' : 'Country evidence status'}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label={
+                  lang === 'ar' ? 'حالة توفر البلد' : 'Country evidence status'
+                }
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="all">{lang === 'ar' ? 'كل الحالات' : 'All states'}</option>
-                <option value="supported">
-                  {lang === 'ar' ? 'مثبت لهذا البلد' : 'Confirmed for this country'}
+                <option value="all">
+                  {lang === 'ar' ? 'كل الحالات' : 'All states'}
                 </option>
-                <option value="unknown">{lang === 'ar' ? 'غير مثبت' : 'Not verified'}</option>
+                <option value="supported">
+                  {lang === 'ar'
+                    ? 'مثبت لهذا البلد'
+                    : 'Confirmed for this country'}
+                </option>
+                <option value="unknown">
+                  {lang === 'ar' ? 'غير مثبت' : 'Not verified'}
+                </option>
                 <option value="excluded">
                   {lang === 'ar' ? 'مستثنى صراحةً' : 'Explicitly excluded'}
                 </option>
               </select>
-              <p id="country-evidence-note" className="basis-full text-[11px] leading-relaxed text-slate-400">
+              <p
+                id="country-evidence-note"
+                className="basis-full text-sm leading-relaxed text-slate-400"
+              >
                 {lang === 'ar'
                   ? 'يعتمد التصنيف على حقل بلد ومصدر رسمي مُراجع فقط. غياب قيود البلدان لا يعني أن العرض متاح عالميًا؛ وما لا يثبته المصدر يبقى غير معلوم.'
                   : 'Classification requires a reviewed country field and an official source. Missing country restrictions do not mean worldwide availability; unsupported cases remain unknown.'}
@@ -1002,7 +1185,7 @@ export default function HomePage({
               <button
                 type="button"
                 onClick={handleResetAll}
-                className="ms-auto text-xs font-medium text-slate-400 underline-offset-4 transition-colors hover:text-white hover:underline"
+                className="ms-auto text-sm font-medium text-slate-400 underline-offset-4 transition-colors hover:text-white hover:underline"
               >
                 {lang === 'ar' ? 'مسح كل الفلاتر' : 'Clear all filters'}
               </button>
@@ -1013,7 +1196,11 @@ export default function HomePage({
 
       {/* الفئات والشرائح والترتيب: خارج الشريط اللاصق حتى لا تغطي النتائج على الجوال */}
       <div className="mt-4">
-        <p role="status" aria-live="polite" className="mb-3 text-sm text-emerald-300 empty:mb-0">
+        <p
+          role="status"
+          aria-live="polite"
+          className="mb-3 text-sm text-emerald-300 empty:mb-0"
+        >
           {copyStatus === 'success'
             ? lang === 'ar'
               ? 'تم نسخ رابط البحث.'
@@ -1025,8 +1212,8 @@ export default function HomePage({
               : ''}
         </p>
         {copyStatus === 'manual' && (
-          <div className="mb-3 rounded-xl border border-slate-700 bg-slate-900/90 p-3">
-            <label className="block text-xs font-medium text-slate-300">
+          <div className="mb-3 rounded-xl border border-slate-700 bg-surface-raised p-3">
+            <label className="block text-sm font-medium text-slate-300">
               {lang === 'ar'
                 ? 'انسخ رابط البحث المفلتر من الحقل أدناه:'
                 : 'Copy the filtered search link from the field below:'}
@@ -1036,7 +1223,7 @@ export default function HomePage({
                 value={manualLink}
                 dir="ltr"
                 onFocus={(e) => e.currentTarget.select()}
-                className="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-950 p-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-950 p-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </label>
           </div>
@@ -1046,19 +1233,27 @@ export default function HomePage({
         <div
           role="group"
           aria-label={lang === 'ar' ? 'فئات العروض' : 'Deal categories'}
-          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
         >
           <button
             type="button"
-            onClick={() => onFilterChange({ category: null, uncategorized: false }, 'push')}
-            aria-pressed={filterState.category === null && !filterState.uncategorized}
-            className={`${categoryButtonBase} ${filterState.category === null && !filterState.uncategorized
+            onClick={() =>
+              onFilterChange({ category: null, uncategorized: false }, 'push')
+            }
+            aria-pressed={
+              filterState.category === null && !filterState.uncategorized
+            }
+            className={`${categoryButtonBase} ${
+              filterState.category === null && !filterState.uncategorized
                 ? categoryActive
                 : categoryIdle
-              }`}
+            }`}
           >
+            {filterState.category === null && !filterState.uncategorized && (
+              <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
+            )}
             {lang === 'ar' ? 'كل الفئات' : 'All categories'}{' '}
-            <span className="text-[11px] opacity-75">
+            <span className="text-sm opacity-75">
               ({deals.length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
             </span>
           </button>
@@ -1068,18 +1263,22 @@ export default function HomePage({
             onClick={() => setSavedOnly((s) => !s)}
             aria-describedby="saved-deals-scope"
             aria-pressed={savedOnly}
-            className={`${categoryButtonBase} inline-flex items-center gap-1.5 ${savedOnly
-                ? `${categoryActive} shadow-md shadow-emerald-950/30`
-                : categoryIdle
-              }`}
+            className={`${categoryButtonBase} inline-flex items-center gap-1.5 ${
+              savedOnly ? `${categoryActive}  ` : categoryIdle
+            }`}
           >
             <Bookmark
-              className={`h-3.5 w-3.5 ${savedOnly ? 'fill-slate-950 text-slate-950' : 'text-slate-400'
-                }`}
+              className={`h-3.5 w-3.5 ${
+                savedOnly ? 'fill-slate-950 text-slate-950' : 'text-slate-400'
+              }`}
             />
             <span>{lang === 'ar' ? 'المحفوظة' : 'Saved'}</span>
-            <span className="text-[11px] opacity-75">
-              ({validSavedCount.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
+            <span className="text-sm opacity-75">
+              (
+              {validSavedCount.toLocaleString(
+                lang === 'ar' ? 'ar-EG' : 'en-US',
+              )}
+              )
             </span>
           </button>
 
@@ -1088,18 +1287,33 @@ export default function HomePage({
               key={`category:${opt.key}`}
               type="button"
               onClick={() =>
-                onFilterChange({ category: opt.key || null, uncategorized: opt.key === '' }, 'push')
+                onFilterChange(
+                  { category: opt.key || null, uncategorized: opt.key === '' },
+                  'push',
+                )
               }
               aria-pressed={
-                opt.key === '' ? filterState.uncategorized : filterState.category === opt.key
+                opt.key === ''
+                  ? filterState.uncategorized
+                  : filterState.category === opt.key
               }
-              className={`${categoryButtonBase} ${(opt.key === '' ? filterState.uncategorized : filterState.category === opt.key)
+              className={`${categoryButtonBase} ${
+                (
+                  opt.key === ''
+                    ? filterState.uncategorized
+                    : filterState.category === opt.key
+                )
                   ? categoryActive
                   : categoryIdle
-                }`}
+              }`}
             >
-              {opt.label}{' '}
-              <span className="text-[11px] opacity-75">
+              {(opt.key === ''
+                ? filterState.uncategorized
+                : filterState.category === opt.key) && (
+                <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
+              )}
+              <bdi>{opt.label}</bdi>{' '}
+              <span className="text-sm opacity-75">
                 ({opt.count.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
               </span>
             </button>
@@ -1107,16 +1321,18 @@ export default function HomePage({
         </div>
 
         {/* Sort controls; quick paths live in the discovery hero above. */}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/60 pt-3">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line-subtle pt-3">
           <div className="flex items-center gap-2 ms-auto">
-            <label htmlFor="deal-sort" className="text-xs text-slate-400">
+            <label htmlFor="deal-sort" className="text-sm text-slate-400">
               {lang === 'ar' ? 'الترتيب:' : 'Sort:'}
             </label>
             <select
               id="deal-sort"
               value={filterState.sort}
-              onChange={(e) => onFilterChange({ sort: e.target.value as SortOption }, 'push')}
-              className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-slate-200 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
+              onChange={(e) =>
+                onFilterChange({ sort: e.target.value as SortOption }, 'push')
+              }
+              className="rounded-lg border border-slate-700 bg-slate-900 min-h-11 px-2.5 py-1.5 text-sm font-medium text-slate-200 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -1127,7 +1343,7 @@ export default function HomePage({
           </div>
         </div>
 
-        <p className="mt-2.5 text-xs text-slate-400" id="saved-deals-scope">
+        <p className="mt-2.5 text-sm text-slate-400" id="saved-deals-scope">
           {lang === 'ar'
             ? 'المحفوظات تخص هذا المتصفح ولا تنتقل مع رابط البحث. فلتر المحفوظة يعمل مع بقية الفلاتر.'
             : 'Saved deals belong to this browser and are not included in shared search links.'}
@@ -1151,19 +1367,21 @@ export default function HomePage({
 
       {/* 3. Newest additions (hidden when any filter or explicit sort is active) */}
       {newestDeals.length > 0 && (
-        <section className="mt-8 rounded-2xl border border-emerald-500/30 bg-emerald-950/15 p-5">
-          <div className="mb-4 flex items-center justify-between">
+        <section className="mt-section">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-emerald-400" />
               <h2 className="text-sm font-bold text-emerald-300">
                 {lang === 'ar' ? 'أحدث العروض المضافة' : 'Newest additions'}
               </h2>
             </div>
-            <span className="text-xs text-slate-400">
-              {lang === 'ar' ? 'الأحدث أولًا حسب تاريخ الإضافة' : 'Newest first by date added'}
+            <span className="text-sm text-slate-400">
+              {lang === 'ar'
+                ? 'الأحدث أولًا حسب تاريخ الإضافة'
+                : 'Newest first by date added'}
             </span>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {newestDeals.map((deal) => (
               <DealCard
                 key={`new-${deal.slug}`}
@@ -1172,7 +1390,10 @@ export default function HomePage({
                 country={filterState.country}
                 onOpen={onOpenDeal}
                 isComparisonSelected={comparisonSelection.includes(deal.slug)}
-                comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
+                comparisonDisabled={
+                  comparisonSelection.length >= 2 &&
+                  !comparisonSelection.includes(deal.slug)
+                }
                 onToggleComparison={onToggleComparison}
                 isSaved={savedSet.has(deal.slug)}
                 onToggleSave={toggle}
@@ -1183,7 +1404,10 @@ export default function HomePage({
       )}
 
       {comparisonSelection.length > 0 && (
-        <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4" role="status">
+        <section
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4"
+          role="status"
+        >
           <p className="text-sm text-slate-200">
             {lang === 'ar'
               ? `تم اختيار ${comparisonSelection.length.toLocaleString('ar-EG')} من عرضين للمقارنة.`
@@ -1191,11 +1415,19 @@ export default function HomePage({
           </p>
           <div className="flex flex-wrap gap-2">
             {comparisonSelection.length === 2 && (
-              <button type="button" onClick={onOpenComparison} className="min-h-11 rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-emerald-400">
+              <button
+                type="button"
+                onClick={onOpenComparison}
+                className="min-h-11 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+              >
                 {lang === 'ar' ? 'عرض المقارنة' : 'View comparison'}
               </button>
             )}
-            <button type="button" onClick={onClearComparison} className="min-h-11 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500">
+            <button
+              type="button"
+              onClick={onClearComparison}
+              className="min-h-11 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-slate-500"
+            >
               {lang === 'ar' ? 'مسح الاختيار' : 'Clear selection'}
             </button>
           </div>
@@ -1212,7 +1444,11 @@ export default function HomePage({
           </p>
         )}
         <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-400" role="status" aria-live="polite">
+          <p
+            className="text-sm text-slate-400"
+            role="status"
+            aria-live="polite"
+          >
             {lang === 'ar'
               ? `${sorted.length.toLocaleString('ar-EG')} عرض من أصل ${deals.length.toLocaleString('ar-EG')}`
               : `${sorted.length} of ${deals.length} offers`}
@@ -1221,7 +1457,7 @@ export default function HomePage({
             <button
               type="button"
               onClick={handleResetAll}
-              className="text-xs text-slate-400 transition hover:text-emerald-400"
+              className="min-h-11 text-sm text-slate-400 transition hover:text-emerald-400"
             >
               {lang === 'ar' ? 'إعادة ضبط الكل' : 'Reset all'}
             </button>
@@ -1241,7 +1477,7 @@ export default function HomePage({
                 <button
                   type="button"
                   onClick={handleResetAll}
-                  className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
+                  className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
                 >
                   {lang === 'ar' ? 'استكشاف كل العروض' : 'Explore all deals'}
                 </button>
@@ -1249,21 +1485,29 @@ export default function HomePage({
             ) : (
               <>
                 <p className="text-base font-medium text-slate-200">
-                  {lang === 'ar'
-                    ? 'لا توجد عروض تطابق الفلاتر المحددة حالياً'
-                    : 'No deals match your current filters.'}
+                  {deals.length === 0
+                    ? lang === 'ar'
+                      ? 'لا توجد عروض لعرضها حالياً'
+                      : 'No offers to display yet.'
+                    : lang === 'ar'
+                      ? 'لا توجد عروض تطابق الفلاتر المحددة حالياً'
+                      : 'No deals match your current filters.'}
                 </p>
-                <p className="mt-1 text-xs text-slate-400">
-                  {lang === 'ar'
-                    ? 'جرّب تخفيف أحد الشروط التالية لإظهار العروض المتاحة.'
-                    : 'Try removing or adjusting filters to see available deals.'}
+                <p className="mt-1 text-sm text-slate-400">
+                  {deals.length === 0
+                    ? lang === 'ar'
+                      ? 'سيظهر هنا ما يُضاف إلى الدليل من عروض ومصادر.'
+                      : 'Offers and their sources will appear here when added to the directory.'
+                    : lang === 'ar'
+                      ? 'جرّب تخفيف أحد الشروط التالية لإظهار العروض المتاحة.'
+                      : 'Try removing or adjusting filters to see available deals.'}
                 </p>
                 <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
                   {mostRestrictiveFilter && (
                     <button
                       type="button"
                       onClick={mostRestrictiveFilter.clear}
-                      className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/25 shadow-sm shadow-emerald-950/40"
+                      className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/25  "
                     >
                       {lang === 'ar'
                         ? `إزالة فلتر «${mostRestrictiveFilter.label}» (سيُظهر ${mostRestrictiveFilter.count} عروض)`
@@ -1274,9 +1518,11 @@ export default function HomePage({
                     <button
                       type="button"
                       onClick={handleResetAll}
-                      className="rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-xs font-medium text-slate-300 transition hover:border-slate-500"
+                      className="rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-500"
                     >
-                      {lang === 'ar' ? 'إزالة جميع الفلاتر' : 'Clear all filters'}
+                      {lang === 'ar'
+                        ? 'إزالة جميع الفلاتر'
+                        : 'Clear all filters'}
                     </button>
                   )}
                 </div>
@@ -1290,27 +1536,31 @@ export default function HomePage({
                 {lang === 'ar' ? 'كل العروض' : 'All deals'}
               </h2>
             )}
-            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-5 grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {listed.map((deal, i) => {
-                const tier = classifyDeadline(deal.registration.deadline, referenceNow).tier;
+                const tier = classifyDeadline(
+                  deal.registration.deadline,
+                  referenceNow,
+                ).tier;
                 const previous = i > 0 ? listed[i - 1] : undefined;
                 const firstInGroup =
                   !previous ||
-                  classifyDeadline(previous.registration.deadline, referenceNow).tier !== tier;
+                  classifyDeadline(previous.registration.deadline, referenceNow)
+                    .tier !== tier;
                 const headings =
                   lang === 'ar'
                     ? [
-                      'مواعيد قادمة بتوقيت صريح',
-                      'تواريخ تقويمية دون ساعة',
-                      'مواعيد أو تواريخ سابقة',
-                      'مواعيد غير معلومة',
-                    ]
+                        'مواعيد قادمة بتوقيت صريح',
+                        'تواريخ تقويمية دون ساعة',
+                        'مواعيد أو تواريخ سابقة',
+                        'مواعيد غير معلومة',
+                      ]
                     : [
-                      'Upcoming exact times',
-                      'Calendar dates without hours',
-                      'Past recorded dates or times',
-                      'Unknown deadlines',
-                    ];
+                        'Upcoming exact times',
+                        'Calendar dates without hours',
+                        'Past recorded dates or times',
+                        'Unknown deadlines',
+                      ];
                 return (
                   <div key={deal.id} className="contents">
                     {filterState.sort === 'deadline' && firstInGroup && (
@@ -1320,16 +1570,25 @@ export default function HomePage({
                     )}
                     {filterState.sort === 'deadline' ? (
                       <div className="flex min-w-0 flex-col gap-2">
-                        <p className="text-xs text-slate-300">
-                          {deadlineTierLabel(deal.registration.deadline, lang, referenceNow)}
+                        <p className="text-sm text-slate-300">
+                          {deadlineTierLabel(
+                            deal.registration.deadline,
+                            lang,
+                            referenceNow,
+                          )}
                         </p>
                         <DealCard
                           deal={deal}
                           referenceNow={referenceNow}
                           country={filterState.country}
                           onOpen={onOpenDeal}
-                          isComparisonSelected={comparisonSelection.includes(deal.slug)}
-                          comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
+                          isComparisonSelected={comparisonSelection.includes(
+                            deal.slug,
+                          )}
+                          comparisonDisabled={
+                            comparisonSelection.length >= 2 &&
+                            !comparisonSelection.includes(deal.slug)
+                          }
                           onToggleComparison={onToggleComparison}
                           index={i}
                           isSaved={savedSet.has(deal.slug)}
@@ -1342,8 +1601,13 @@ export default function HomePage({
                         referenceNow={referenceNow}
                         country={filterState.country}
                         onOpen={onOpenDeal}
-                        isComparisonSelected={comparisonSelection.includes(deal.slug)}
-                        comparisonDisabled={comparisonSelection.length >= 2 && !comparisonSelection.includes(deal.slug)}
+                        isComparisonSelected={comparisonSelection.includes(
+                          deal.slug,
+                        )}
+                        comparisonDisabled={
+                          comparisonSelection.length >= 2 &&
+                          !comparisonSelection.includes(deal.slug)
+                        }
                         onToggleComparison={onToggleComparison}
                         index={i}
                         isSaved={savedSet.has(deal.slug)}
@@ -1370,7 +1634,7 @@ export default function HomePage({
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
             {overview.distinction ?? ''}
           </p>
-          <div className="mt-4 grid gap-3 text-xs text-slate-400 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 text-sm text-slate-400 sm:grid-cols-2">
             <p>
               {lang === 'ar' ? 'آخر مراجعة للمصادر' : 'Last reviewed'}:{' '}
               <bdi>{reviewDateLabel(config.last_reviewed, lang)}</bdi>
@@ -1379,7 +1643,9 @@ export default function HomePage({
               {lang === 'ar' ? 'التصنيفات' : 'Labels'}:{' '}
               <span className="text-slate-300">
                 {tristateLabel('unknown', lang)} ={' '}
-                {lang === 'ar' ? 'غير مثبت بالأدلة' : 'not established by evidence'}
+                {lang === 'ar'
+                  ? 'غير مثبت بالأدلة'
+                  : 'not established by evidence'}
               </span>
             </p>
           </div>
