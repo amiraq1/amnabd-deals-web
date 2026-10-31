@@ -2,9 +2,9 @@ export default function DealCardSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="flex min-h-offer min-w-0 flex-col rounded-card border border-line bg-surface-raised p-5"
+      className="flex h-full min-w-0 flex-col rounded-card border border-line bg-surface-raised p-5"
     >
-      <div className="flex min-h-[6.5rem] gap-3">
+      <div className="flex gap-3">
         <div className="skeleton h-12 w-12 shrink-0" />
         <div className="flex-1 space-y-2">
           <div className="skeleton h-6" />

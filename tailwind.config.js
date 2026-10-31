@@ -3,7 +3,6 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      minHeight: { offer: '46rem' },
       borderRadius: { card: '1rem', control: '0.75rem' },
       spacing: { section: '2rem', card: '1.25rem' },
       colors: {

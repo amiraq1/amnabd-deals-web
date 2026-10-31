@@ -74,9 +74,9 @@ export default function DealCard({
   const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
   return (
     <article
-      className={`deal-spotlight group relative flex min-h-offer min-w-0 flex-col rounded-card border border-line bg-surface-raised p-5 transition-colors hover:border-slate-500 focus-within:border-brand [overflow-wrap:anywhere]`}
+      className={`deal-spotlight group relative flex h-full min-w-0 flex-col rounded-card border border-line bg-surface-raised p-5 transition-colors hover:border-slate-500 focus-within:border-brand [overflow-wrap:anywhere]`}
     >
-      <div className="flex min-h-[6.5rem] items-start gap-3">
+      <div className="flex items-start gap-3">
         <DealIcon deal={deal} />
         <div className="min-w-0 flex-1">
           <h3 className="line-clamp-2 text-base font-bold leading-relaxed text-ink">
@@ -93,18 +93,18 @@ export default function DealCard({
           {isAr ? 'المنفعة المسجّلة' : 'Recorded benefit'}
         </p>
         <p
-          className={`mt-1 line-clamp-3 min-h-[4.5rem] text-2xl font-bold leading-normal ${value === unknown ? 'text-ink-secondary' : 'text-ink'}`}
+          className={`mt-1 line-clamp-3 text-2xl font-bold leading-normal ${value === unknown ? 'text-ink-secondary' : 'text-ink'}`}
         >
           <bdi>
             <IsolatedText text={value} />
           </bdi>
         </p>
-        <p className="mt-2 line-clamp-3 min-h-[4.5rem] text-sm leading-relaxed text-ink-secondary">
+        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-ink-secondary">
           <bdi>
             <IsolatedText text={description || unknown} />
           </bdi>
         </p>
-        <p className="mt-2 min-h-6 text-sm text-ink-muted">
+        <p className="mt-2 text-sm text-ink-muted">
           <bdi>{additional || '\u00a0'}</bdi>
         </p>
       </div>

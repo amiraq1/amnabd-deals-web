@@ -244,32 +244,48 @@ export default function DealDetailPage({
           >
             {lang === 'ar' ? 'ملخص سريع' : 'At a glance'}
           </h2>
-          <dl className="mt-5 grid min-w-0 gap-5 sm:grid-cols-2">
-            <FactRow
-              label={lang === 'ar' ? 'المنفعة الأولى' : 'First benefit'}
-              value={primaryBenefit(deal, lang)}
-            />
-            <FactRow
-              label={lang === 'ar' ? 'السعر' : 'Price'}
-              value={recordedPrice(deal.pricing, lang)}
-            />
-            <FactRow
-              label={lang === 'ar' ? 'لمن' : 'Who'}
-              value={eligibilitySummary(deal, lang)}
-            />
-            <FactRow
-              label={lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
-              value={requirementLabel(e.card_required, lang)}
-            />
-            <FactRow
-              label={lang === 'ar' ? 'التسجيل' : 'Registration'}
-              value={registrationDeadline(deal.registration.deadline, lang)}
-            />
-            <FactRow
-              label={lang === 'ar' ? 'آخر مراجعة' : 'Last reviewed'}
-              value={reviewDateLabel(deal.review.reviewed_on, lang)}
-            />
-          </dl>
+          <div className="mt-5 grid min-w-0 gap-5 sm:grid-cols-2">
+            <dl>
+              <FactRow
+                label={lang === 'ar' ? 'المنفعة الأولى' : 'First benefit'}
+                value={primaryBenefit(deal, lang)}
+              />
+            </dl>
+            <div className="min-w-0 border-b border-line-subtle pb-3">
+              <p className="font-medium text-slate-100 [overflow-wrap:anywhere]">
+                <bdi>
+                  <IsolatedText text={recordedPrice(deal.pricing, lang)} />
+                </bdi>
+              </p>
+            </div>
+            <dl>
+              <FactRow
+                label={lang === 'ar' ? 'لمن' : 'Who'}
+                value={eligibilitySummary(deal, lang)}
+              />
+            </dl>
+            <dl>
+              <FactRow
+                label={lang === 'ar' ? 'بطاقة ائتمان' : 'Credit card'}
+                value={requirementLabel(e.card_required, lang)}
+              />
+            </dl>
+            <div className="min-w-0 border-b border-line-subtle pb-3">
+              <p className="font-medium text-slate-100 [overflow-wrap:anywhere]">
+                <bdi>
+                  <IsolatedText
+                    text={registrationDeadline(deal.registration.deadline, lang)}
+                  />
+                </bdi>
+              </p>
+            </div>
+            <dl>
+              <FactRow
+                label={lang === 'ar' ? 'آخر مراجعة' : 'Last reviewed'}
+                value={reviewDateLabel(deal.review.reviewed_on, lang)}
+              />
+            </dl>
+          </div>
           {deal.headline_value && (
             <p className="mt-4 text-sm text-slate-300">
               <IsolatedText text={deal.headline_value} />

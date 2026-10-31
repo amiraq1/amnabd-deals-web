@@ -685,7 +685,7 @@ export default function HomePage({
           </div>
           <div className="skeleton ms-auto h-11 w-1/2" />
         </div>
-        <div className="mt-8 grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <DealCardSkeleton key={i} />
           ))}
@@ -1381,7 +1381,7 @@ export default function HomePage({
                 : 'Newest first by date added'}
             </span>
           </div>
-          <div className="grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {newestDeals.map((deal) => (
               <DealCard
                 key={`new-${deal.slug}`}
@@ -1536,7 +1536,7 @@ export default function HomePage({
                 {lang === 'ar' ? 'كل العروض' : 'All deals'}
               </h2>
             )}
-            <div className="mt-5 grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {listed.map((deal, i) => {
                 const tier = classifyDeadline(
                   deal.registration.deadline,
