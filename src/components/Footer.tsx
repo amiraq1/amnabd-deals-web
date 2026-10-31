@@ -77,6 +77,22 @@ export default function Footer() {
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
+            <div className="mt-4">
+              <a
+                href="https://www.f6s.com/member/ammar-mohammed?follow=1"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Follow Ammar Mohammed on F6S"
+              >
+                <img
+                  src="https://www.f6s.com/images/f6s-follow-secondary.png"
+                  width={78}
+                  height={22}
+                  alt="Follow Ammar Mohammed on F6S"
+                  style={{ border: 0, width: '78px', height: '22px', padding: 0, margin: 0 }}
+                />
+              </a>
+            </div>
           </div>
         </div>
       </div>
