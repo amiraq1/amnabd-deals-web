@@ -1253,7 +1253,7 @@ export default function HomePage({
               <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
             )}
             {lang === 'ar' ? 'كل الفئات' : 'All categories'}{' '}
-            <span className="text-sm opacity-75">
+            <span className="text-sm font-normal">
               ({deals.length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
             </span>
           </button>
@@ -1273,7 +1273,7 @@ export default function HomePage({
               }`}
             />
             <span>{lang === 'ar' ? 'المحفوظة' : 'Saved'}</span>
-            <span className="text-sm opacity-75">
+            <span className="text-sm font-normal">
               (
               {validSavedCount.toLocaleString(
                 lang === 'ar' ? 'ar-EG' : 'en-US',
@@ -1313,7 +1313,7 @@ export default function HomePage({
                 <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
               )}
               <bdi>{opt.label}</bdi>{' '}
-              <span className="text-sm opacity-75">
+              <span className="text-sm font-normal">
                 ({opt.count.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')})
               </span>
             </button>
