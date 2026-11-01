@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Daily rebuild so Supabase status and end-date changes reach sitemap.xml,
+  # feed.xml and static deal pages without a commit. Scheduled runs use the
+  # default branch only and take the same main path as a push.
+  schedule:
+    - cron: '17 3 * * *'
 
 # Least privilege by default; the deploy job escalates for Pages only.
 permissions:
