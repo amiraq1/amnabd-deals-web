@@ -1,8 +1,9 @@
 import IsolatedText from '@/components/IsolatedText';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CopyDealLink from '@/components/CopyDealLink';
 import EvidenceBadge from '@/components/EvidenceBadge';
-import { offerStatusLabel } from '@/lib/evidence';
+import { offerTimingLabel } from '@/lib/evidence';
+import { getTimingState } from '@/lib/dealTiming';
 import {
   Sparkles,
   ExternalLink,
@@ -55,6 +56,18 @@ export default function DealDetailPage({
   comparisonDisabled,
 }: DealDetailPageProps) {
   const { lang, dir } = useLanguage();
+
+  // Same clock as HomePage: refresh every minute and when the page becomes visible.
+  const [referenceNow, setReferenceNow] = useState(() => new Date());
+  useEffect(() => {
+    const refresh = () => setReferenceNow(new Date());
+    const timer = window.setInterval(refresh, 60000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, []);
 
   const displayName = getDealDisplayName(deal);
   const description = lang === 'ar' ? deal.description_ar : deal.description_en;
@@ -452,7 +465,11 @@ export default function DealDetailPage({
               {' · '}
               {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
               <span className="text-slate-300">
-                {offerStatusLabel(deal.review.offer_status, lang)}
+                {offerTimingLabel(
+                  getTimingState(deal, referenceNow).offer,
+                  deal.review.offer_status,
+                  lang
+                )}
               </span>
             </p>
           </section>

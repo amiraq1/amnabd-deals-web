@@ -126,6 +126,7 @@ export function verifySeoParity({
   liveDealSlugs,
   baseHtml,
   baseUrl,
+  sitemapExcludedSlugs = [],
 }) {
   const violations = [];
   const catalog = new Set();
@@ -212,10 +213,14 @@ export function verifySeoParity({
   if (sitemap === null) {
     violations.push('sitemap.xml: generated artifact is missing');
   } else {
+    // Ended offers keep their deal page but are deliberately left out of the
+    // sitemap. Every other reviewed slug must still be listed exactly once.
+    const excluded = new Set(sitemapExcludedSlugs);
+    const sitemapExpected = new Set([...catalog].filter((slug) => !excluded.has(slug)));
     checkExactSlugIndex(
       'sitemap.xml',
       collectSitemapDealSlugs(sitemap, siteOrigin, violations),
-      catalog,
+      sitemapExpected,
       violations
     );
   }
