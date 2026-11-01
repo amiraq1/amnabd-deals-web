@@ -5,16 +5,28 @@
 
 begin;
 
--- Step 1: make deals.slug unique so it can be a FK target.
--- IF NOT EXISTS is not available for constraints; use DO block instead.
+-- Step 1: make deals.slug unique only if no single-column unique constraint
+-- already covers it. The base deals migration creates `deals_slug_key`.
 do $$
+declare
+  slug_attnum smallint;
 begin
+  select attnum into slug_attnum
+  from pg_attribute
+  where attrelid = 'public.deals'::regclass
+    and attname = 'slug'
+    and not attisdropped;
+
+  if slug_attnum is null then
+    raise exception 'public.deals.slug does not exist';
+  end if;
+
   if not exists (
     select 1
-    from   pg_constraint
-    where  conrelid = 'public.deals'::regclass
-    and    contype  = 'u'
-    and    conname  = 'deals_slug_unique'
+    from pg_constraint c
+    where c.conrelid = 'public.deals'::regclass
+      and c.contype = 'u'
+      and c.conkey = array[slug_attnum]::smallint[]
   ) then
     alter table public.deals
       add constraint deals_slug_unique unique (slug);

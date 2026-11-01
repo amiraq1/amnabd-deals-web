@@ -41,7 +41,7 @@ create or replace function public.deal_reports_throttle()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog
 as $$
 declare
   per_slug integer;
@@ -88,6 +88,7 @@ $$;
 revoke all on function public.deal_reports_throttle() from public;
 revoke all on function public.deal_reports_throttle() from anon;
 revoke all on function public.deal_reports_throttle() from authenticated;
+revoke all on function public.deal_reports_throttle() from service_role;
 
 drop trigger if exists trg_deal_reports_throttle on public.deal_reports;
 create trigger trg_deal_reports_throttle
