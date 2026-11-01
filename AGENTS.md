@@ -5,7 +5,7 @@
 - **الموقع:** https://amnabd.com/
 - **المستودع:** `amiraq1/amnabd-deals-web`
 - **التقنيات:** React 18 + TypeScript + Vite + Tailwind.
-- **البيانات:** تُعرض العروض من Supabase بقراءة عامة فقط.
+- **البيانات:** تُعرض العروض من Supabase بقراءة عامة (`SELECT`) لـ`anon`. الاستثناء الوحيد للكتابة المجهولة هو `INSERT` على جدول البلاغات `public.deal_reports`، محكومًا بسياسة RLS تتحقق من الحقول وبـtrigger `trg_deal_reports_throttle` للحدّ من المعدّل (راجع DEPLOY.md). لا كتابة مجهولة على أي جدول آخر.
 - **النشر:** GitHub Pages عبر workflow `Verify & Deploy`، وذلك بعد موافقة المالك.
 
 الفحوصات المطلوبة قبل طلب أي مراجعة:
