@@ -35,9 +35,14 @@ export async function loadSharedSeo(rootDir) {
     writeFileSync(dest, outputText, 'utf8');
   }
   writeFileSync(join(out, 'package.json'), '{"type":"module"}', 'utf8');
-  const [seo, instants] = await Promise.all([
+  const [seo, instants, timing] = await Promise.all([
     import(pathToFileURL(join(out, 'src/lib/seoFacts.js')).href),
     import(pathToFileURL(join(out, 'src/lib/instants.js')).href),
+    import(pathToFileURL(join(out, 'src/lib/dealTiming.js')).href),
   ]);
-  return { ...seo, timestampInstant: instants.timestampInstant };
+  return {
+    ...seo,
+    timestampInstant: instants.timestampInstant,
+    getTimingState: timing.getTimingState,
+  };
 }

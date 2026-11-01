@@ -16,7 +16,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // Compiles the shared TS modules once per process; the app imports the same ones.
 const shared = await loadSharedSeo(ROOT);
-const { AGGREGATIONS, dealDisplayName, dealFacts } = shared;
+const { AGGREGATIONS, dealDisplayName, dealFacts, getTimingState } = shared;
 
 // Re-exported so `verify-dist.mjs` reuses the already-compiled copy.
 export { shared as sharedSeo };
@@ -439,23 +439,19 @@ export function toRfc822Date(dateStr) {
   return Number.isNaN(parsed.getTime()) ? new Date().toUTCString() : parsed.toUTCString();
 }
 
-function hasPassedRecordedEnd(deal, nowMs) {
-  if (typeof deal?.ends_at !== 'string' || !deal.ends_at.trim()) return false;
-  const endMs = Date.parse(deal.ends_at);
-  return Number.isFinite(endMs) && endMs <= nowMs;
+// Same offer model as the detail page and the home list (src/lib/dealTiming.ts):
+// an explicit `expired` status, or a recorded end that has passed, means ended.
+// Missing or invalid dates stay unknown; nothing is inferred from prose.
+export function isOfferEndedAt(deal, referenceNow) {
+  return getTimingState(deal, referenceNow).offer.state === 'expired';
 }
 
 export function generateRssFeedXml(deals, baseUrl = DEFAULT_SITE_URL, referenceNow = new Date()) {
   const cleanBase = baseUrl.replace(/\/+$/, '');
-  const nowMs = referenceNow instanceof Date ? referenceNow.getTime() : Date.parse(String(referenceNow));
 
-  // Keep only live records with no explicit expiry status or passed ends_at.
-  // Missing/invalid dates stay unknown; no dates are inferred from prose.
+  // Keep only offers that are not ended at the reference time.
   const feedDeals = [...deals]
-    .filter(
-      (deal) =>
-        deal?.slug && deal.status !== 'expired' && !hasPassedRecordedEnd(deal, nowMs)
-    )
+    .filter((deal) => deal?.slug && !isOfferEndedAt(deal, referenceNow))
     .sort((a, b) => {
       const aTime = a.review?.reviewed_on ? new Date(a.review.reviewed_on).getTime() : 0;
       const bTime = b.review?.reviewed_on ? new Date(b.review.reviewed_on).getTime() : 0;
@@ -754,6 +750,7 @@ export async function runStaticSeoGeneration({
   baseUrl = DEFAULT_SITE_URL,
   databaseSlugs,
   databaseDealStates,
+  referenceNow = new Date(),
 } = {}) {
   const indexHtmlPath = join(distDir, 'index.html');
   if (!existsSync(indexHtmlPath)) {
@@ -795,9 +792,21 @@ export async function runStaticSeoGeneration({
   baseHtml = injectHomeItemList(baseHtml, buildHomeItemList(feedDeals, baseUrl));
   writeFileSync(indexHtmlPath, baseHtml, 'utf8');
 
-  writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(seoDeals, baseUrl), 'utf8');
+  // Sitemap follows the feed: an ended offer keeps its deal page but leaves the
+  // sitemap. Live status and ends_at override the catalog when the DB was read.
+  const sitemapCandidates = seoDeals.map((deal) => {
+    const liveState = liveStateBySlug?.get(deal.slug);
+    return liveState ? { ...deal, status: liveState.status, ends_at: liveState.ends_at } : deal;
+  });
+  const sitemapEndedSlugs = sitemapCandidates
+    .filter((deal) => isOfferEndedAt(deal, referenceNow))
+    .map((deal) => deal.slug);
+  const sitemapEnded = new Set(sitemapEndedSlugs);
+  const sitemapDeals = seoDeals.filter((deal) => !sitemapEnded.has(deal.slug));
+
+  writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(sitemapDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, 'robots.txt'), generateRobotsTxt(baseUrl), 'utf8');
-  writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(feedDeals, baseUrl), 'utf8');
+  writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(feedDeals, baseUrl, referenceNow), 'utf8');
   writeFileSync(join(distDir, 'llms.txt'), generateLlmsTxt(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, '404.html'), buildNotFoundPage(baseHtml, baseUrl), 'utf8');
 
@@ -898,6 +907,7 @@ export async function runStaticSeoGeneration({
     liveDealSlugs: publishedSlugs,
     baseHtml,
     baseUrl,
+    sitemapExcludedSlugs: sitemapEndedSlugs,
   });
   if (parityViolations.length > 0) {
     throw new Error(`[SEO parity] FAIL:\n${parityViolations.map((item) => `- ${item}`).join('\n')}`);

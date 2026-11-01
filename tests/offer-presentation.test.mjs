@@ -159,9 +159,11 @@ test('audited surfaces have no remote fonts, provider images or urgency claims',
     read('src/components/DealCard.tsx'),
     /endsLabel|animate-ping|isRecentlyReviewed|ending_soon|isNew/,
   );
-  assert.doesNotMatch(
+  // FIX-01 (AUD-01): the detail page must read ended offers from the timing
+  // model. This replaces an earlier guard that forbade it.
+  assert.match(
     read('src/pages/DealDetailPage.tsx'),
-    /offerTimingLabel|getTimingState/,
+    /offerTimingLabel\(\s*getTimingState\(/,
   );
   assert.match(
     read('src/components/OfferFacts.tsx'),
