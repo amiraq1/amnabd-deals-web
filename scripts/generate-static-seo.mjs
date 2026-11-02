@@ -700,15 +700,20 @@ function toCatalogRow(item) {
     /* keep the raw segment */
   }
   if (!slug) return [];
-  // Only fields present verbatim in the source. Status, eligibility, pricing,
-  // review dates and use cases are intentionally left undefined: the catalog
-  // never stated them, so no generator may publish them.
+  // Only fields present verbatim in the source are used. An explicit review
+  // object is passed through; status, eligibility, pricing and use cases remain
+  // undefined, so this helper never infers them.
+  const review =
+    item?.review && typeof item.review === 'object' && !Array.isArray(item.review)
+      ? item.review
+      : undefined;
   return [
     {
       slug,
       name: explicitText(item.name) || undefined,
       summary: explicitText(item.description) || undefined,
       url,
+      ...(review ? { review } : {}),
     },
   ];
 }
