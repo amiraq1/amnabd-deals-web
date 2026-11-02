@@ -136,7 +136,7 @@ test('F-07 rejects legacy hash routes in generated sitemap and llms artifacts', 
 
 test('reviewed public slug snapshot is valid, unique, and complete', () => {
   const slugs = loadDealSlugSnapshot(process.cwd());
-  assert.equal(slugs.length, 65);
+  assert.equal(slugs.length, 82);
   assert.deepEqual(slugs, [...slugs].sort());
   assert.ok(slugs.includes('anthropic-api-starter-credit'));
   assert.ok(slugs.includes('zenmux'));
