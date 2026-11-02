@@ -80,7 +80,7 @@ jobs:
       # Stops the initial payload from growing unnoticed while no Lighthouse
       # baseline exists yet (audit AMN-011). Raise budgets in a commit, not here.
       - run: npm run test:bundle
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: github.event_name != 'pull_request'
         with:
           path: dist
