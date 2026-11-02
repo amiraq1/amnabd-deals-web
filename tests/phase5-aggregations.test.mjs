@@ -98,11 +98,13 @@ test('aggregation filters accurately match qualifying deals', () => {
     eligibility: { student_status: 'not_required', card_required: 'required' },
     status: 'active',
   };
+  const tomorrow = new Date();
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
   const endingSoonDeal = {
     id: '4',
     slug: 'ending-deal',
     status: 'ending_soon',
-    ends_at: '2026-10-31',
+    ends_at: tomorrow.toISOString().slice(0, 10),
   };
 
   assert.equal(AGGREGATIONS['for-students'].filter(studentDeal), true);
