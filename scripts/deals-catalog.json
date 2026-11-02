@@ -15,10 +15,11 @@
     {
       "@type": "ItemList",
       "name": "AI tool deals",
-      "numberOfItems": 27,
+      "numberOfItems": 49,
       "itemListElement": [
         {
           "@type": "ListItem",
+          "position": 1,
           "position": 1,
           "name": "Google Antigravity — free access for 10,000 scientists",
           "alternateName": "Google Antigravity — وصول مجاني لـ10,000 باحث",
@@ -232,6 +233,187 @@
           "alternateName": "ZenMux — اشتراك Max مجاني لسفراء الجامعات",
           "url": "https://amnabd.com/deal/zenmux",
           "description": "ZenMux is a unified AI gateway compatible with OpenAI, Anthropic and Vertex AI. Accepted campus ambassadors receive free Max membership, normally $100/month. This is not a cash..."
+        },
+        {
+          "@type": "ListItem",
+          "position": 28,
+          "name": "Groq Free Tier — model-specific API limits",
+          "alternateName": "Groq — حدود API مجانية تختلف حسب النموذج",
+          "url": "https://amnabd.com/deal/groq-free-tier",
+          "description": "Groq Free offers API access. Limits vary by model and apply at the organization level; the official table lists 1,000 requests and 200,000 tokens per day for some models."
+        },
+        {
+          "@type": "ListItem",
+          "position": 29,
+          "name": "Mistral Free Mode — limited monthly API access",
+          "alternateName": "Mistral Free Mode — وصول API محدود بحصة شهرية",
+          "url": "https://amnabd.com/deal/mistral-free-mode",
+          "description": "Mistral Free mode provides Studio and API access without a credit card, with limited monthly usage shared across Studio, API and Vibe. No dollar value for this allowance is published."
+        },
+        {
+          "@type": "ListItem",
+          "position": 30,
+          "name": "OpenRouter — free models with daily limits",
+          "alternateName": "OpenRouter — حدود يومية للنماذج المجانية",
+          "url": "https://amnabd.com/deal/openrouter-free-models",
+          "description": "Free models allow 50 requests per day and 20 per minute; the daily limit rises to 1,000 after at least $10 in total credits purchased. Failed requests count, and the free plan works without a payment method."
+        },
+        {
+          "@type": "ListItem",
+          "position": 31,
+          "name": "Google AI Studio — free Gemini 2.5 Flash",
+          "alternateName": "Google AI Studio — Gemini 2.5 Flash مجاني بحدود معلنة",
+          "url": "https://amnabd.com/deal/google-ai-studio-free",
+          "description": "Gemini 2.5 Flash input and output are free in the Free Tier. Google Search grounding has a 500-request daily limit, not a general model request limit. Free-tier data may be used to improve Google products."
+        },
+        {
+          "@type": "ListItem",
+          "position": 32,
+          "name": "GitHub Copilot Free — 2,000 monthly completions",
+          "alternateName": "GitHub Copilot Free — 2,000 إكمالًا شهريًا للأفراد",
+          "url": "https://amnabd.com/deal/github-copilot-free",
+          "description": "The free individual plan includes up to 2,000 code completions per month and a limited AI Credits allowance. It is separate from the existing Copilot Student offer."
+        },
+        {
+          "@type": "ListItem",
+          "position": 33,
+          "name": "Kaggle Notebooks — weekly GPU and TPU hours",
+          "alternateName": "Kaggle Notebooks — ساعات GPU وTPU أسبوعية",
+          "url": "https://amnabd.com/deal/kaggle-gpu-weekly",
+          "description": "Kaggle Notebooks provide up to 30 GPU and 20 TPU hours per week. Availability is limited and sessions may queue; a TPU session is limited to 9 hours."
+        },
+        {
+          "@type": "ListItem",
+          "position": 34,
+          "name": "Cohere — free Trial key for evaluation",
+          "alternateName": "Cohere — مفتاح Trial مجاني للتقييم بحدود تختلف حسب الواجهة",
+          "url": "https://amnabd.com/deal/cohere-trial-key",
+          "description": "Cohere provides a free Trial key for testing and proofs of concept. A 1,000-calls-per-month limit is documented for some Trial-key or endpoint cases; Trial keys are not for production or commercial use."
+        },
+        {
+          "@type": "ListItem",
+          "position": 35,
+          "name": "Oracle Cloud Always Free — compute and storage",
+          "alternateName": "Oracle Cloud Always Free — موارد حوسبة وتخزين مجانية",
+          "url": "https://amnabd.com/deal/oracle-always-free",
+          "description": "Always Free resources include 2 OCPUs and 12GB Arm/Ampere A1 memory, up to two AMD Micro instances, 200GB Block Volume and 10TB monthly outbound data. Card verification is required; idle instances may be reclaimed under stated thresholds."
+        },
+        {
+          "@type": "ListItem",
+          "position": 36,
+          "name": "Google Cloud — $300 for 90 days",
+          "alternateName": "Google Cloud — رصيد 300 دولار لمدة 90 يومًا",
+          "url": "https://amnabd.com/deal/google-cloud-300",
+          "description": "Eligible new users receive $300 for 90 days plus selected Free Tier services. A payment method is required; covered usage is not charged before upgrade. Resources stop at trial end, with a 30-day recovery period."
+        },
+        {
+          "@type": "ListItem",
+          "position": 37,
+          "name": "AWS Free Plan — $100 plus up to $100 more",
+          "alternateName": "AWS — 100 دولار عند التسجيل وحتى 100 إضافية",
+          "url": "https://amnabd.com/deal/aws-free-plan",
+          "description": "The new plan gives $100 at signup and up to $100 more through eligible activities, for up to six months on selected services. Most new customers do not need a payment method, with exceptions; the plan closes when time or credit runs out."
+        },
+        {
+          "@type": "ListItem",
+          "position": 38,
+          "name": "Azure — $200 for 30 days (Iraq eligible)",
+          "alternateName": "Azure — 200 دولار لمدة 30 يومًا (العراق مؤهل)",
+          "url": "https://amnabd.com/deal/azure-200-credit",
+          "description": "The offer is available in Iraq: $200 for 30 days plus selected free services for 12 months. A phone number and non-prepaid payment method are required; free-tier services are not charged before manual upgrade."
+        },
+        {
+          "@type": "ListItem",
+          "position": 39,
+          "name": "DigitalOcean — up to $200 for 60 days",
+          "alternateName": "DigitalOcean — حتى 200 دولار لمدة 60 يومًا",
+          "url": "https://amnabd.com/deal/digitalocean-200-60d",
+          "description": "The MLH offer provides up to $200 for 60 days to eligible new customers. A valid credit card is required; overages and active resources are billed after the trial ends."
+        },
+        {
+          "@type": "ListItem",
+          "position": 40,
+          "name": "Cloudflare Free — DNS, CDN, SSL and Workers",
+          "alternateName": "Cloudflare Free — DNS وCDN وSSL وWorkers",
+          "url": "https://amnabd.com/deal/cloudflare-free",
+          "description": "Cloudflare Free is $0/month and includes DNS, CDN and Universal SSL. Workers Free allows 100,000 requests daily. R2 has a monthly free allowance but requires subscription and billing setup."
+        },
+        {
+          "@type": "ListItem",
+          "position": 41,
+          "name": "Backblaze B2 — first 10GB free",
+          "alternateName": "Backblaze B2 — أول 10GB تخزين مجانية",
+          "url": "https://amnabd.com/deal/backblaze-b2-10gb",
+          "description": "Backblaze B2 includes the first 10GB of storage free, with egress up to 3x average monthly storage and an S3-compatible API. No credit card is required to get started."
+        },
+        {
+          "@type": "ListItem",
+          "position": 42,
+          "name": "eu.org — free subdomain with human review",
+          "alternateName": "eu.org — نطاق فرعي مجاني بمراجعة بشرية",
+          "url": "https://amnabd.com/deal/eu-org-subdomain",
+          "description": "eu.org offers free subdomain registration. Applications require human review that may take a few days; its policy welcomes non-European sites. Registration duration and card requirements are not specified."
+        },
+        {
+          "@type": "ListItem",
+          "position": 43,
+          "name": "GitHub Student Developer Pack — partner offers",
+          "alternateName": "GitHub Student Developer Pack — عروض للطلاب المتحققين",
+          "url": "https://amnabd.com/deal/github-student-pack",
+          "description": "GitHub Education's Student Developer Pack combines GitHub and partner offers for verified students; terms vary. A university email is not universally required. New Copilot Student signups were paused in April 2026 without a reopening date.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-02",
+            "verified_on": "2026-11-02"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 44,
+          "name": "Azure for Students — $100 for 12 months",
+          "alternateName": "Azure for Students — رصيد 100 دولار لمدة 12 شهرًا بلا بطاقة",
+          "url": "https://amnabd.com/deal/azure-for-students",
+          "description": "Eligible students receive $100 to use within 12 months with no credit card required. Eligibility requires age 18+, full-time study at an accredited degree-granting institution and institution-email verification; Iraq-specific availability is unconfirmed."
+        },
+        {
+          "@type": "ListItem",
+          "position": 45,
+          "name": "Notion Education — free Plus for one-member workspaces",
+          "alternateName": "Notion Education — Plus مجاني لمساحة فردية للطلاب والمعلمين",
+          "url": "https://amnabd.com/deal/notion-education",
+          "description": "Notion offers Education/Plus free for one-member student and educator workspaces at accredited colleges and universities listed in WHED. A primary school email and annual verification are required."
+        },
+        {
+          "@type": "ListItem",
+          "position": 46,
+          "name": "CodeRabbit — free PR reviews for public repositories",
+          "alternateName": "CodeRabbit — مراجعات PR مجانية للمستودعات العامة",
+          "url": "https://amnabd.com/deal/coderabbit-public-free",
+          "description": "CodeRabbit states that PR reviews are free for public repositories and eligible open-source projects. Private-repository features have separate plans and are not covered by this offer."
+        },
+        {
+          "@type": "ListItem",
+          "position": 47,
+          "name": "PostHog — 1M events and 5,000 recordings monthly",
+          "alternateName": "PostHog — مليون حدث و5,000 تسجيل جلسة مجانًا شهريًا",
+          "url": "https://amnabd.com/deal/posthog-free",
+          "description": "The free plan includes 1 million analytics events and 5,000 session recordings per month, with no credit card required. At free limits usage stops or excess events are dropped; the allowance resets monthly."
+        },
+        {
+          "@type": "ListItem",
+          "position": 48,
+          "name": "MongoDB Atlas M0 — 512MB free",
+          "alternateName": "MongoDB Atlas M0 — 512MB مجانية بلا بطاقة",
+          "url": "https://amnabd.com/deal/mongodb-atlas-m0",
+          "description": "Atlas Free/M0 provides 512MB at no cost and requires no credit card. A cluster pauses after 30 days of inactivity with zero connections and can be resumed."
+        },
+        {
+          "@type": "ListItem",
+          "position": 49,
+          "name": "Viktor — up to $100 starting credit",
+          "alternateName": "Viktor — حتى 100 دولار رصيد بدء بلا بطاقة ولا انتهاء",
+          "url": "https://amnabd.com/deal/viktor-100-credit",
+          "description": "Viktor's free plan starts with up to $100 in credits; no credit card is required and free credits never expire. Viktor is an AI employee in Slack and Microsoft Teams."
         }
       ]
     }
