@@ -39,6 +39,7 @@ const FavoritesPage = lazy(() => import('@/pages/FavoritesPage'));
 const ChangelogPage = lazy(() => import('@/pages/ChangelogPage'));
 const CollectionPage = lazy(() => import('@/pages/CollectionPage'));
 const ComparisonPage = lazy(() => import('@/pages/ComparisonPage'));
+const FreeApiKeysDirectoryPage = lazy(() => import('@/pages/FreeApiKeysDirectoryPage'));
 
 function AppInner() {
   const { lang } = useLanguage();
@@ -345,6 +346,7 @@ function AppInner() {
     content = <OfflineNotice lang={lang} onRetry={() => window.location.reload()} />;
   else if (route.name === 'notfound')
     content = <NotFoundPage onBack={() => navigate({ name: 'home' })} />;
+  else if (route.name === 'apiDirectory') content = <FreeApiKeysDirectoryPage />;
   else if (offers.status === 'error' && route.name !== 'guide') {
     // Applies before every deal-dependent route, including details/comparison.
     content = (

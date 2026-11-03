@@ -362,6 +362,17 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
     }
   }
 
+  const apiDirectoryHtml = readIfExists(join(distDir, 'free-api-keys-directory', 'index.html'));
+  const apiDirectoryCanonical = `${sharedSeo.DEFAULT_SITE_URL.replace(/\/+$/, '')}/free-api-keys-directory`;
+  if (apiDirectoryHtml === null) {
+    report('free-api-keys-directory/index.html: static directory route is missing');
+  } else if (
+    !apiDirectoryHtml.includes(`<link rel="canonical" href="${apiDirectoryCanonical}">`) ||
+    !apiDirectoryHtml.includes('دليل مفاتيح API المجانية')
+  ) {
+    report('free-api-keys-directory/index.html: route must have its own canonical URL and title');
+  }
+
   // An empty collection page advertises deals that were never established.
   for (const agg of STATIC_AGGREGATIONS) {
     const matches = deals.filter((deal) => agg.filter(deal));

@@ -161,6 +161,7 @@ test('F-04: verify-dist fails timed live copy and warns on Google-style date-onl
   const distDir = mkdtempSync(join(tmpdir(), 'amnabd-deadline-dist-'));
   try {
     mkdirSync(join(distDir, 'compare'), { recursive: true });
+    mkdirSync(join(distDir, 'free-api-keys-directory'), { recursive: true });
     writeFileSync(
       join(distDir, '404.html'),
       '<html><head><meta name="robots" content="noindex,follow"><link rel="canonical" href="https://amnabd.com/404"></head></html>'
@@ -168,6 +169,10 @@ test('F-04: verify-dist fails timed live copy and warns on Google-style date-onl
     writeFileSync(
       join(distDir, 'compare', 'index.html'),
       '<html><head><meta name="robots" content="noindex,follow"></head><body><div id="root"></div></body></html>'
+    );
+    writeFileSync(
+      join(distDir, 'free-api-keys-directory', 'index.html'),
+      '<html><head><title>دليل مفاتيح API المجانية</title><link rel="canonical" href="https://amnabd.com/free-api-keys-directory"></head></html>'
     );
     const timed = verifyDist({
       distDir,

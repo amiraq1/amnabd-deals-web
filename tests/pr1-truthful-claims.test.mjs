@@ -289,6 +289,8 @@ function fixtureDist(files) {
       '<!doctype html><html><head><title>AMNABD Deals</title><meta name="robots" content="noindex,follow"></head><body><div id="root"></div></body></html>',
     '404.html':
       '<!doctype html><html><head><title>AMNABD Deals</title><meta name="robots" content="noindex,follow"><link rel="canonical" href="https://amnabd.com/404"></head><body><div id="root"></div></body></html>',
+    'free-api-keys-directory/index.html':
+      '<!doctype html><html><head><title>دليل مفاتيح API المجانية</title><link rel="canonical" href="https://amnabd.com/free-api-keys-directory"></head></html>',
   };
   for (const [rel, body] of Object.entries({ ...defaults, ...files })) {
     const full = join(root, rel);

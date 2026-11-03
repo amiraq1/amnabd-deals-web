@@ -75,6 +75,13 @@ const COPY: Record<string, RouteCopy> = {
       en: 'The latest recorded review and notes for each offer, plus expiry events calculated from recorded end dates, without claiming historical field changes.',
     },
   },
+  apiDirectory: {
+    title: { ar: 'دليل مفاتيح API المجانية', en: 'Free API Keys Directory' },
+    description: {
+      ar: 'دليل ثنائي اللغة لمنصات مفاتيح API المجانية، مع الحدود وشروط البطاقة وحالة العراق وروابط المصادر الرسمية.',
+      en: 'A bilingual directory of free API key platforms, including limits, card terms, Iraq status, and official source links.',
+    },
+  },
   notfound: {
     title: { ar: 'الصفحة غير موجودة (404)', en: 'Page Not Found (404)' },
     description: {
@@ -156,7 +163,7 @@ export function routeMetadata(
     ogImageUrl,
     jsonLd: {
       '@context': 'https://schema.org',
-      '@type': route.name === 'collection' ? 'CollectionPage' : 'WebSite',
+      '@type': route.name === 'collection' || route.name === 'apiDirectory' ? 'CollectionPage' : 'WebSite',
       name: copy.title[lang],
       url: `${base}${path}`,
     },

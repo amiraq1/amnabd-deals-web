@@ -208,6 +208,11 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     // is the finished document, not the input.
     const builtHomepage = readFileSync(join(distDir, 'index.html'), 'utf8');
     assert.equal(readFileSync(join(distDir, 'ending-soon', 'index.html'), 'utf8'), builtHomepage);
+    const apiDirectoryHtml = readFileSync(join(distDir, 'free-api-keys-directory', 'index.html'), 'utf8');
+    assert.match(apiDirectoryHtml, /<link rel="canonical" href="https:\/\/deals\.example\.com\/free-api-keys-directory">/);
+    assert.match(apiDirectoryHtml, /دليل مفاتيح API المجانية/);
+    assert.match(apiDirectoryHtml, /"@type":"CollectionPage"/);
+    assert.match(readFileSync(join(distDir, 'sitemap.xml'), 'utf8'), /<loc>https:\/\/deals\.example\.com\/free-api-keys-directory<\/loc>/);
     const comparisonShell = readFileSync(join(distDir, 'compare', 'index.html'), 'utf8');
     assert.equal(comparisonShell, buildNoIndexAppShell(sampleHomepageHtml));
     assert.match(comparisonShell, /name="robots" content="noindex,follow"/);
