@@ -655,12 +655,14 @@ export function buildHomeItemList(deals, baseUrl = DEFAULT_SITE_URL) {
     numberOfItems: live.length,
     itemListElement: live.map((deal, index) => {
       const seo = buildDealSeo(deal, base);
+      // Descriptions already appear on each detail page and in llms.txt. Keep
+      // the complete homepage URL list, but avoid repeating long descriptions
+      // in the entry HTML's JSON-LD for every deal.
       return {
         '@type': 'ListItem',
         position: index + 1,
         name: dealDisplayName(deal, deal.slug),
         url: seo.canonicalUrl,
-        description: seo.description,
       };
     }),
   };

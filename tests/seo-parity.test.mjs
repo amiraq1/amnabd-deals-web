@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -134,10 +134,37 @@ test('F-07 rejects legacy hash routes in generated sitemap and llms artifacts', 
   }
 });
 
+test('curated SEO catalog includes all 13 newly reviewed production deals', () => {
+  const catalog = JSON.parse(readFileSync(join(process.cwd(), 'scripts/deals-catalog.json'), 'utf8'));
+  const itemList = catalog['@graph'].find((entry) => entry['@type'] === 'ItemList');
+  assert.equal(itemList.numberOfItems, itemList.itemListElement.length);
+  assert.equal(itemList.itemListElement.length, 80);
+  const slugs = new Set(itemList.itemListElement.map((entry) => new URL(entry.url).pathname.split('/').at(-1)));
+  for (const slug of [
+    'context-dev-1000-api',
+    'runway-free-125-credits',
+    'cartesia-free-tts-stt',
+    'tavily-student-4-months',
+    'speechmatics-signup-bonus',
+    'aiven-free-tier-managed-db',
+    'layerbase-free-db',
+    'apple-pcc-free-foundation-models',
+    'inferall-open-models-free',
+    'geekflare-api-500-credits',
+    'hetzner-experiments-inference-api',
+    'orcarouter-free-models',
+    'requesty-free-200-day',
+  ]) {
+    assert.ok(slugs.has(slug), `missing curated SEO slug: ${slug}`);
+  }
+});
+
 test('reviewed public slug snapshot is valid, unique, and complete', () => {
   const slugs = loadDealSlugSnapshot(process.cwd());
-  assert.equal(slugs.length, 82);
+  assert.equal(slugs.length, 95);
   assert.deepEqual(slugs, [...slugs].sort());
   assert.ok(slugs.includes('anthropic-api-starter-credit'));
+  assert.ok(slugs.includes('context-dev-1000-api'));
+  assert.ok(slugs.includes('requesty-free-200-day'));
   assert.ok(slugs.includes('zenmux'));
 });

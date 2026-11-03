@@ -27,7 +27,7 @@ test('API directory has exactly the 11 eligible free platforms grouped gateways 
 });
 
 test('API directory entries preserve official-source fields and unknown states', () => {
-  assert.equal(FREE_API_DIRECTORY_LAST_VERIFIED, '2026-11-03');
+  assert.equal(FREE_API_DIRECTORY_LAST_VERIFIED, '2026-11-04');
   for (const entry of FREE_API_KEY_ENTRIES) {
     assert.ok(entry.name);
     assert.ok(entry.type === 'gateway' || entry.type === 'provider');
@@ -36,10 +36,18 @@ test('API directory entries preserve official-source fields and unknown states',
     assert.ok(entry.cardPolicy === 'not_required' || entry.cardPolicy === 'unknown');
     assert.ok(entry.iraq === 'ok' || entry.iraq === 'unknown');
     assert.equal(new URL(entry.officialUrl).protocol, 'https:');
-    assert.match(entry.verified, /^2026-11-0[23]$/);
+    assert.match(entry.verified, /^2026-11-0[234]$/);
   }
-  assert.equal(FREE_API_KEY_ENTRIES.filter((entry) => entry.cardPolicy === 'unknown').length, 3);
+  assert.equal(FREE_API_KEY_ENTRIES.filter((entry) => entry.cardPolicy === 'unknown').length, 4);
   assert.equal(FREE_API_KEY_ENTRIES.filter((entry) => entry.iraq === 'ok').length, 1);
+});
+
+test('API directory preserves corrected AnyAPI, BazaarLink, and Fireworks qualifications', () => {
+  const byName = Object.fromEntries(FREE_API_KEY_ENTRIES.map((entry) => [entry.name, entry]));
+  assert.match(byName.AnyAPI.benefit.en, /100K ANY Tokens per calendar day/);
+  assert.match(byName.AnyAPI.limits.en, /one free account per person\/entity/);
+  assert.match(byName.BazaarLink.limits.en, /two concurrent free requests/);
+  assert.match(byName['Fireworks AI'].limits.en, /zero training GPUs with no payment method/);
 });
 
 test('API directory route has stable path, legacy hash route, and localized metadata', () => {
