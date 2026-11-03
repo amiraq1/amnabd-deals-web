@@ -184,6 +184,7 @@ test('generateSitemapXml lists only collections that contain a deal', () => {
   assert.equal(empty.includes('<loc>https://amnabd.com/no-credit-card</loc>'), false);
   assert.equal(empty.includes('<loc>https://amnabd.com/coding</loc>'), false);
   assert.equal(empty.includes('<loc>https://amnabd.com/ending-soon</loc>'), false);
+  assert.equal(empty.includes('<loc>https://amnabd.com/free-api-keys-directory</loc>'), true);
 
   const populated = generateSitemapXml(
     [

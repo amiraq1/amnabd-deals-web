@@ -838,6 +838,24 @@ export async function runStaticSeoGeneration({
   };
   writeFileSync(join(changelogDir, 'index.html'), injectSeoIntoHtml(baseHtml, changelogSeo), 'utf8');
 
+  const apiDirectoryPath = '/free-api-keys-directory';
+  const apiDirectoryDir = join(distDir, apiDirectoryPath.slice(1));
+  mkdirSync(apiDirectoryDir, { recursive: true });
+  const apiDirectorySeo = {
+    title: 'دليل مفاتيح API المجانية — نبض',
+    description:
+      'دليل ثنائي اللغة لمنصات مفاتيح API المجانية، مع الحدود وشروط البطاقة وحالة العراق وروابط المصادر الرسمية.',
+    canonicalUrl: `${baseUrl.replace(/\/+$/, '')}${apiDirectoryPath}`,
+    ogImageUrl: `${baseUrl.replace(/\/+$/, '')}/og-image.png`,
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'دليل مفاتيح API المجانية',
+      url: `${baseUrl.replace(/\/+$/, '')}${apiDirectoryPath}`,
+    },
+  };
+  writeFileSync(join(apiDirectoryDir, 'index.html'), injectSeoIntoHtml(baseHtml, apiDirectorySeo), 'utf8');
+
   // Bake collection SEO only when the catalog proves at least one deal. A
   // generic app shell still gives a known route HTTP 200 and lets the live
   // collection load without publishing any collection-specific static claims.

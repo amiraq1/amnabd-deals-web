@@ -219,6 +219,7 @@ export function generateSitemapXml(deals: readonly Deal[], baseUrl = DEFAULT_SIT
   const urls = [
     url(`${cleanBase}/`, '1.0', 'daily', latestReview),
     url(`${cleanBase}/changelog`, '0.8', 'daily', latestReview),
+    url(`${cleanBase}/free-api-keys-directory`, '0.8', 'weekly'),
     ...nonEmptyAggregations(deals).map(({ config }) =>
       url(`${cleanBase}/${config.slug}`, '0.9', 'daily', latestReview)
     ),
