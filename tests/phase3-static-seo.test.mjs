@@ -92,6 +92,7 @@ test('homepage ItemList is a build-time placeholder the generator fills with can
   const generated = buildHomeItemList(loadDealsCatalog(process.cwd()), 'https://amnabd.com');
   assert.ok(generated.numberOfItems > 0);
   assert.equal(generated.itemListElement.length, generated.numberOfItems);
+  assert.ok(generated.itemListElement.every((item) => !('description' in item)));
   for (const item of generated.itemListElement) {
     const url = new URL(item.url);
     assert.equal(url.origin, 'https://amnabd.com');

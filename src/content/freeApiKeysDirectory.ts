@@ -13,7 +13,7 @@ export interface FreeApiKeyEntry {
   verified: string;
 }
 
-export const FREE_API_DIRECTORY_LAST_VERIFIED = '2026-11-03';
+export const FREE_API_DIRECTORY_LAST_VERIFIED = '2026-11-04';
 
 // The facts and verification dates below come from the supplied official-source review.
 // Paid-only platforms in that review are intentionally not included here.
@@ -38,17 +38,17 @@ export const FREE_API_KEY_ENTRIES: readonly FreeApiKeyEntry[] = [
     name: 'AnyAPI',
     type: 'gateway',
     benefit: {
-      ar: '100 ألف توكن مجاني يوميًا على جميع النماذج المجانية (أكثر من 400 نموذج).',
-      en: '100K free tokens per day across all free models (400+ models).',
+      ar: '100 ألف ANY Tokens يوميًا (وحدة الاستخدام الداخلية) على النماذج المجانية/الأساسية؛ بوابة لأكثر من 400 نموذج.',
+      en: '100K ANY Tokens per calendar day (the service billing unit) on free/basic models; gateway to 400+ models.',
     },
     limits: {
-      ar: 'ينص المصدر الرسمي على عدم الحاجة إلى بطاقة ائتمان.',
-      en: 'The official source explicitly says no credit card is required.',
+      ar: 'إعادة الضبط عند منتصف الليل UTC بلا ترحيل؛ الاستخدام محدود للتقييم والمنخفض، وحساب مجاني واحد للفرد/الجهة. قد تتغير الخطة أو تتوقف.',
+      en: 'Resets at midnight UTC with no carryover; intended for evaluation/low-volume use, one free account per person/entity. The plan may change or be discontinued.',
     },
     cardPolicy: 'not_required',
     iraq: 'unknown',
-    officialUrl: 'https://anyapi.ai',
-    verified: '2026-11-03',
+    officialUrl: 'https://anyapi.ai/pricing',
+    verified: '2026-11-04',
   },
   {
     name: 'LLM7.io',
@@ -87,13 +87,13 @@ export const FREE_API_KEY_ENTRIES: readonly FreeApiKeyEntry[] = [
       en: '6 free models — 10 requests per minute and 60 shared weighted units per day.',
     },
     limits: {
-      ar: 'تكلف المدخلات الطويلة وحدات مرجّحة أكثر؛ إعادة الضبط في منتصف ليل UTC.',
-      en: 'Longer inputs use more weighted units; the quota resets at midnight UTC.',
+      ar: 'الحصة مشتركة بين النماذج؛ المدخلات الطويلة تستهلك وحدات أكثر. يوجد حد عام 20 طلبًا/دقيقة وبحد أقصى طلبان مجانيان متزامنان لكل حساب.',
+      en: 'Quota is shared across models; longer inputs use more weighted units. A site-wide cap of 20 requests/minute and a maximum of two concurrent free requests per account also apply.',
     },
     cardPolicy: 'not_required',
     iraq: 'unknown',
     officialUrl: 'https://bazaarlink.ai/free',
-    verified: '2026-11-03',
+    verified: '2026-11-04',
   },
   {
     name: 'Google AI Studio',
@@ -151,13 +151,13 @@ export const FREE_API_KEY_ENTRIES: readonly FreeApiKeyEntry[] = [
       en: 'Free SFT training for the Muse Glimmer 30B model through November 30, 2026.',
     },
     limits: {
-      ar: 'لا يشمل RL أو DPO أو التدريب الكامل أو النشر خارج التدريب.',
-      en: 'Excludes RL, DPO, full training, and deployment beyond training.',
+      ar: 'تقول صفحة العرض «بلا بطاقة»، لكن توثيق الحصص يذكر صفر GPU للتدريب عند عدم وجود وسيلة دفع؛ إمكانية التدريب بلا وسيلة دفع غير محسومة. حد العرض/حصة GPU غير موضحين.',
+      en: 'The offer page says “no credit card,” but quota docs show zero training GPUs with no payment method on file; access without a payment method is unresolved. The offer cap/GPU quota is not stated.',
     },
-    cardPolicy: 'not_required',
+    cardPolicy: 'unknown',
     iraq: 'unknown',
     officialUrl: 'https://docs.fireworks.ai/fine-tuning/finetuning-intro',
-    verified: '2026-11-03',
+    verified: '2026-11-04',
   },
   {
     name: 'Mistral',

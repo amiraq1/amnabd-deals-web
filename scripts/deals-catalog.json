@@ -15,7 +15,7 @@
     {
       "@type": "ItemList",
       "name": "AI tool deals",
-      "numberOfItems": 67,
+      "numberOfItems": 80,
       "itemListElement": [
         {
           "@type": "ListItem",
@@ -557,6 +557,110 @@
           "alternateName": "حزمة Nexconn للشركات الناشئة — خطة Pro بقيمة $860 شهريًا",
           "url": "https://amnabd.com/deal/nexconn-free-chat-10k",
           "description": "Full Chat Pro for up to 10,000 MAU valued at $860/month; send a successful message before Dec. 31, 2026."
+        },
+        {
+          "@type": "ListItem",
+          "position": 68,
+          "name": "Context.dev — 1,000 Free API Credits/Month (No Card)",
+          "alternateName": "Context.dev — 1,000 رصيد API شهريًا مجانًا (بلا بطاقة)",
+          "url": "https://amnabd.com/deal/context-dev-1000-api",
+          "description": "1,000 monthly API credits plus 10,000 one-time Logo Link requests; no card. 404 and some partial-success responses may be billed."
+        },
+        {
+          "@type": "ListItem",
+          "position": 69,
+          "name": "Runway Free — 125 One-Time Free Credits (No Expiry)",
+          "alternateName": "Runway Free — 125 رصيد مجاني لمرة واحدة (لا تنتهي)",
+          "url": "https://amnabd.com/deal/runway-free-125-credits",
+          "description": "Free plan: 125 one-time non-expiring credits and 5GB asset storage. Card policy and Iraq availability are not stated."
+        },
+        {
+          "@type": "ListItem",
+          "position": 70,
+          "name": "Cartesia Free — Free Monthly Voice: ~27 Min TTS + ~1h51m STT",
+          "alternateName": "Cartesia Free — صوت مجاني شهريًا: ~27 دقيقة TTS + ~1h51m STT",
+          "url": "https://amnabd.com/deal/cartesia-free-tts-stt",
+          "description": "20,000 monthly speech credits plus $1 prepaid voice-agent balance; estimated minutes exclude telephony and LLM usage."
+        },
+        {
+          "@type": "ListItem",
+          "position": 71,
+          "name": "Tavily — Student Account: 4 Months Free of the Project Plan",
+          "alternateName": "Tavily — حساب طلابي: 4 أشهر مجانية من خطة Project",
+          "url": "https://amnabd.com/deal/tavily-student-4-months",
+          "description": "Verified students get four months of Project with 4,000 API credits/month. Card policy for this student offer is not stated."
+        },
+        {
+          "@type": "ListItem",
+          "position": 72,
+          "name": "Speechmatics — Signup Bonus + First 1M TTS Characters Free",
+          "alternateName": "Speechmatics — مكافأة تسجيل + أول مليون حرف TTS مجاني",
+          "url": "https://amnabd.com/deal/speechmatics-signup-bonus",
+          "description": "$100 new-signup grant valid 12 months plus the first 1M TTS characters free; the Free plan needs no card and pauses after credits run out."
+        },
+        {
+          "@type": "ListItem",
+          "position": 73,
+          "name": "Aiven — Free Forever Tier for Managed Databases (No Card)",
+          "alternateName": "Aiven — طبقة مجانية دائمة لقواعد البيانات المدارة (بلا بطاقة)",
+          "url": "https://amnabd.com/deal/aiven-free-tier-managed-db",
+          "description": "Free managed services with no card or automatic charge; resources are capped and services may power off for inactivity; not for production."
+        },
+        {
+          "@type": "ListItem",
+          "position": 74,
+          "name": "Layerbase — Free Forever Tier: 2 Databases + 5GB, No Card",
+          "alternateName": "Layerbase — طبقة مجانية دائمة: قاعدتان + 5GB بلا بطاقة",
+          "url": "https://amnabd.com/deal/layerbase-free-db",
+          "description": "Free tier: two databases, 5GB, eight engines and 20 connections; no card. Idle archival/removal and beta terms apply."
+        },
+        {
+          "@type": "ListItem",
+          "position": 75,
+          "name": "Apple Private Cloud Compute — Free Cloud AI Models for Indie iOS Developers",
+          "alternateName": "Apple Private Cloud Compute — نماذج AI سحابية مجانية لمطوري iOS المستقلين",
+          "url": "https://amnabd.com/deal/apple-pcc-free-foundation-models",
+          "description": "No cloud API fee for eligible Small Business Program developers under 2M downloads; paid Apple Developer membership and PCC entitlement required, with variable daily limits."
+        },
+        {
+          "@type": "ListItem",
+          "position": 76,
+          "name": "InferAll — Unified API Gateway: Open Models at $0 In/Out",
+          "alternateName": "InferAll — بوابة API موحدة: نماذج مفتوحة بسعر $0 دخل/خرج",
+          "url": "https://amnabd.com/deal/inferall-open-models-free",
+          "description": "10+ open NVIDIA NIM models at $0; 25 initial calls then 25/day, no card. Optional one-time $5 activation becomes spendable balance."
+        },
+        {
+          "@type": "ListItem",
+          "position": 77,
+          "name": "Geekflare API — 500 Free API Credits/Month",
+          "alternateName": "Geekflare API — 500 رصيد API مجاني شهريًا",
+          "url": "https://amnabd.com/deal/geekflare-api-500-credits",
+          "description": "500 monthly credits across 14 APIs, no card; 1 request/second, no rollover, and service terms may change."
+        },
+        {
+          "@type": "ListItem",
+          "position": 78,
+          "name": "Hetzner Experiments Inference API — Free Experimental LLM Inference",
+          "alternateName": "Hetzner Experiments Inference API — استدلال LLM مجاني تجريبي",
+          "url": "https://amnabd.com/deal/hetzner-experiments-inference-api",
+          "description": "Free while experimental; limits are 4M input/100K output tokens and 10 requests per 60 seconds. Not for production."
+        },
+        {
+          "@type": "ListItem",
+          "position": 79,
+          "name": "OrcaRouter — Permanent Free AI Models ($0/Token)",
+          "alternateName": "OrcaRouter — نماذج AI مجانية دائمة ($0/توكن)",
+          "url": "https://amnabd.com/deal/orcarouter-free-models",
+          "description": "Rotating free models at $0/token; no card to start, but an established account is required and quotas vary by model, account and region."
+        },
+        {
+          "@type": "ListItem",
+          "position": 80,
+          "name": "Requesty — Unified LLM Gateway With Permanent Free Tier",
+          "alternateName": "Requesty — بوابة LLM موحدة بطبقة مجانية دائمة",
+          "url": "https://amnabd.com/deal/requesty-free-200-day",
+          "description": "200 requests/day on models marked free, no card or trial timer; the free-model catalogue changes."
         }
       ]
     }
