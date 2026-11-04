@@ -269,6 +269,7 @@ rows.push({
             .click();
           if (phase !== 'before') {
             assert.equal(await p.locator('article').count(), rows.length);
+            assert.ok((await p.locator('.offer-monogram').count()) > 0, 'cards use local monogram DealIcon');
             const first = p.locator('article').first();
             const heart = first.getByRole('button', {
               name: 'Remove from favorites',

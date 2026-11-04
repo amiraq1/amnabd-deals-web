@@ -191,7 +191,7 @@ const deals = [
     for (const english of [false, true])
       await run(
         'UX clipboard success announcement ' + (english ? 'en' : 'ar'),
-        { hash: '?tracking=synthetic#/deal/offer-0', english },
+        { path: '/deal/offer-0', english },
         async (p) => {
           await p
             .getByRole('button', {
@@ -203,19 +203,19 @@ const deals = [
             .getByRole('status')
             .filter({ hasText: english ? 'Deal link copied.' : 'تم نسخ رابط العرض.' })
             .waitFor();
-          assert.deepEqual(await p.evaluate(() => window.__written), [base + '/#/deal/offer-0']);
+          assert.deepEqual(await p.evaluate(() => window.__written), [base + '/deal/offer-0']);
           assert.equal(await p.getByRole('textbox').count(), 0);
         }
       );
     for (const clipboard of ['rejected', 'unsupported', 'getter'])
       await run(
         'UX clipboard manual fallback ' + clipboard,
-        { clipboard, hash: '#/deal/offer-0' },
+        { clipboard, path: '/deal/offer-0' },
         async (p) => {
           await p.getByRole('button', { name: 'نسخ رابط العرض', exact: true }).click();
           const input = p.getByRole('textbox', { name: 'رابط العرض للنسخ اليدوي' });
           await input.waitFor();
-          assert.equal(await input.inputValue(), base + '/#/deal/offer-0');
+          assert.equal(await input.inputValue(), base + '/deal/offer-0');
           assert.equal(await input.getAttribute('readonly'), '');
           await input.focus();
           assert.equal(
@@ -227,10 +227,10 @@ const deals = [
       );
     await run(
       'UX late clipboard result cannot leak into another deal',
-      { clipboard: 'delayed', hash: '#/deal/offer-0' },
+      { clipboard: 'delayed', path: '/deal/offer-0' },
       async (p) => {
         await p.getByRole('button', { name: 'نسخ رابط العرض', exact: true }).click();
-        await p.evaluate(() => (window.location.hash = '#/deal/offer-1'));
+        await p.evaluate(() => (window.location.pathname = '/deal/offer-1'));
         await p.getByRole('heading', { name: 'Cloud Two', exact: true }).waitFor();
         await p.waitForTimeout(1000);
         assert.equal(
@@ -261,7 +261,7 @@ const deals = [
       );
     await run(
       'UX manual copying can be retried successfully',
-      { clipboard: 'rejected', hash: '#/deal/offer-0' },
+      { clipboard: 'rejected', path: '/deal/offer-0' },
       async (p) => {
         await p.getByRole('button', { name: 'نسخ رابط العرض', exact: true }).click();
         await p.getByRole('textbox', { name: 'رابط العرض للنسخ اليدوي' }).waitFor();
@@ -273,7 +273,7 @@ const deals = [
         await p.getByRole('button', { name: 'نسخ رابط العرض', exact: true }).click();
         await p.getByRole('status').filter({ hasText: 'تم نسخ رابط العرض.' }).waitFor();
         assert.equal(await p.getByRole('textbox').count(), 0);
-        assert.deepEqual(await p.evaluate(() => window.__written), [base + '/#/deal/offer-0']);
+        assert.deepEqual(await p.evaluate(() => window.__written), [base + '/deal/offer-0']);
         await p.waitForTimeout(4200);
         assert.equal(
           await p.getByRole('status').filter({ hasText: 'تم نسخ رابط العرض.' }).count(),
@@ -283,12 +283,12 @@ const deals = [
     );
     await run(
       'UX stalled clipboard permission offers manual recovery',
-      { clipboard: 'never', hash: '#/deal/offer-0', english: true },
+      { clipboard: 'never', path: '/deal/offer-0', english: true },
       async (p) => {
         await p.getByRole('button', { name: 'Copy deal link', exact: true }).click();
         const input = p.getByRole('textbox', { name: 'Deal link for manual copying' });
         await input.waitFor({ timeout: 7000 });
-        assert.equal(await input.inputValue(), base + '/#/deal/offer-0');
+        assert.equal(await input.inputValue(), base + '/deal/offer-0');
       }
     );
     await run('UX category keyboard focus remains visible', {}, async (p) => {

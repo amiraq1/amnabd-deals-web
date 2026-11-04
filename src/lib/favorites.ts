@@ -1,8 +1,8 @@
 export const FAVORITES_STORAGE_KEY = 'amnabd-favorites';
 export const FAVORITES_EVENT = 'amnabd:favorites-changed';
-// The list lived under this key before `amnabd-favorites` existed; the saved
-// deals module still writes it. Reading it is a one-way compatibility bridge.
-export const LEGACY_FAVORITES_STORAGE_KEY = 'amnabd_saved_deals_v1';
+export const CANONICAL_FAVORITES_STORAGE_KEY = 'amnabd_saved_deals_v1';
+export const LEGACY_FAVORITES_STORAGE_KEY = CANONICAL_FAVORITES_STORAGE_KEY;
+export const UNIFIED_EVENT = 'amnabd:saved-deals-changed';
 
 // Module-level in-memory state in case storage is unavailable or writes fail
 let memoryFavorites: string[] = [];
@@ -75,6 +75,7 @@ function notifyChange(): void {
   if (typeof window !== 'undefined') {
     try {
       window.dispatchEvent(new CustomEvent(FAVORITES_EVENT));
+      window.dispatchEvent(new CustomEvent(UNIFIED_EVENT));
     } catch {
       /* ignore */
     }
@@ -98,7 +99,7 @@ export function saveFavorites(slugs: string[], override?: Storage | null): boole
     if (override === undefined) {
       try {
         storage.setItem(LEGACY_FAVORITES_STORAGE_KEY, JSON.stringify(sanitized));
-        window.dispatchEvent(new CustomEvent('amnabd:saved-deals-changed'));
+        window.dispatchEvent(new CustomEvent(UNIFIED_EVENT));
       } catch {
         /* ignore */
       }
@@ -157,16 +158,22 @@ export function subscribeFavorites(callback: () => void): () => void {
 
   const handleCustomEvent = () => callback();
   const handleStorageEvent = (e: StorageEvent) => {
-    if (e.key === FAVORITES_STORAGE_KEY || e.key === null) {
+    if (
+      e.key === FAVORITES_STORAGE_KEY ||
+      e.key === CANONICAL_FAVORITES_STORAGE_KEY ||
+      e.key === null
+    ) {
       callback();
     }
   };
 
   window.addEventListener(FAVORITES_EVENT, handleCustomEvent);
+  window.addEventListener(UNIFIED_EVENT, handleCustomEvent);
   window.addEventListener('storage', handleStorageEvent);
 
   return () => {
     window.removeEventListener(FAVORITES_EVENT, handleCustomEvent);
+    window.removeEventListener(UNIFIED_EVENT, handleCustomEvent);
     window.removeEventListener('storage', handleStorageEvent);
   };
 }
