@@ -257,7 +257,7 @@ const rows = [
         await p.getByRole('link', { name: 'التفاصيل', exact: true }).click();
         await p.getByRole('button', { name: 'نسخ رابط العرض', exact: true }).click();
         await p.getByRole('status').filter({ hasText: 'تم نسخ رابط العرض.' }).waitFor();
-        assert.equal(await p.evaluate(() => window.__copied.at(-1)), base + '/#/deal/alpha');
+        assert.equal(await p.evaluate(() => window.__copied.at(-1)), base + '/deal/alpha');
       }
     );
     await run(

@@ -228,11 +228,11 @@ const rows = [
         await pressed(save(p), true);
         assert.equal(await p.evaluate(() => location.hash), original);
         const link = articles(p).first().getByRole('link', { name: 'Details', exact: true });
-        assert.equal(await link.getAttribute('href'), '#/deal/alpha');
+        assert.match(await link.getAttribute('href'), /\/?deal\/alpha/);
         assert.equal(await save(p).evaluate((el) => !!el.closest('a')), false);
         await link.focus();
         await p.keyboard.press('Enter');
-        await p.waitForFunction(() => location.hash === '#/deal/alpha');
+        await p.waitForFunction(() => location.pathname === '/deal/alpha' || location.hash === '#/deal/alpha');
         await p
           .getByRole('button', { name: 'Remove Cloud Alpha from saved', exact: true })
           .first()
@@ -420,7 +420,7 @@ const rows = [
     );
     await run(
       'detail header and mobile bar saved state agree, valid source matches header',
-      { hash: '#/deal/alpha', viewport: { width: 390, height: 844 } },
+      { path: '/deal/alpha', viewport: { width: 390, height: 844 } },
       async (p) => {
         const bar = p.getByRole('complementary', { name: 'Quick deal actions' });
         const buttons = p.getByRole('button', { name: 'Save Cloud Alpha', exact: true });
@@ -451,7 +451,7 @@ const rows = [
       await run(
         'invalid source disabled consistently: ' + url,
         {
-          hash: '#/deal/alpha',
+          path: '/deal/alpha',
           rows: [{ ...rows[0], benefits: [], official_sources: [{ url }] }],
           viewport: { width: 320, height: 780 },
         },
@@ -474,7 +474,7 @@ const rows = [
     for (const english of [true, false])
       await run(
         'mobile geometry footer access logical side and reduced motion ' + (english ? 'en' : 'ar'),
-        { english, hash: '#/deal/alpha', viewport: { width: 320, height: 780 } },
+        { english, path: '/deal/alpha', viewport: { width: 320, height: 780 } },
         async (p) => {
           await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
           const bar = p.getByRole('complementary', {
@@ -521,12 +521,13 @@ const rows = [
             ),
             ''
           );
-          await snap(p, 'home-mobile-' + (english ? 'en' : 'ar'));
+          assert.ok((await p.locator('.offer-monogram').count()) > 0, 'cards use local monogram DealIcon');
+        await snap(p, 'home-mobile-' + (english ? 'en' : 'ar'));
         }
       );
     await run(
       'bar remeasures enlarged text and keeps footer accessible',
-      { hash: '#/deal/beta', viewport: { width: 320, height: 780 } },
+      { path: '/deal/beta', viewport: { width: 320, height: 780 } },
       async (p) => {
         await p.evaluate(() => (document.documentElement.style.fontSize = '24px'));
         await p.waitForTimeout(150);
@@ -562,7 +563,7 @@ const rows = [
     );
     await run(
       'desktop hides mobile bar and scroll uses smooth when motion allowed',
-      { hash: '#/deal/alpha', motion: 'no-preference', viewport: { width: 1200, height: 600 } },
+      { path: '/deal/alpha', motion: 'no-preference', viewport: { width: 1200, height: 600 } },
       async (p) => {
         assert.ok(
           await p
@@ -599,7 +600,7 @@ const rows = [
     );
     await run(
       'mobile bar is hidden at the sm breakpoint exactly',
-      { hash: '#/deal/alpha', viewport: { width: 640, height: 780 } },
+      { path: '/deal/alpha', viewport: { width: 640, height: 780 } },
       async (p) => {
         assert.ok(
           await p
@@ -610,7 +611,7 @@ const rows = [
     );
     await run(
       'bar/footer geometry follows extra simulated safe-area padding',
-      { hash: '#/deal/alpha', viewport: { width: 390, height: 844 } },
+      { path: '/deal/alpha', viewport: { width: 390, height: 844 } },
       async (p) => {
         const bar = p.getByRole('complementary', { name: 'Quick deal actions' });
         const before = await bar.boundingBox();

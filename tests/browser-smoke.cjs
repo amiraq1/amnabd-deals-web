@@ -98,6 +98,7 @@ const config = {
         !opt.missingConfig
       ) {
         await p.locator('article').first().waitFor({ timeout: 5000 });
+        assert.ok((await p.locator('.offer-monogram').count()) > 0, 'cards render local monogram DealIcon');
       }
       try {
         await check(p, logs, calls);
@@ -158,7 +159,7 @@ const config = {
     );
     await run(
       'AMN-007 SQL defaults do not crash detail',
-      { deals: [row({ review: {}, eligibility: {}, benefits: [] })], hash: '#/deal/offer' },
+      { deals: [row({ review: {}, eligibility: {}, benefits: [] })], path: '/deal/offer' },
       async (p) => {
         assert.match(await p.locator('h1').innerText(), /Offer/);
         assert.match(await p.locator('main').innerText(), /غير معلوم/);
@@ -175,7 +176,7 @@ const config = {
           }),
         ],
         guides: [{ slug: 'offer', sections: { eligibility: { ar: 'شرط', sources: {} } } }],
-        hash: '#/deal/offer',
+        path: '/deal/offer',
       },
       async (p) => {
         await p.getByText('شرط', { exact: true }).waitFor();
@@ -196,7 +197,7 @@ const config = {
     );
     await run(
       'AMN-007 all invalid rows show explicit error, not 404',
-      { deals: [{}], hash: '#/deal/offer' },
+      { deals: [{}], path: '/deal/offer' },
       async (p) => {
         assert.match(await p.getByRole('alert').innerText(), /غير صالحة/);
         assert.doesNotMatch(await p.locator('main').innerText(), /404/);
@@ -288,7 +289,7 @@ const config = {
       'AMN-003 detail preserves not-required student and no-card facts',
       {
         deals: [row({ eligibility: eligibility({ student_status: 'no', card_required: 'no' }) })],
-        hash: '#/deal/offer',
+        path: '/deal/offer',
       },
       async (p) => {
         const fact = (label) =>
@@ -342,7 +343,7 @@ const config = {
     );
     await run(
       'AMN-004 deal network error is not 404 and retry recovers',
-      { failures: { deals: 1 }, hash: '#/deal/offer' },
+      { failures: { deals: 1 }, path: '/deal/offer' },
       async (p, _logs, calls) => {
         assert.match(await p.locator('main').innerText(), /تعذر تحميل العروض/);
         assert.doesNotMatch(await p.locator('main').innerText(), /404/);
@@ -358,7 +359,7 @@ const config = {
     );
     await run(
       'AMN-004 valid missing offer is a genuine not-found route',
-      { deals: [], hash: '#/deal/missing' },
+      { deals: [], path: '/deal/missing' },
       async (p) => assert.match(await p.locator('main').innerText(), /404/)
     );
     await run('AMN-004 Escape closes mobile nav and restores trigger focus', {}, async (p) => {
@@ -424,7 +425,7 @@ const config = {
               },
             }),
           ],
-          hash: '#/deal/offer',
+          path: '/deal/offer',
         },
         async (p) => {
           const text = await p.locator('main').innerText();

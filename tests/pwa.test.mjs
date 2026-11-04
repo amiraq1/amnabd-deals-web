@@ -137,7 +137,7 @@ test('PWA generator emits real PNG icons, versioned offline-only cache, and pari
     await writeFile(join(distDir, 'assets', 'index-AbCd1234.js'), 'console.log("app")');
     await writeFile(join(distDir, 'assets', 'styles-1234abcd.css'), 'body { color: white; }');
     await writeFile(join(distDir, 'assets', 'deals.json'), '[{"slug":"must-not-be-cached"}]');
-    for (const name of ['favicon.svg', 'sw.js', 'offline.html'])
+    for (const name of ['favicon.svg', 'sw.js', 'offline.html', 'init-language.js'])
       await writeFile(join(publicDir, name), await readFile(join(root, 'public', name)));
     const built = await generatePwaArtifacts({ root: fixture });
     const verified = await verifyPwaArtifacts(distDir);
@@ -148,6 +148,7 @@ test('PWA generator emits real PNG icons, versioned offline-only cache, and pari
     assert.equal(built.versionedAssets.some((url) => url.includes('deals.json')), false);
     assert.equal(built.versionedAssets.filter((url) => url.endsWith('.html')).length, 1);
     assert.ok(built.versionedAssets.includes(built.offlineUrl));
+    assert.ok(built.versionedAssets.includes('/init-language.js'));
     const worker = await readFile(join(distDir, 'sw.js'), 'utf8');
     assert.equal(worker.includes('__CACHE_NAME__'), false);
     assert.equal(worker.includes('__PRECACHE_URLS__'), false);
@@ -165,9 +166,11 @@ test('PWA generator emits real PNG icons, versioned offline-only cache, and pari
 
 test('offline page honors the language URL before local preferences without containing a catalog', async () => {
   const html = await readFile(join(root, 'public/offline.html'), 'utf8');
-  assert.match(html, /URLSearchParams\(location\.search\)/);
-  assert.match(html, /const preferred = fromUrl \|\| saved/);
+  assert.match(html, /<script[^>]+src="\/init-language\.js"/);
   assert.match(html, /noindex,nofollow/);
   assert.ok(!html.includes('application/ld+json'));
   assert.ok(!html.includes('rest/v1'));
+  const script = await readFile(join(root, 'public/init-language.js'), 'utf8');
+  assert.match(script, /URLSearchParams\(window\.location\.search\)|URLSearchParams\(location\.search\)/);
+  assert.match(script, /fromUrl/);
 });

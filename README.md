@@ -8,7 +8,7 @@
 
 - React 18 + TypeScript + Vite
 - Tailwind CSS + lucide-react
-- Supabase PostgREST (public, read-only data)
+- Supabase PostgREST (قراءة عامة للكتالوج + سطح كتابة محدود ومضبوط بالمعدل لبلاغات العروض `public.deal_reports`)
 
 ## Scripts
 
@@ -134,6 +134,22 @@ AMN_DEV_PREVIEW_URL=http://127.0.0.1:4174 CHROMIUM_PATH=/path/to/chromium node t
 بوابة الإصدار الحالية هي [Verify & Deploy](https://github.com/amiraq1/amnabd-deals-web/actions/workflows/deploy.yml):
 تشغّل typecheck وlint والاختبارات وحارس إعداد البناء، ثم بناء Vite مع SEO/PWA و`verify-dist` قبل نشر `main` إلى GitHub Pages.
 الرابط العام الحالي هو [amnabd.com](https://amnabd.com/).
+
+## التحديثات المعمارية وبوابة PR #9
+
+تم ترسيخ التحسينات الجوهرية لضمان صحة البيانات في PR #9 (الالتزام `0c2e55d`: truthful claims, unified timing model, pathname routing, and verify-dist gates):
+
+1. **الادعاءات الصادقة والتحقق الآلي (Truthful Claims & Verification):**
+   - حظر اختلاق أي شروط أو أسعار أو مدد غير مثبتة، وفحص تطابق البيانات الثابتة وتوليد SEO مع مخرجات الكتالوج عبر `scripts/verify-dist.mjs` كبوابة إلزامية في CI.
+2. **نموذج التوقيت الموحد (Unified Timing Model):**
+   - توحيد معالجة المواعيد والتواريخ عبر `src/lib/dealTiming.ts` و`src/lib/instants.ts`، مع اعتماد UTC الصارم وتجنب افتراضات المناطق الزمنية أو العد التنازلي المضلل.
+3. **التوجيه بالمسار القانوني (Pathname Routing):**
+   - اعتماد مسار `/deal/:slug` لتوجيه صفحات التفاصيل مع الحفاظ على التوافقية وسهولة المشاركة والأرشفة.
+4. **سطح كتابة البلاغات المضبوط بالمعدل (Rate-Limited Deal Reports Surface):**
+   - بينما تعتمد المنصة على القراءة العامة لبيانات العروض والدلائل، يُتاح للمستخدمين الإبلاغ عن العروض المعطلة أو الشروط المتغيرة عبر جدول `public.deal_reports`.
+   - يتم حماية هذا السطح بقيود أمنية مشددة:
+     - صلاحيات `GRANT INSERT` لدور `anon` مقتصرة حصرياً على الأعمدة (`deal_slug`, `reason`, `note`) مع حجب باقي الحقول.
+     - زناد قاعدة بيانات يفرض قفلًا استشاريًا (`pg_advisory_xact_lock`) ويضبط توقيت الإنشاء تلقائياً من خادم قاعدة البيانات (`NEW.created_at := pg_catalog.now()`) قبل التحقق من سقف المعدل لمنع التلاعب وتكرار الإغراق.
 
 ## دفعة تحسين التجربة: الفئات والبطاقات ونسخ الرابط
 

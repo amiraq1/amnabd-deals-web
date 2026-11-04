@@ -1,11 +1,14 @@
 export const SAVED_DEALS_STORAGE_KEY = 'amnabd_saved_deals_v1';
 export const SAVED_DEALS_EVENT = 'amnabd:saved-deals-changed';
+export const LEGACY_FAVORITES_STORAGE_KEY = 'amnabd-favorites';
 export const MAX_SAVED_DEALS = 500;
 
 // A storage failure selects memory for reads. A later explicit write retries
 // persistence and recovers only on success; reads never overwrite unsaved edits.
 let memoryFallback = new Set<string>();
 let storageDisabled = false;
+let migratedGlobal = false;
+const migratedStores = new WeakSet<object>();
 
 function resolveStorage(override?: Storage | null): Storage | null {
   try {
@@ -83,8 +86,10 @@ export function getSavedDeals(storageOverride?: Storage | null): string[] {
   const storage = resolveStorage(storageOverride);
   if (!storage) return [...memoryFallback];
   let raw: string | null;
+  let rawLegacy: string | null = null;
   try {
     raw = storage.getItem(SAVED_DEALS_STORAGE_KEY);
+    rawLegacy = storage.getItem(LEGACY_FAVORITES_STORAGE_KEY);
   } catch {
     storageDisabled = true;
     return [...memoryFallback];
@@ -100,6 +105,54 @@ export function getSavedDeals(storageOverride?: Storage | null): string[] {
     }
   }
   const slugs = sanitizeSavedDealKeys(parsed);
+
+  const alreadyMigrated =
+    storageOverride && typeof storageOverride === 'object'
+      ? migratedStores.has(storageOverride)
+      : migratedGlobal;
+
+  // Non-destructive Set migration from legacy amnabd-favorites on first read
+  if (!alreadyMigrated && rawLegacy !== null) {
+    if (storageOverride && typeof storageOverride === 'object') {
+      migratedStores.add(storageOverride);
+    } else {
+      migratedGlobal = true;
+    }
+    let parsedLegacy: unknown = [];
+    try {
+      parsedLegacy = JSON.parse(rawLegacy);
+    } catch {
+      parsedLegacy = [];
+    }
+    const legacySlugs = sanitizeSavedDealKeys(parsedLegacy);
+    if (legacySlugs.length > 0) {
+      const mergedSet = new Set(slugs);
+      let changed = false;
+      for (const item of legacySlugs) {
+        if (!mergedSet.has(item) && mergedSet.size < MAX_SAVED_DEALS) {
+          mergedSet.add(item);
+          changed = true;
+        }
+      }
+      if (changed) {
+        const mergedList = [...mergedSet];
+        try {
+          storage.setItem(SAVED_DEALS_STORAGE_KEY, JSON.stringify(mergedList));
+        } catch {
+          /* ignore */
+        }
+        memoryFallback = new Set(mergedList);
+        return mergedList;
+      }
+    }
+  } else if (!alreadyMigrated) {
+    if (storageOverride && typeof storageOverride === 'object') {
+      migratedStores.add(storageOverride);
+    } else {
+      migratedGlobal = true;
+    }
+  }
+
   memoryFallback = new Set(slugs);
   return slugs;
 }
@@ -117,12 +170,16 @@ function persistSlugs(slugs: string[], storageOverride?: Storage | null): void {
   memoryFallback = new Set(sanitized);
   const storage = resolveStorage(storageOverride);
   if (storage) {
+    if (storageOverride && typeof storageOverride === 'object') {
+      migratedStores.add(storageOverride);
+    } else {
+      migratedGlobal = true;
+    }
     try {
       storage.setItem(SAVED_DEALS_STORAGE_KEY, JSON.stringify(sanitized));
       if (storageOverride === undefined) {
         try {
-          storage.setItem('amnabd-favorites', JSON.stringify(sanitized));
-          window.dispatchEvent(new CustomEvent('amnabd:favorites-changed'));
+          storage.setItem(LEGACY_FAVORITES_STORAGE_KEY, JSON.stringify(sanitized));
         } catch {
           /* ignore */
         }
@@ -194,5 +251,6 @@ export function subscribeSavedDeals(callback: () => void): () => void {
 export function _resetMemoryFallback(): void {
   memoryFallback = new Set<string>();
   storageDisabled = false;
+  migratedGlobal = false;
   cachedSnapshot = EMPTY_SAVED_SNAPSHOT;
 }
