@@ -36,19 +36,6 @@
         <button type="button" onclick="location.reload()">Try again</button>
       </section>
     </main>
-    <script>
-      try {
-        const requested = new URLSearchParams(location.search).getAll('lang');
-        const fromUrl = requested.length === 1 && (requested[0] === 'en' || requested[0] === 'ar') ? requested[0] : null;
-        const saved = localStorage.getItem('amnabd-lang');
-        const preferred = fromUrl || saved;
-        const useEnglish = preferred === 'en' || (!preferred && navigator.language.toLowerCase().startsWith('en'));
-        document.documentElement.lang = useEnglish ? 'en' : 'ar';
-        document.documentElement.dir = useEnglish ? 'ltr' : 'rtl';
-        document.title = useEnglish ? 'Offline | AMNABD Deals' : 'غير متصل | AMNABD Deals';
-        document.getElementById('arabic').hidden = useEnglish;
-        document.getElementById('english').hidden = !useEnglish;
-      } catch (_) {}
-    </script>
+    <script src="/init-language.js"></script>
   </body>
 </html>

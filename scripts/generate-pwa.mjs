@@ -52,17 +52,28 @@ export async function generatePwaArtifacts({
   const iconSvg = await readFile(join(publicDir, 'favicon.svg'), 'utf8');
   const offlineTemplate = await readFile(join(publicDir, 'offline.html'), 'utf8');
   const workerTemplate = await readFile(join(publicDir, 'sw.js'), 'utf8');
+  let initLanguage = '';
+  try {
+    initLanguage = await readFile(join(publicDir, 'init-language.js'), 'utf8');
+  } catch {
+    /* optional in minimal test fixtures */
+  }
   const generatorSource = await readFile(fileURLToPath(import.meta.url), 'utf8');
   const fingerprint = sha256(
-    [originalIndex, iconSvg, offlineTemplate, workerTemplate, generatorSource, ...hashedAssets].join('\n'),
+    [originalIndex, iconSvg, offlineTemplate, workerTemplate, initLanguage, generatorSource, ...hashedAssets].join('\n'),
   );
   const offlineFilename = `offline-${fingerprint}.html`;
   const offlineUrl = `/${offlineFilename}`;
   const icon192Filename = `amnabd-icon-${fingerprint}-192.png`;
   const icon512Filename = `amnabd-icon-${fingerprint}-512.png`;
   const maskable512Filename = `amnabd-icon-${fingerprint}-maskable-512.png`;
+  const initLanguageFilename = 'init-language.js';
+  const initLanguageUrl = `/${initLanguageFilename}`;
 
   await writeFile(join(distDir, offlineFilename), offlineTemplate);
+  if (initLanguage) {
+    await writeFile(join(distDir, initLanguageFilename), initLanguage);
+  }
   for (const size of [192, 512]) {
     const renderer = new Resvg(iconSvg, { fitTo: { mode: 'width', value: size } });
     const filename = size === 192 ? icon192Filename : icon512Filename;
@@ -95,7 +106,7 @@ export async function generatePwaArtifacts({
   };
   await writeFile(join(distDir, 'manifest.webmanifest'), `${JSON.stringify(manifest, null, 2)}\n`);
 
-  const versionedAssets = [...hashedAssets, offlineUrl, icon192Url, icon512Url, maskable512Url];
+  const versionedAssets = [...hashedAssets, initLanguageUrl, offlineUrl, icon192Url, icon512Url, maskable512Url];
   const cacheName = `amnabd-static-${fingerprint}`;
   const worker = renderServiceWorker(workerTemplate, {
     cacheName,

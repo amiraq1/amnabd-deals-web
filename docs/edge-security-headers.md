@@ -31,7 +31,6 @@ while the CSP is still in report-only.
 
 Derived from what the built site actually requests:
 
-- one inline bootstrap script in `index.html` (language/direction setup before React mounts)
 - Google Fonts CSS from `fonts.googleapis.com`, font files from `fonts.gstatic.com`
 - Supabase PostgREST calls to the project origin, injected at build time from `VITE_SUPABASE_URL`
 - own assets, `og-image.png` and the generated per-deal OG cards
@@ -50,9 +49,6 @@ object-src 'none'
 ```
 
 `'unsafe-inline'` in `script-src` is the one weak point, and it exists only for
-that bootstrap block. Removing it requires either a hash of the block or moving
-it into a bundled module. Prefer the hash: it keeps the pre-paint behaviour and
-needs no code change to the app.
 
 `style-src 'unsafe-inline'` is needed because React sets inline style attributes.
 Dropping it would break layout, not just styling.

@@ -59,9 +59,10 @@ test('F-02: URL language overrides storage and invalid or repeated values are ig
 
 test('F-02: HTML bootstrap honors the URL before React even when storage is blocked', () => {
   const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
-  const bootstrap = /<script>\s*([\s\S]*?)<\/script>/.exec(html)?.[1];
+  assert.match(html, /<script[^>]+src="\/init-language\.js"/);
+  const bootstrap = readFileSync(join(process.cwd(), 'public/init-language.js'), 'utf8');
   assert.ok(bootstrap);
-  const document = { documentElement: { lang: 'ar', dir: 'rtl' } };
+  const document = { documentElement: { lang: 'ar', dir: 'rtl' }, getElementById: () => null };
   runInNewContext(bootstrap, {
     URLSearchParams,
     window: { location: { search: '?lang=en' } },

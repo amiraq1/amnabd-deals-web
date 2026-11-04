@@ -44,7 +44,8 @@ export async function verifyPwaArtifacts(distDir = join(ROOT, 'dist')) {
     const isAsset = url.startsWith('/assets/') && isImmutableHashedAsset(url);
     const isOffline = /^\/offline-[a-f0-9]{12}\.html$/.test(url);
     const isIcon = /^\/amnabd-icon-[a-f0-9]{12}-(?:192|512|maskable-512)\.png$/.test(url);
-    assert.ok(isAsset || isOffline || isIcon, `Unsafe PWA cache URL: ${url}`);
+    const isInitLang = url === '/init-language.js';
+    assert.ok(isAsset || isOffline || isIcon || isInitLang, `Unsafe PWA cache URL: ${url}`);
     await readFile(join(distDir, url.slice(1)));
   }
   assert.ok(!precacheUrls.includes('/') && !precacheUrls.includes('/index.html'));
