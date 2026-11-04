@@ -12,6 +12,10 @@ const hardening = readFileSync(
   join(migrations, '20261026120000_deal_reports_hardening.sql'),
   'utf8'
 );
+const createdAtHardening = readFileSync(
+  join(migrations, '20261103120000_deal_reports_created_at_hardening.sql'),
+  'utf8'
+);
 
 test('deal_reports FK migration reuses any single-column UNIQUE constraint on deals.slug', () => {
   assert.match(slugFk, /and\s+c\.contype\s*=\s*'u'/i);
@@ -32,6 +36,34 @@ test('deal_reports throttle keeps pg_catalog search_path and does not grant dire
   assert.doesNotMatch(
     hardening,
     /\bgrant\s+(?:execute|all)\s+on\s+function\s+public\.deal_reports_throttle\(\)/i
+  );
+});
+
+test('deal_reports created_at hardening enforces server timestamp, global advisory lock, and column-level anon grant', () => {
+  // 1. Enforces NEW.created_at := pg_catalog.now() before COUNT
+  assert.match(createdAtHardening, /new\.created_at\s*:=\s*pg_catalog\.now\(\);/i);
+  const countIndex = createdAtHardening.search(/select\s+count\(\*\)/i);
+  const timestampIndex = createdAtHardening.search(/new\.created_at\s*:=\s*pg_catalog\.now\(\);/i);
+  assert.ok(timestampIndex > 0 && timestampIndex < countIndex, 'timestamp must be assigned before count');
+
+  // 2. Global advisory lock
+  assert.match(createdAtHardening, /perform\s+pg_catalog\.pg_advisory_xact_lock\(74839201\);/i);
+
+  // 3. Security definer search path
+  assert.match(createdAtHardening, /security definer\s+set search_path\s*=\s*pg_catalog/i);
+
+  // 4. Revoke table-level anon insert & grant column-level insert (deal_slug, reason, note)
+  assert.match(createdAtHardening, /revoke\s+insert\s+on\s+table\s+public\.deal_reports\s+from\s+anon;/i);
+  assert.match(
+    createdAtHardening,
+    /grant\s+insert\s*\(deal_slug,\s*reason,\s*note\)\s+on\s+table\s+public\.deal_reports\s+to\s+anon;/i
+  );
+
+  // 5. Preserves service_role access
+  assert.match(createdAtHardening, /grant\s+all\s+on\s+table\s+public\.deal_reports\s+to\s+service_role;/i);
+  assert.doesNotMatch(
+    createdAtHardening,
+    /revoke\s+(?:all|insert)\s+on\s+table\s+public\.deal_reports\s+from\s+service_role;/i
   );
 });
 
