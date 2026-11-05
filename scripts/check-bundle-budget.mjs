@@ -10,7 +10,7 @@
 //   node scripts/check-bundle-budget.mjs --json
 //
 // Env: AMN_DIST_DIR to point at another build directory.
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
@@ -28,14 +28,17 @@ function gzipSize(path) {
   return gzipSync(readFileSync(path), { level: 9 }).length;
 }
 
-function collect(dir) {
-  const files = [];
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) files.push(...collect(full));
-    else files.push(full);
+function referencedEntryAssets(html) {
+  const assets = new Set();
+  for (const [tag] of html.matchAll(/<(?:script|link)\b[^>]*>/gi)) {
+    const attribute = tag.match(/\b(?:src|href)\s*=\s*["']([^"']+)["']/i);
+    if (!attribute) continue;
+    const reference = attribute[1].split(/[?#]/, 1)[0];
+    if (/^(?:https?:)?\/\//i.test(reference)) continue;
+    const relative = reference.replace(/^\/+/, '');
+    if (relative.startsWith('assets/')) assets.add(relative);
   }
-  return files;
+  return [...assets];
 }
 
 function kindOf(path, entryHtml) {
@@ -56,7 +59,24 @@ function main() {
   const rows = [];
 
   const entryHtml = join(DIST, 'index.html');
-  for (const path of collect(DIST)) {
+  if (!existsSync(entryHtml)) {
+    console.error(`bundle-budget: entry HTML is missing in ${DIST}. Run the build first.`);
+    process.exitCode = 1;
+    return;
+  }
+  const htmlRaw = statSync(entryHtml).size;
+  const htmlGzip = gzipSize(entryHtml);
+  totals.html += htmlGzip;
+  rows.push({ file: 'index.html', kind: 'html', rawKb: kb(htmlRaw), gzipKb: kb(htmlGzip) });
+
+  const html = readFileSync(entryHtml, 'utf8');
+  for (const relative of referencedEntryAssets(html)) {
+    const path = join(DIST, relative);
+    if (!existsSync(path) || !statSync(path).isFile()) {
+      console.error(`bundle-budget: entry asset is missing: ${relative}`);
+      process.exitCode = 1;
+      return;
+    }
     const kind = kindOf(path, entryHtml);
     if (!kind) continue;
     const raw = statSync(path).size;

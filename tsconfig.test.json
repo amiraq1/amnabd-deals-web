@@ -40,6 +40,7 @@
     "src/lib/aggregations.ts",
     "src/lib/activationGuideSafety.ts",
     "src/content/freeApiKeysDirectory.ts",
+    "src/content/freeAiModelsDirectory.ts",
     "src/lib/comparison.ts",
     "src/lib/unknownFieldLabels.ts",
     "src/content/activationGuides.ts"

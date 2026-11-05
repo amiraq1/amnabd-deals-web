@@ -77,6 +77,14 @@ export default function Footer() {
                 {lang === 'ar' ? 'دليل مفاتيح API المجانية' : 'Free API Keys Directory'}
               </a>
             </div>
+            <div className="mt-1">
+              <a
+                href={localizedPath('/free-ai-models-directory')}
+                className="inline-flex min-h-11 items-center text-sm text-slate-400 hover:text-emerald-400"
+              >
+                {lang === 'ar' ? 'دليل نماذج الذكاء الاصطناعي المجانية' : 'Free AI Models Directory'}
+              </a>
+            </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <a
