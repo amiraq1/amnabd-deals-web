@@ -2,6 +2,29 @@ import { getSupabase } from './supabase';
 import { ResourceError } from './resource';
 import { validateConfig, validateDeals, validateGuides } from './validate';
 
+const DEAL_COLUMNS = [
+  'id',
+  'slug',
+  'name_ar',
+  'name_en',
+  'description_ar',
+  'description_en',
+  'category',
+  'benefits',
+  'eligibility',
+  'pricing',
+  'registration',
+  'official_sources',
+  'get_offer',
+  'review',
+  'created_at',
+  'icon_url',
+  'status',
+  'ends_at',
+].join(',');
+const GUIDE_COLUMNS = ['slug', 'sections'].join(',');
+const CONFIG_COLUMNS = ['id', 'overview', 'section_labels', 'last_reviewed'].join(',');
+
 function diagnostic(rejectedRows: number, normalizedFields: number) {
   if (rejectedRows || normalizedFields)
     console.warn('[data] validation_summary', { rejectedRows, normalizedFields });
@@ -10,7 +33,7 @@ function diagnostic(rejectedRows: number, normalizedFields: number) {
 export async function loadDeals(signal: AbortSignal) {
   const response = await getSupabase()
     .from('deals')
-    .select('*')
+    .select(DEAL_COLUMNS)
     .order('created_at', { ascending: false, nullsFirst: false })
     .order('id', { ascending: true })
     .abortSignal(signal);
@@ -25,7 +48,7 @@ export async function loadDeals(signal: AbortSignal) {
 export async function loadGuides(signal: AbortSignal) {
   const response = await getSupabase()
     .from('usage_guides')
-    .select('*')
+    .select(GUIDE_COLUMNS)
     .order('slug')
     .abortSignal(signal);
   if (response.error) throw new ResourceError('network');
@@ -39,7 +62,7 @@ export async function loadGuides(signal: AbortSignal) {
 export async function loadConfig(signal: AbortSignal) {
   const response = await getSupabase()
     .from('site_config')
-    .select('*')
+    .select(CONFIG_COLUMNS)
     .eq('id', 'main')
     .abortSignal(signal)
     .maybeSingle();
