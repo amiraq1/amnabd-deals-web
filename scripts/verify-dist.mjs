@@ -34,37 +34,83 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { dealFacts } = sharedSeo;
 
 // Per-deal claims: each phrase is allowed only when its own explicit field holds.
-const DEAL_CLAIMS = [
+export const DEAL_CLAIMS = [
   {
-    phrases: ['متاح للجميع'],
+    phrases: ['متاح للجميع', 'available to all', 'open to all'],
     allowed: (facts) => facts.openToAll,
     needs: 'open_to_all=yes + applicant_type=any + worldwide + بلا قائمة دول',
   },
-  { phrases: ['مخصص للطلاب'], allowed: (facts) => facts.studentsOnly, needs: 'student_status=required' },
-  { phrases: ['بدون بطاقة'], allowed: (facts) => facts.noCard, needs: 'card_required=not_required' },
+  {
+    phrases: ['مخصص للطلاب', 'for students', 'students only'],
+    allowed: (facts) => facts.studentsOnly,
+    needs: 'student_status=required',
+  },
+  {
+    phrases: ['بدون بطاقة', 'no credit card', 'no card required'],
+    allowed: (facts) => facts.noCard,
+    needs: 'card_required=not_required',
+  },
   {
     phrases: ['موثّق', 'موثق', 'verified'],
     allowed: (facts) => facts.verified,
     needs: 'review.verification_status=verified',
   },
+  {
+    phrases: ['free for everyone', 'مجان للجميع', 'مجاني للجميع'],
+    allowed: () => false,
+    needs: 'لا يوجد حقل في المصدر يثبت مجانية العرض للجميع',
+  },
+  {
+    phrases: ['guaranteed discount', 'خصم مضمون'],
+    allowed: () => false,
+    needs: 'لا يوجد حقل في المصدر يثبت الخصم المضمون',
+  },
+  {
+    phrases: ['unlimited usage', 'استخدام غير محدود'],
+    allowed: () => false,
+    needs: 'لا يوجد حقل في المصدر يثبت الاستخدام غير المحدود',
+  },
 ];
 
 // Site-wide claims (homepage, 404, feed, llms.txt) speak about the whole
 // directory, so they are allowed only when *every* published deal holds the fact.
-const SITE_CLAIMS = [
+export const SITE_CLAIMS = [
   {
     phrases: ['موثّق', 'موثق', 'verified'],
     every: (facts) => facts.verified,
     needs: 'كل عرض منشور موثّق',
   },
-  { phrases: ['متاح للجميع'], every: (facts) => facts.openToAll, needs: 'كل عرض منشور متاح للجميع' },
-  { phrases: ['بدون بطاقة'], every: (facts) => facts.noCard, needs: 'كل عرض منشور بلا بطاقة' },
+  {
+    phrases: ['متاح للجميع', 'available to all', 'open to all'],
+    every: (facts) => facts.openToAll,
+    needs: 'كل عرض منشور متاح للجميع',
+  },
+  {
+    phrases: ['مخصص للطلاب', 'for students', 'students only'],
+    every: (facts) => facts.studentsOnly,
+    needs: 'كل عرض منشور مخصص للطلاب',
+  },
+  {
+    phrases: ['بدون بطاقة', 'no credit card', 'no card required'],
+    every: (facts) => facts.noCard,
+    needs: 'كل عرض منشور بلا بطاقة',
+  },
   // No field proves "free": a zero offer price is a recorded price, not a
   // promise that the whole offer costs nothing (Docker needs a card).
   {
-    phrases: ['مجان', 'free', 'Free'],
+    phrases: ['مجان', 'free', 'Free', 'free for everyone'],
     every: () => false,
     needs: 'لا يوجد حقل في المصدر يثبت المجانية',
+  },
+  {
+    phrases: ['خصم مضمون', 'guaranteed discount'],
+    every: () => false,
+    needs: 'لا يوجد حقل في المصدر يثبت الخصم المضمون',
+  },
+  {
+    phrases: ['استخدام غير محدود', 'unlimited usage'],
+    every: () => false,
+    needs: 'لا يوجد حقل في المصدر يثبت الاستخدام غير المحدود',
   },
 ];
 
@@ -105,9 +151,80 @@ function jsonLdOf(html) {
   }
 }
 
-function checkText(report, file, text, claims, allow) {
+export function decodeHtmlEntities(text) {
+  if (typeof text !== 'string') return '';
+  return text
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+export function extractVisibleBodyText(html) {
+  if (typeof html !== 'string') return '';
+  let bodyContent = html;
+  const bodyMatch = /<body\b[^>]*>([\s\S]*?)<\/body>/i.exec(html);
+  if (bodyMatch) {
+    bodyContent = bodyMatch[1];
+  } else {
+    bodyContent = html.replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, ' ');
+  }
+  bodyContent = bodyContent.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ');
+  bodyContent = bodyContent.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ');
+  bodyContent = bodyContent.replace(/<!--[\s\S]*?-->/g, ' ');
+  bodyContent = bodyContent.replace(/<[^>]+>/g, ' ');
+  bodyContent = decodeHtmlEntities(bodyContent);
+  return bodyContent.replace(/\s+/g, ' ').trim();
+}
+
+function isNegatedBefore(preceding) {
+  if (/(?:\b(?:not|never|no longer|neither|without|no)\s+|non-?\s*)$/i.test(preceding)) {
+    return true;
+  }
+  if (/(?:^|\s)(?:غير|ليس|ليست|لا)\s+$/.test(preceding)) {
+    return true;
+  }
+  return false;
+}
+
+export function findClaimMatch(text, phrase) {
+  if (typeof text !== 'string' || typeof phrase !== 'string') return null;
+
+  if (/[a-z]/i.test(phrase)) {
+    const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const preceding = text.slice(Math.max(0, match.index - 25), match.index);
+      if (!isNegatedBefore(preceding)) {
+        return match[0];
+      }
+    }
+    return null;
+  }
+
+  let idx = 0;
+  while ((idx = text.indexOf(phrase, idx)) !== -1) {
+    const preceding = text.slice(Math.max(0, idx - 25), idx);
+    if (!isNegatedBefore(preceding)) {
+      return phrase;
+    }
+    idx += phrase.length;
+  }
+  return null;
+}
+
+export function checkText(report, file, text, claims, allow) {
   for (const claim of claims) {
-    const hit = claim.phrases.find((phrase) => text.includes(phrase));
+    let hit = null;
+    for (const phrase of claim.phrases) {
+      hit = findClaimMatch(text, phrase);
+      if (hit) break;
+    }
     if (!hit) continue;
     if (!allow(claim)) {
       report(`${file}: ادعاء «${hit}» غير مثبت (يتطلب ${claim.needs})`);
@@ -115,7 +232,31 @@ function checkText(report, file, text, claims, allow) {
   }
 }
 
-function checkDealPage(report, distDir, slug, facts) {
+export function stripProductTitleFromSvg(svg, deal) {
+  if (typeof svg !== 'string') return '';
+  // Strip titleSvg elements specifically (fill="#f8fafc" and font-weight="700"),
+  // leaving headlineSvg (fill="#34d399" and font-weight="800") intact.
+  let stripped = svg.replace(
+    /<text\b[^>]*font-weight=["']700["'][^>]*fill=["']#f8fafc["'][^>]*>[\s\S]*?<\/text>/gi,
+    ''
+  );
+  stripped = stripped.replace(
+    /<text\b[^>]*fill=["']#f8fafc["'][^>]*font-weight=["']700["'][^>]*>[\s\S]*?<\/text>/gi,
+    ''
+  );
+
+  const name = deal?.name || deal?.name_ar || deal?.name_en || deal?.title || '';
+  if (name) {
+    for (const part of [name, ...name.split(/[—–-]/)].map((s) => s.trim())) {
+      if (part.length > 2) {
+        stripped = stripped.replaceAll(part, '');
+      }
+    }
+  }
+  return stripped;
+}
+
+function checkDealPage(report, distDir, slug, facts, deal) {
   const rel = `deal/${slug}/index.html`;
   const html = readIfExists(join(distDir, rel));
   if (html === null) return;
@@ -129,8 +270,26 @@ function checkDealPage(report, distDir, slug, facts) {
   }
 
   const allow = (claim) => claim.allowed(facts);
-  checkText(report, rel, metaContent(html, 'name', 'description'), DEAL_CLAIMS, allow);
-  checkText(report, rel, metaContent(html, 'property', 'og:description'), DEAL_CLAIMS, allow);
+
+  const summary = typeof deal?.summary === 'string' ? deal.summary : '';
+  const desc = decodeHtmlEntities(metaContent(html, 'name', 'description'));
+  const ogDesc = decodeHtmlEntities(metaContent(html, 'property', 'og:description'));
+
+  const metaClaimsText = summary ? desc.replace(summary, '') : desc;
+  const ogClaimsText = summary ? ogDesc.replace(summary, '') : ogDesc;
+
+  checkText(report, rel, metaClaimsText, DEAL_CLAIMS, allow);
+  checkText(report, rel, ogClaimsText, DEAL_CLAIMS, allow);
+
+  // Check headline_value if present on the deal record (rendered by React DealDetailPage and OG card)
+  if (deal?.headline_value && typeof deal.headline_value === 'string') {
+    checkText(report, `${rel} (headline_value)`, deal.headline_value, DEAL_CLAIMS, allow);
+  }
+
+  const bodyText = extractVisibleBodyText(html);
+  if (bodyText) {
+    checkText(report, rel, bodyText, DEAL_CLAIMS, allow);
+  }
 
   const jsonLd = jsonLdOf(html);
   if (jsonLd === 'invalid') {
@@ -302,7 +461,7 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
       report(`deal/${slug}: صفحة لعرض غير موجود في المصدر`);
       continue;
     }
-    checkDealPage(report, distDir, slug, dealFacts(deal));
+    checkDealPage(report, distDir, slug, dealFacts(deal), deal);
   }
 
   const ogDir = join(distDir, 'og');
@@ -318,7 +477,9 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
       const svg = readIfExists(join(ogDir, file));
       if (svg !== null) {
         const facts = dealFacts(deal);
-        checkText(report, `og/${file}`, svg, DEAL_CLAIMS, (claim) => claim.allowed(facts));
+        // Strip only the product title/name; the headline banner asserts promotional claims and must be checked.
+        const svgToCheck = stripProductTitleFromSvg(svg, deal);
+        checkText(report, `og/${file}`, svgToCheck, DEAL_CLAIMS, (claim) => claim.allowed(facts));
       }
     }
   }
@@ -446,6 +607,8 @@ if (isMain) {
   try {
     const index = process.argv.indexOf('--dist');
     const distDir = index > -1 && process.argv[index + 1] ? resolve(process.argv[index + 1]) : undefined;
+    const rootIndex = process.argv.indexOf('--root');
+    const rootDir = rootIndex > -1 && process.argv[rootIndex + 1] ? resolve(process.argv[rootIndex + 1]) : undefined;
     let liveDeals;
     // Mirror generate-static-seo.mjs: in audit-fixture / snapshot mode skip the
     // live fetch so `npm run build` succeeds on PRs and local fixture builds.
@@ -464,6 +627,7 @@ if (isMain) {
     }
 
     const { violations, warnings, deadlineWarnings, deadlineCoverage } = verifyDist({
+      ...(rootDir ? { rootDir } : {}),
       ...(distDir ? { distDir } : {}),
       ...(liveDeals ? { liveDeals } : {}),
     });
