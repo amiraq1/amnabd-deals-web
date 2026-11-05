@@ -244,7 +244,7 @@ export default function FreeAiModelsDirectoryPage() {
         searchHeading: 'ابحث عن نموذج للبرمجة أو الصور أو الاستدلال', search: 'اكتب اسم النموذج أو المزوّد...',
         quickTitle: 'اختر حسب استخدامك', quickCoding: 'أحتاج نموذجًا للبرمجة', quickVision: 'أحتاج تحليل الصور',
         quickContext: 'أريد سياقًا طويلًا', quickNoCard: 'أريد تجربة دون بطاقة (مؤكد رسميًا)',
-        reviewed: 'نماذج تمت مراجعتها عبر مصادر رسمية', lastUpdated: 'آخر تحديث',
+        reviewed: 'سجلات تمت مراجعتها عبر مصادر رسمية', lastUpdated: 'آخر تحديث',
         models: 'نماذج مدرجة', providers: 'مزوّدون مدرجون', noCard: 'مؤكد أنها بلا بطاقة', longContext: 'سياق ≥ مليون رمز',
         provider: 'كل المزوّدين', access: 'كل أنواع الوصول', direct: 'مزوّد مباشر', gateway: 'بوابة',
         usage: 'كل الاستخدامات', modality: 'كل الوسائط', coding: 'برمجة', reasoning: 'استدلال', vision: 'رؤية', chat: 'محادثة',
@@ -268,7 +268,7 @@ export default function FreeAiModelsDirectoryPage() {
         searchHeading: 'Find a model for coding, images, or reasoning', search: 'Enter a model or provider name...',
         quickTitle: 'Choose by what you need', quickCoding: 'I need a model for coding', quickVision: 'I need image analysis',
         quickContext: 'I want long context', quickNoCard: 'I want a trial without a card (officially confirmed)',
-        reviewed: 'model records reviewed against official sources', lastUpdated: 'Last updated',
+        reviewed: 'entries reviewed via official sources', lastUpdated: 'Last updated',
         models: 'Listed models', providers: 'Listed providers', noCard: 'Confirmed no-card', longContext: 'Context ≥ 1M tokens',
         provider: 'All providers', access: 'All access types', direct: 'Direct provider', gateway: 'Gateway',
         usage: 'All use cases', modality: 'All modalities', coding: 'Coding', reasoning: 'Reasoning', vision: 'Vision', chat: 'Chat',
@@ -367,7 +367,7 @@ export default function FreeAiModelsDirectoryPage() {
           />
         </label>
         <p className="mt-3 text-sm text-emerald-100">
-          {modelCount.toLocaleString(ar ? 'ar-IQ' : 'en-US')} {text.reviewed} · {text.lastUpdated}: <time dateTime={FREE_AI_MODELS_DIRECTORY_LAST_VERIFIED} dir="auto">{updatedAt}</time>
+          <bdi dir="ltr">{modelCount.toLocaleString('en-US')}</bdi> {text.reviewed} · {text.lastUpdated}: <time dateTime={FREE_AI_MODELS_DIRECTORY_LAST_VERIFIED} dir="auto">{updatedAt}</time>
         </p>
         <div className="mt-5">
           <h3 className="mb-2 text-sm font-semibold text-slate-200">{text.quickTitle}</h3>

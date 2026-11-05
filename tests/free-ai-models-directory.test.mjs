@@ -41,6 +41,7 @@ test('AI models directory includes only official-source-verified free or trial r
     'gemini-3.8-flash',
   ]);
   assert.ok(FREE_AI_MODEL_ENTRIES.every((entry) => entry.cardPolicy === 'unknown' && entry.phonePolicy === 'unknown'));
+  assert.ok(FREE_AI_MODEL_ENTRIES.every((entry) => entry.evidenceStatus === 'partial'));
   const gemini = FREE_AI_MODEL_ENTRIES.find((entry) => entry.providerId === 'google-gemini');
   assert.equal(gemini?.tierType, 'quota');
   assert.match(gemini?.trialLimits.en ?? '', /\$0 Free Tier/);
@@ -55,6 +56,14 @@ test('AI models directory route has canonical path, legacy hash, and localized m
   assert.match(routeMetadata(route, 'en').title, /Free AI Models Directory/);
   assert.equal(routeMetadata(route, 'en').canonicalUrl, 'https://amnabd.com/free-ai-models-directory');
   assert.equal(routeMetadata(route, 'en').jsonLd['@type'], 'CollectionPage');
+});
+
+test('AI models aggregate says entries were reviewed via official sources without claiming full verification', () => {
+  const page = readFileSync(join(process.cwd(), 'src/pages/FreeAiModelsDirectoryPage.tsx'), 'utf8');
+  assert.match(page, /reviewed: 'سجلات تمت مراجعتها عبر مصادر رسمية'/);
+  assert.match(page, /reviewed: 'entries reviewed via official sources'/);
+  assert.match(page, /<bdi dir="ltr">\{modelCount\.toLocaleString\('en-US'\)\}<\/bdi> \{text\.reviewed\}/);
+  assert.doesNotMatch(page, /reviewed:\s*'[^']*fully verified[^']*'/i);
 });
 
 test('AI models page is bilingual, discloses trial/unknown fields, and links official sources and API directory', () => {
