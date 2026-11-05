@@ -64,10 +64,10 @@ test('AI models page is bilingual, discloses trial/unknown fields, and links off
   const footer = readFileSync(join(process.cwd(), 'src/components/Footer.tsx'), 'utf8');
   assert.match(page, /Free AI Models Directory/);
   assert.match(page, /دليل نماذج الذكاء الاصطناعي المجانية/);
-  for (const phrase of ['Search model or provider', 'Credit card', 'Phone', 'Context window', 'Official model page', 'Access terms and pricing']) {
+  for (const phrase of ['Enter a model or provider name...', 'Credit card', 'Phone', 'Context window', 'Official model page', 'Access terms and pricing']) {
     assert.ok(page.includes(phrase), `missing English field/feature: ${phrase}`);
   }
-  for (const phrase of ['ابحث باسم النموذج أو المزوّد', 'البطاقة', 'الهاتف', 'حجم السياق', 'صفحة النموذج الرسمية', 'شروط الوصول والأسعار']) {
+  for (const phrase of ['اكتب اسم النموذج أو المزوّد...', 'البطاقة', 'الهاتف', 'حجم السياق', 'صفحة النموذج الرسمية', 'شروط الوصول والأسعار']) {
     assert.ok(page.includes(phrase), `missing Arabic field/feature: ${phrase}`);
   }
   assert.match(page, /target="_blank"/);
@@ -78,6 +78,29 @@ test('AI models page is bilingual, discloses trial/unknown fields, and links off
   assert.match(navbar, /path: '\/free-ai-models-directory'/);
   assert.match(footer, /localizedPath\('\/free-ai-models-directory'\)/);
   assert.match(footer, /Free AI Models Directory/);
+});
+
+test('AI models directory first-phase UX has expandable cards, quick-use choices, honest no-phone filtering, and mobile controls', () => {
+  const page = readFileSync(join(process.cwd(), 'src/pages/FreeAiModelsDirectoryPage.tsx'), 'utf8');
+  for (const phrase of [
+    'Show details and limits', 'عرض التفاصيل والحدود',
+    'I need a model for coding', 'I need image analysis', 'I want long context',
+    'I want a trial without a card (officially confirmed)',
+    'أحتاج نموذجًا للبرمجة', 'أحتاج تحليل الصور', 'أريد سياقًا طويلًا',
+    'أريد تجربة دون بطاقة (مؤكد رسميًا)',
+    'Officially confirmed no phone number required', 'مؤكد رسميًا أنه لا يتطلب رقم هاتف',
+    'Access via', 'طريقة الوصول', 'overflow-x-auto',
+  ]) {
+    assert.ok(page.includes(phrase), `missing first-phase UX: ${phrase}`);
+  }
+  assert.match(page, /if \(noPhoneOnly && entry\.phonePolicy !== 'not_required'\) return false;/);
+  assert.match(page, /if \(noCardOnly && entry\.cardPolicy !== 'not_required'\) return false;/);
+  assert.match(page, /href=\{entry\.officialUrl\}/);
+  assert.match(page, /setUsageFilter\('coding'\)/);
+  assert.match(page, /setUsageFilter\('vision'\)/);
+  assert.match(page, /setCategoryFilter\('long-context'\)/);
+  assert.match(page, /setNoCardOnly\(true\)/);
+  assert.match(page, /<details className="group border-t/);
 });
 
 test('AI models directory is included in the generated sitemap and has an indexable static route check', () => {
