@@ -59,6 +59,8 @@ test('AI models directory route has canonical path, legacy hash, and localized m
 
 test('AI models page is bilingual, discloses trial/unknown fields, and links official sources and API directory', () => {
   const page = readFileSync(join(process.cwd(), 'src/pages/FreeAiModelsDirectoryPage.tsx'), 'utf8');
+  const apiPage = readFileSync(join(process.cwd(), 'src/pages/FreeApiKeysDirectoryPage.tsx'), 'utf8');
+  const navbar = readFileSync(join(process.cwd(), 'src/components/Navbar.tsx'), 'utf8');
   const footer = readFileSync(join(process.cwd(), 'src/components/Footer.tsx'), 'utf8');
   assert.match(page, /Free AI Models Directory/);
   assert.match(page, /دليل نماذج الذكاء الاصطناعي المجانية/);
@@ -71,6 +73,9 @@ test('AI models page is bilingual, discloses trial/unknown fields, and links off
   assert.match(page, /target="_blank"/);
   assert.match(page, /time dateTime=\{entry\.verifiedDate\}/);
   assert.match(page, /href="\/free-api-keys-directory"/);
+  assert.match(apiPage, /href="\/free-ai-models-directory"/);
+  assert.match(navbar, /key: 'aiModels'/);
+  assert.match(navbar, /path: '\/free-ai-models-directory'/);
   assert.match(footer, /localizedPath\('\/free-ai-models-directory'\)/);
   assert.match(footer, /Free AI Models Directory/);
 });

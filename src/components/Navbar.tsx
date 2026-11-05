@@ -29,6 +29,7 @@ const translations = {
     offers: 'العروض',
     favorites: 'المفضلة',
     guide: 'الدليل',
+    aiModels: 'نماذج AI',
     changelog: 'المراجعات',
     savedDeals: 'عروض محفوظة',
     switchLang: 'EN — التبديل إلى الإنجليزية',
@@ -42,6 +43,7 @@ const translations = {
     offers: 'Offers',
     favorites: 'Favorites',
     guide: 'Guide',
+    aiModels: 'AI Models',
     changelog: 'Review History',
     savedDeals: 'saved deals',
     switchLang: 'ع — switch to Arabic',
@@ -52,7 +54,7 @@ const translations = {
   },
 } as const;
 
-type NavKey = 'offers' | 'favorites' | 'guide' | 'changelog';
+type NavKey = 'offers' | 'favorites' | 'guide' | 'aiModels' | 'changelog';
 
 interface NavItem {
   key: NavKey;
@@ -74,6 +76,12 @@ const navItems: readonly NavItem[] = [
     icon: BookOpen,
     routeTarget: { name: 'guide' },
     path: '/guide',
+  },
+  {
+    key: 'aiModels',
+    icon: Sparkles,
+    routeTarget: { name: 'aiModelsDirectory' },
+    path: '/free-ai-models-directory',
   },
   {
     key: 'changelog',
