@@ -127,6 +127,12 @@ export default function FreeApiKeysDirectoryPage() {
       <header>
         <h1 className="font-heading text-3xl font-extrabold text-white">{t.title}</h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-400">{t.note}</p>
+        <a
+          href="/free-ai-models-directory"
+          className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 text-sm font-semibold text-emerald-200 transition hover:border-emerald-400/60 hover:bg-emerald-500/15 hover:text-emerald-100"
+        >
+          {lang === 'ar' ? 'استكشف دليل نماذج الذكاء الاصطناعي المجانية' : 'Explore the Free AI Models Directory'}
+        </a>
       </header>
 
       <div className="mt-8 space-y-10">
