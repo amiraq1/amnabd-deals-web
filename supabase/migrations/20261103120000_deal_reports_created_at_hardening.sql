@@ -5,8 +5,8 @@
 -- 2. Adds global advisory transaction lock pg_catalog.pg_advisory_xact_lock(74839201) to serialize
 --    global rate limit evaluations across concurrent transactions.
 -- 3. Hardens function with SECURITY DEFINER SET search_path = pg_catalog.
--- 4. Revokes table-level INSERT on public.deal_reports from anon and grants column-level INSERT
---    only on (deal_slug, reason, note) to anon, preserving service_role table access.
+-- 4. Revokes table-level INSERT on public.deal_reports from anon and authenticated, then grants
+--    only (deal_slug, reason, note) to both client-facing roles, preserving service_role access.
 
 begin;
 
@@ -30,7 +30,7 @@ begin
   -- Global advisory transaction lock to serialize rate evaluation
   perform pg_catalog.pg_advisory_xact_lock(74839201);
 
-  -- Per-slug advisory lock to serialize concurrent inserts for the same slug
+  -- Per-slug advisory lock to serialize concurrent inserts for the same deal slug
   perform pg_catalog.pg_advisory_xact_lock(hashtext('deal_reports:' || coalesce(new.deal_slug, '')));
 
   select count(*) into per_slug
@@ -75,9 +75,10 @@ create trigger trg_deal_reports_throttle
   for each row
   execute function public.deal_reports_throttle();
 
--- Revoke table-level insert from anon, then grant column-level insert to anon
-revoke insert on table public.deal_reports from anon;
-grant insert (deal_slug, reason, note) on table public.deal_reports to anon;
+-- Remove table-level client inserts so clients cannot supply id or created_at.
+-- Keep report submission available to both client-facing roles using only these columns.
+revoke insert on table public.deal_reports from anon, authenticated;
+grant insert (deal_slug, reason, note) on table public.deal_reports to anon, authenticated;
 
 -- Preserve service_role table access
 grant all on table public.deal_reports to service_role;

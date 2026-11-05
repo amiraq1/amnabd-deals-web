@@ -39,7 +39,7 @@ test('deal_reports throttle keeps pg_catalog search_path and does not grant dire
   );
 });
 
-test('deal_reports created_at hardening enforces server timestamp, global advisory lock, and column-level anon grant', () => {
+test('deal_reports hardening enforces server time, serializes the existing limits, and restricts client inserts', () => {
   // 1. Enforces NEW.created_at := pg_catalog.now() before COUNT
   assert.match(createdAtHardening, /new\.created_at\s*:=\s*pg_catalog\.now\(\);/i);
   const countIndex = createdAtHardening.search(/select\s+count\(\*\)/i);
@@ -52,14 +52,21 @@ test('deal_reports created_at hardening enforces server timestamp, global adviso
   // 3. Security definer search path
   assert.match(createdAtHardening, /security definer\s+set search_path\s*=\s*pg_catalog/i);
 
-  // 4. Revoke table-level anon insert & grant column-level insert (deal_slug, reason, note)
-  assert.match(createdAtHardening, /revoke\s+insert\s+on\s+table\s+public\.deal_reports\s+from\s+anon;/i);
+  // 4. Numeric rate limits are unchanged: 5 per deal/10 minutes and 300/hour.
+  assert.match(createdAtHardening, /interval\s+'10 minutes'[\s\S]*?limit\s+5/i);
+  assert.match(createdAtHardening, /interval\s+'1 hour'[\s\S]*?limit\s+300/i);
+
+  // 5. Revoke table-level client inserts and grant only the submitted fields.
   assert.match(
     createdAtHardening,
-    /grant\s+insert\s*\(deal_slug,\s*reason,\s*note\)\s+on\s+table\s+public\.deal_reports\s+to\s+anon;/i
+    /revoke\s+insert\s+on\s+table\s+public\.deal_reports\s+from\s+anon,\s*authenticated;/i
+  );
+  assert.match(
+    createdAtHardening,
+    /grant\s+insert\s*\(deal_slug,\s*reason,\s*note\)\s+on\s+table\s+public\.deal_reports\s+to\s+anon,\s*authenticated;/i
   );
 
-  // 5. Preserves service_role access
+  // 6. Preserves service_role access
   assert.match(createdAtHardening, /grant\s+all\s+on\s+table\s+public\.deal_reports\s+to\s+service_role;/i);
   assert.doesNotMatch(
     createdAtHardening,
