@@ -1,7 +1,7 @@
 import { parseLanguageFromSearch } from './languageStorage.js';
 
 export interface Route {
-  name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites' | 'changelog' | 'collection' | 'compare' | 'apiDirectory';
+  name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites' | 'changelog' | 'collection' | 'compare' | 'apiDirectory' | 'aiModelsDirectory';
   slug?: string;
   collectionKey?: string;
 }
@@ -39,6 +39,7 @@ export function parseHash(raw: unknown): Route {
     if (first === 'changelog') return { name: 'changelog' };
     if (first === 'compare') return { name: 'compare' };
     if (first === 'free-api-keys-directory') return { name: 'apiDirectory' };
+    if (first === 'free-ai-models-directory') return { name: 'aiModelsDirectory' };
     if (['for-students', 'no-credit-card', 'coding', 'ending-soon'].includes(first)) {
       return { name: 'collection', collectionKey: first };
     }
@@ -59,6 +60,7 @@ export function routeHash(route: Route): string {
   if (route.name === 'changelog') return '#/changelog';
   if (route.name === 'compare') return '#/compare';
   if (route.name === 'apiDirectory') return '#/free-api-keys-directory';
+  if (route.name === 'aiModelsDirectory') return '#/free-ai-models-directory';
   if (route.name === 'collection' && route.collectionKey) {
     return `#/${route.collectionKey}`;
   }
@@ -94,6 +96,7 @@ export function routePath(route: Route): string {
   if (route.name === 'changelog') return '/changelog';
   if (route.name === 'compare') return '/compare';
   if (route.name === 'apiDirectory') return '/free-api-keys-directory';
+  if (route.name === 'aiModelsDirectory') return '/free-ai-models-directory';
   if (route.name === 'collection' && route.collectionKey) {
     return `/${route.collectionKey}`;
   }

@@ -858,6 +858,24 @@ export async function runStaticSeoGeneration({
   };
   writeFileSync(join(apiDirectoryDir, 'index.html'), injectSeoIntoHtml(baseHtml, apiDirectorySeo), 'utf8');
 
+  const aiModelsDirectoryPath = '/free-ai-models-directory';
+  const aiModelsDirectoryDir = join(distDir, aiModelsDirectoryPath.slice(1));
+  mkdirSync(aiModelsDirectoryDir, { recursive: true });
+  const aiModelsDirectorySeo = {
+    title: 'دليل نماذج الذكاء الاصطناعي المجانية — نبض',
+    description:
+      'دليل ثنائي اللغة لنماذج الذكاء الاصطناعي الموثّقة رسميًا، مع توضيح الوصول التجريبي والحدود والسياق والحقول غير المنشورة.',
+    canonicalUrl: `${baseUrl.replace(/\/+$/, '')}${aiModelsDirectoryPath}`,
+    ogImageUrl: `${baseUrl.replace(/\/+$/, '')}/og-image.png`,
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'دليل نماذج الذكاء الاصطناعي المجانية',
+      url: `${baseUrl.replace(/\/+$/, '')}${aiModelsDirectoryPath}`,
+    },
+  };
+  writeFileSync(join(aiModelsDirectoryDir, 'index.html'), injectSeoIntoHtml(baseHtml, aiModelsDirectorySeo), 'utf8');
+
   // Bake collection SEO only when the catalog proves at least one deal. A
   // generic app shell still gives a known route HTTP 200 and lets the live
   // collection load without publishing any collection-specific static claims.

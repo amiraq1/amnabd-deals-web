@@ -82,6 +82,13 @@ const COPY: Record<string, RouteCopy> = {
       en: 'A bilingual directory of free API key platforms, including limits, card terms, Iraq status, and official source links.',
     },
   },
+  aiModelsDirectory: {
+    title: { ar: 'دليل نماذج الذكاء الاصطناعي المجانية', en: 'Free AI Models Directory' },
+    description: {
+      ar: 'دليل ثنائي اللغة لنماذج الذكاء الاصطناعي الموثّقة رسميًا، مع توضيح الوصول التجريبي والحدود والسياق والحقول غير المنشورة.',
+      en: 'A bilingual directory of AI models checked against official sources, including trial access, limits, context, and unpublished fields.',
+    },
+  },
   notfound: {
     title: { ar: 'الصفحة غير موجودة (404)', en: 'Page Not Found (404)' },
     description: {
@@ -163,7 +170,7 @@ export function routeMetadata(
     ogImageUrl,
     jsonLd: {
       '@context': 'https://schema.org',
-      '@type': route.name === 'collection' || route.name === 'apiDirectory' ? 'CollectionPage' : 'WebSite',
+      '@type': route.name === 'collection' || route.name === 'apiDirectory' || route.name === 'aiModelsDirectory' ? 'CollectionPage' : 'WebSite',
       name: copy.title[lang],
       url: `${base}${path}`,
     },
