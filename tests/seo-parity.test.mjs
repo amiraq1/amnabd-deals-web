@@ -138,7 +138,7 @@ test('curated SEO catalog includes all 13 newly reviewed production deals', () =
   const catalog = JSON.parse(readFileSync(join(process.cwd(), 'scripts/deals-catalog.json'), 'utf8'));
   const itemList = catalog['@graph'].find((entry) => entry['@type'] === 'ItemList');
   assert.equal(itemList.numberOfItems, itemList.itemListElement.length);
-  assert.equal(itemList.itemListElement.length, 80);
+  assert.equal(itemList.itemListElement.length, 92);
   const slugs = new Set(itemList.itemListElement.map((entry) => new URL(entry.url).pathname.split('/').at(-1)));
   for (const slug of [
     'context-dev-1000-api',
@@ -154,6 +154,18 @@ test('curated SEO catalog includes all 13 newly reviewed production deals', () =
     'hetzner-experiments-inference-api',
     'orcarouter-free-models',
     'requesty-free-200-day',
+    'mindshub-free-tier',
+    'cto-new-free-forever',
+    'stepfun-stepaudio-3-free',
+    'cloady-free-tier',
+    'daytona-200-free-compute',
+    'prized-30-free-credit',
+    'raon-1-mini-free-api',
+    'tensorlake-free-sandbox',
+    'flyio-sprites-30-trial',
+    'vercel-sandbox-free-hobby',
+    'freestyle-free-vms',
+    'zai-free-flash-models',
   ]) {
     assert.ok(slugs.has(slug), `missing curated SEO slug: ${slug}`);
   }
@@ -161,7 +173,7 @@ test('curated SEO catalog includes all 13 newly reviewed production deals', () =
 
 test('reviewed public slug snapshot is valid, unique, and complete', () => {
   const slugs = loadDealSlugSnapshot(process.cwd());
-  assert.equal(slugs.length, 95);
+  assert.equal(slugs.length, 107);
   assert.deepEqual(slugs, [...slugs].sort());
   assert.ok(slugs.includes('anthropic-api-starter-credit'));
   assert.ok(slugs.includes('context-dev-1000-api'));
