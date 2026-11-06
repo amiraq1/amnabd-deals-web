@@ -271,6 +271,11 @@ function wrapLines(text, max) {
   return lines;
 }
 
+// Title <text> attributes of the OG card, shared with scripts/verify-dist.mjs
+// so the generator and the post-build verifier cannot drift apart (AUD-011).
+export const OG_TITLE_TEXT_FILL = '#f8fafc';
+export const OG_TITLE_TEXT_WEIGHT = '700';
+
 // The OG card may only state what `facts` proves. With no explicit data it
 // renders the name alone — no "verified" badge, no eligibility tag, no value.
 export function buildDealOgSvg(deal, facts = dealFacts(deal)) {
@@ -295,7 +300,7 @@ export function buildDealOgSvg(deal, facts = dealFacts(deal)) {
   const titleSvg = titleLines
     .map(
       (line, index) =>
-        `  <text x="1096" y="${titleY + index * 62}" fill="#f8fafc" font-family="Cairo, Tajawal, sans-serif" font-size="40" font-weight="700" text-anchor="end" direction="rtl">${line}</text>`
+        `  <text x="1096" y="${titleY + index * 62}" fill="${OG_TITLE_TEXT_FILL}" font-family="Cairo, Tajawal, sans-serif" font-size="40" font-weight="${OG_TITLE_TEXT_WEIGHT}" text-anchor="end" direction="rtl">${line}</text>`
     )
     .join('\n');
 
