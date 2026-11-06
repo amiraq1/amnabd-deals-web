@@ -347,6 +347,11 @@ test('AUD-011: findClaimMatch skips negated English and Arabic claims', () => {
   assert.equal(findClaimMatch('هذا العرض غير متاح للجميع', 'متاح للجميع'), null);
   assert.equal(findClaimMatch('عرض غير موثّق', 'موثّق'), null);
   assert.equal(findClaimMatch('ليس متاحاً للجميع', 'متاح للجميع'), null);
+  // Contractions and non-adjacent negation (devloai review on PR #44):
+  assert.equal(findClaimMatch("This tier isn't available to all users", 'available to all'), null);
+  assert.equal(findClaimMatch('Access is not currently available to all', 'available to all'), null);
+  // "not only X" asserts X, so it must still match (curated adverb gap, not \w+):
+  assert.equal(findClaimMatch('Not only available to all users', 'available to all'), 'available to all');
 
   // Positive claims still match:
   assert.equal(findClaimMatch('Now available to all developers', 'available to all'), 'available to all');
@@ -428,9 +433,42 @@ test('AUD-011: stripProductTitleFromSvg strips title lines but keeps headlineSvg
   const mockSvg =
     '<svg><text x="1096" y="100" fill="#f8fafc" font-size="40" font-weight="700">Azure for Students</text>' +
     '<g transform="translate(104, 380)"><text x="956" y="62" fill="#34d399" font-size="40" font-weight="800">خصم مضمون</text></g></svg>';
-  const stripped = stripProductTitleFromSvg(mockSvg, { name_ar: 'Azure for Students', name_en: 'Azure for Students' });
+  const stripped = stripProductTitleFromSvg(mockSvg);
   assert.ok(!stripped.includes('Azure for Students'), 'Title must be stripped');
   assert.ok(stripped.includes('خصم مضمون'), 'Headline SVG must be preserved');
+});
+
+// Locks in the headline gate (devloai review on PR #44): an unproven claim in
+// a catalog row's headline_value must fail verifyDist end to end, even when
+// the deal page body itself is clean.
+test('AUD-011: verifyDist flags unproven claim in catalog headline_value (headline gate)', () => {
+  const customRoot = mkdtempSync(join(tmpdir(), 'amnabd-root-'));
+  mkdirSync(join(customRoot, 'public'), { recursive: true });
+  writeFileSync(
+    join(customRoot, 'public', 'deals-catalog.json'),
+    JSON.stringify([
+      {
+        slug: 'acme-verified-partner',
+        name: 'Acme — Verified Partner',
+        summary: 'Partner deal',
+        headline_value: 'Verified Partner deal',
+        eligibility: {
+          student_status: 'unknown',
+        },
+      },
+    ])
+  );
+
+  const customDist = fixtureDist({
+    'deal/acme-verified-partner/index.html':
+      '<!doctype html><html><head><title>Acme</title></head><body><div id="root"></div></body></html>',
+  });
+
+  const result = verifyDist({ rootDir: customRoot, distDir: customDist });
+  assert.ok(
+    result.violations.some((v) => v.includes('(headline_value)') && v.includes('Verified')),
+    `Unproven headline_value claim must be flagged: ${result.violations.join(', ')}`
+  );
 });
 
 // --- P1: React DOM rendering integration tests ---

@@ -24,6 +24,8 @@ import {
   isStaticDealSlug,
   loadDealsCatalog,
   loadPublicDealRecords,
+  OG_TITLE_TEXT_FILL,
+  OG_TITLE_TEXT_WEIGHT,
   STATIC_AGGREGATIONS,
   sharedSeo,
 } from './generate-static-seo.mjs';
@@ -182,7 +184,13 @@ export function extractVisibleBodyText(html) {
 }
 
 function isNegatedBefore(preceding) {
-  if (/(?:\b(?:not|never|no longer|neither|without|no)\s+|non-?\s*)$/i.test(preceding)) {
+  // Curated adverb gap (not a generic \w+ gap): "not only available to all"
+  // asserts the claim, so "only" must never count as a negating gap.
+  if (
+    /(?:\b(?:not|never|no longer|neither|without|no)\s+(?:(?:currently|actually|really|necessarily|strictly|exclusively|entirely)\s+)?|n['’]t\s+(?:\w+\s+)?|non-?\s*)$/i.test(
+      preceding
+    )
+  ) {
     return true;
   }
   if (/(?:^|\s)(?:غير|ليس|ليست|لا)\s+$/.test(preceding)) {
@@ -232,27 +240,33 @@ export function checkText(report, file, text, claims, allow) {
   }
 }
 
-export function stripProductTitleFromSvg(svg, deal) {
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function stripProductTitleFromSvg(svg) {
   if (typeof svg !== 'string') return '';
-  // Strip titleSvg elements specifically (fill="#f8fafc" and font-weight="700"),
-  // leaving headlineSvg (fill="#34d399" and font-weight="800") intact.
+  // Strip titleSvg elements specifically. The title-text attributes are shared
+  // with buildDealOgSvg in generate-static-seo.mjs, so the generator and this
+  // verifier cannot drift apart; headlineSvg (fill="#34d399" and
+  // font-weight="800") stays intact.
+  const fill = escapeRegExp(OG_TITLE_TEXT_FILL);
+  const weight = escapeRegExp(OG_TITLE_TEXT_WEIGHT);
   let stripped = svg.replace(
-    /<text\b[^>]*font-weight=["']700["'][^>]*fill=["']#f8fafc["'][^>]*>[\s\S]*?<\/text>/gi,
+    new RegExp(
+      `<text\\b[^>]*font-weight=["']${weight}["'][^>]*fill=["']${fill}["'][^>]*>[\\s\\S]*?</text>`,
+      'gi'
+    ),
     ''
   );
   stripped = stripped.replace(
-    /<text\b[^>]*fill=["']#f8fafc["'][^>]*font-weight=["']700["'][^>]*>[\s\S]*?<\/text>/gi,
+    new RegExp(
+      `<text\\b[^>]*fill=["']${fill}["'][^>]*font-weight=["']${weight}["'][^>]*>[\\s\\S]*?</text>`,
+      'gi'
+    ),
     ''
   );
 
-  const name = deal?.name || deal?.name_ar || deal?.name_en || deal?.title || '';
-  if (name) {
-    for (const part of [name, ...name.split(/[—–-]/)].map((s) => s.trim())) {
-      if (part.length > 2) {
-        stripped = stripped.replaceAll(part, '');
-      }
-    }
-  }
   return stripped;
 }
 
@@ -478,7 +492,7 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
       if (svg !== null) {
         const facts = dealFacts(deal);
         // Strip only the product title/name; the headline banner asserts promotional claims and must be checked.
-        const svgToCheck = stripProductTitleFromSvg(svg, deal);
+        const svgToCheck = stripProductTitleFromSvg(svg);
         checkText(report, `og/${file}`, svgToCheck, DEAL_CLAIMS, (claim) => claim.allowed(facts));
       }
     }
