@@ -91,6 +91,8 @@ function fixtureDist(files) {
       '<!doctype html><html><head><title>دليل مفاتيح API المجانية</title><link rel="canonical" href="https://amnabd.com/free-api-keys-directory"></head></html>',
     'free-ai-models-directory/index.html':
       '<!doctype html><html><head><title>دليل نماذج الذكاء الاصطناعي المجانية</title><link rel="canonical" href="https://amnabd.com/free-ai-models-directory"></head></html>',
+    'sms-suppliers-directory/index.html':
+      '<!doctype html><html><head><title>دليل خدمات وأدلة أرقام SMS</title><link rel="canonical" href="https://amnabd.com/sms-suppliers-directory"></head></html>',
   };
   for (const [rel, body] of Object.entries({ ...defaults, ...files })) {
     const full = join(root, rel);

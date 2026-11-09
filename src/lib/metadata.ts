@@ -89,6 +89,13 @@ const COPY: Record<string, RouteCopy> = {
       en: 'A bilingual directory of AI models checked against official sources, including trial access, limits, context, and unpublished fields.',
     },
   },
+  smsSuppliersDirectory: {
+    title: { ar: 'دليل خدمات وأدلة أرقام SMS — 75 سجلًا', en: 'SMS Number Services & Directories — 75 Entries' },
+    description: {
+      ar: 'دليل ثنائي اللغة لـ75 سجلًا من خدمات وأدلة أرقام SMS، مع فصل السجلات الموسومة رسميًا في الملف عن الإدخالات التي تحتاج إلى مراجعة.',
+      en: 'A bilingual directory of 75 SMS number and inbox entries, separating records marked official in the supplied file from entries that need review.',
+    },
+  },
   notfound: {
     title: { ar: 'الصفحة غير موجودة (404)', en: 'Page Not Found (404)' },
     description: {
@@ -170,7 +177,7 @@ export function routeMetadata(
     ogImageUrl,
     jsonLd: {
       '@context': 'https://schema.org',
-      '@type': route.name === 'collection' || route.name === 'apiDirectory' || route.name === 'aiModelsDirectory' ? 'CollectionPage' : 'WebSite',
+      '@type': route.name === 'collection' || route.name === 'apiDirectory' || route.name === 'aiModelsDirectory' || route.name === 'smsSuppliersDirectory' ? 'CollectionPage' : 'WebSite',
       name: copy.title[lang],
       url: `${base}${path}`,
     },

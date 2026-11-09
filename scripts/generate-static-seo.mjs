@@ -881,6 +881,24 @@ export async function runStaticSeoGeneration({
   };
   writeFileSync(join(aiModelsDirectoryDir, 'index.html'), injectSeoIntoHtml(baseHtml, aiModelsDirectorySeo), 'utf8');
 
+  const smsSuppliersDirectoryPath = '/sms-suppliers-directory';
+  const smsSuppliersDirectoryDir = join(distDir, smsSuppliersDirectoryPath.slice(1));
+  mkdirSync(smsSuppliersDirectoryDir, { recursive: true });
+  const smsSuppliersDirectorySeo = {
+    title: 'دليل خدمات وأدلة أرقام SMS — 75 سجلًا — نبض',
+    description:
+      'دليل ثنائي اللغة لـ75 سجلًا من خدمات وأدلة أرقام SMS، مع فصل السجلات الموسومة رسميًا في الملف عن الإدخالات التي تحتاج إلى مراجعة.',
+    canonicalUrl: `${baseUrl.replace(/\/+$/, '')}${smsSuppliersDirectoryPath}`,
+    ogImageUrl: `${baseUrl.replace(/\/+$/, '')}/og-image.png`,
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'دليل خدمات وأدلة أرقام SMS — 75 سجلًا',
+      url: `${baseUrl.replace(/\/+$/, '')}${smsSuppliersDirectoryPath}`,
+    },
+  };
+  writeFileSync(join(smsSuppliersDirectoryDir, 'index.html'), injectSeoIntoHtml(baseHtml, smsSuppliersDirectorySeo), 'utf8');
+
   // Bake collection SEO only when the catalog proves at least one deal. A
   // generic app shell still gives a known route HTTP 200 and lets the live
   // collection load without publishing any collection-specific static claims.

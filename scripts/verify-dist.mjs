@@ -559,6 +559,17 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
     report('free-ai-models-directory/index.html: route must have its own canonical URL and title');
   }
 
+  const smsSuppliersDirectoryHtml = readIfExists(join(distDir, 'sms-suppliers-directory', 'index.html'));
+  const smsSuppliersDirectoryCanonical = `${sharedSeo.DEFAULT_SITE_URL.replace(/\/+$/, '')}/sms-suppliers-directory`;
+  if (smsSuppliersDirectoryHtml === null) {
+    report('sms-suppliers-directory/index.html: static directory route is missing');
+  } else if (
+    !smsSuppliersDirectoryHtml.includes(`<link rel="canonical" href="${smsSuppliersDirectoryCanonical}">`) ||
+    !smsSuppliersDirectoryHtml.includes('دليل خدمات وأدلة أرقام SMS')
+  ) {
+    report('sms-suppliers-directory/index.html: route must have its own canonical URL and title');
+  }
+
   // An empty collection page advertises deals that were never established.
   for (const agg of STATIC_AGGREGATIONS) {
     const matches = deals.filter((deal) => agg.filter(deal));
