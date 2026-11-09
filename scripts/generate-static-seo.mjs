@@ -606,10 +606,30 @@ export function injectSeoIntoHtml(baseHtml, seo) {
     /<link\s+rel=["']alternate["'][^>]*type=["']application\/rss\+xml["'][^>]*>/i,
     `<link rel="alternate" type="application/rss+xml" title="عروض وأرصدة الذكاء الاصطناعي — RSS Feed" href="${escapeHtml(cleanBase)}/feed.xml">`
   );
-  upsertTag(
-    /<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/i,
-    `<script type="application/ld+json" data-deal-jsonld="true">${safeJsonLd}</script>`
+  // Strip any inherited ItemList blocks (such as the home deal catalog) from inner pages
+  html = html.replace(
+    /<script\s+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>\s*/gi,
+    (fullMatch, content) => {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed['@type'] === 'ItemList') {
+          return '';
+        }
+      } catch {
+        // If not parseable as ItemList, keep
+      }
+      return fullMatch;
+    }
   );
+
+  const dealJsonLdRegex =
+    /<script\s+type=["']application\/ld\+json["'][^>]*data-deal-jsonld=["']true["'][^>]*>[\s\S]*?<\/script>/i;
+  const newDealJsonLdTag = `<script type="application/ld+json" data-deal-jsonld="true">${safeJsonLd}</script>`;
+  if (dealJsonLdRegex.test(html)) {
+    html = html.replace(dealJsonLdRegex, newDealJsonLdTag);
+  } else {
+    html = html.replace('</head>', `  ${newDealJsonLdTag}\n</head>`);
+  }
 
   return html;
 }

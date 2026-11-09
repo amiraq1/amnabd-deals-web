@@ -240,3 +240,54 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test('Task 1: inner pages do not inherit homepage ItemList JSON-LD and SMS directory has valid CollectionPage', async () => {
+  const rootDir = mkdtempSync(join(tmpdir(), 'amnabd-jsonld-'));
+  const distDir = join(rootDir, 'dist');
+  try {
+    mkdirSync(join(rootDir, 'scripts'), { recursive: true });
+    mkdirSync(distDir, { recursive: true });
+    writeFileSync(join(rootDir, 'scripts', 'deals-catalog.json'), JSON.stringify([sampleDeal]));
+    const indexWithBoth = sampleBaseHtml.replace(
+      '</head>',
+      `  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://deals.example.com/#website","name":"نبض","url":"https://deals.example.com/"}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"عروض نبض","numberOfItems":0,"itemListElement":[]}</script>
+</head>`
+    );
+    writeFileSync(join(distDir, 'index.html'), indexWithBoth);
+
+    await runStaticSeoGeneration({
+      rootDir,
+      distDir,
+      baseUrl: 'https://deals.example.com',
+      databaseSlugs: [sampleDeal.slug],
+      databaseDealStates: [{ slug: sampleDeal.slug, status: 'active', ends_at: null }],
+    });
+
+    const smsHtml = readFileSync(join(distDir, 'sms-suppliers-directory', 'index.html'), 'utf8');
+    const smsBlocks = [...smsHtml.matchAll(/<script\s+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(
+      (m) => JSON.parse(m[1])
+    );
+    // Every JSON-LD block is valid
+    assert.ok(smsBlocks.length > 0);
+    // No ItemList from homepage
+    const itemList = smsBlocks.find((b) => b['@type'] === 'ItemList' || b.name === 'عروض نبض');
+    assert.equal(itemList, undefined, 'SMS page must not inherit homepage ItemList');
+    // CollectionPage is present
+    const collectionPage = smsBlocks.find((b) => b['@type'] === 'CollectionPage');
+    assert.ok(collectionPage, 'SMS page must have a CollectionPage JSON-LD');
+    assert.equal(collectionPage.url, 'https://deals.example.com/sms-suppliers-directory');
+
+    // Homepage still keeps its ItemList
+    const homeHtml = readFileSync(join(distDir, 'index.html'), 'utf8');
+    const homeBlocks = [...homeHtml.matchAll(/<script\s+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(
+      (m) => JSON.parse(m[1])
+    );
+    const homeItemList = homeBlocks.find((b) => b['@type'] === 'ItemList');
+    assert.ok(homeItemList, 'Home page must retain its ItemList');
+    assert.equal(homeItemList.name, 'عروض نبض');
+    assert.ok(homeItemList.numberOfItems > 0);
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
