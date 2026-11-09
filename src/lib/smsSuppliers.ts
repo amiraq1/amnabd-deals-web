@@ -1,4 +1,9 @@
-import type { SmsSupplier } from '@/content/smsSuppliersDirectory';
+import type {
+  SmsSupplier,
+  SmsSupplierPrivacy,
+  SmsSupplierServiceType,
+  SmsSupplierVerificationStatus,
+} from '@/content/smsSuppliersDirectory';
 
 export type ListedSourceUrlReason =
   | 'needsReview'
@@ -78,4 +83,66 @@ export function getListedSourceUrl(
   }
 
   return { ok: false, reason: 'domainMismatch' };
+}
+
+export const SMS_PAGE_SIZE = 15;
+
+export interface SmsSupplierFilters {
+  query?: string;
+  serviceType?: 'all' | SmsSupplierServiceType;
+  privacy?: 'all' | SmsSupplierPrivacy;
+  status?: 'all' | SmsSupplierVerificationStatus;
+}
+
+export function filterSuppliers(
+  suppliers: readonly SmsSupplier[],
+  filters: SmsSupplierFilters,
+  lang: 'ar' | 'en' = 'ar'
+): SmsSupplier[] {
+  const needle = (filters.query ?? '').trim().toLocaleLowerCase(lang);
+  const serviceType = filters.serviceType ?? 'all';
+  const privacy = filters.privacy ?? 'all';
+  const status = filters.status ?? 'all';
+
+  return suppliers.filter((supplier) => {
+    const matchesQuery =
+      !needle ||
+      `${supplier.name} ${supplier.domain} ${supplier.id}`
+        .toLocaleLowerCase(lang)
+        .includes(needle);
+    const matchesType = serviceType === 'all' || supplier.serviceTypes.includes(serviceType);
+    const matchesPrivacy = privacy === 'all' || supplier.privacy === privacy;
+    const matchesStatus = status === 'all' || supplier.verificationStatus === status;
+    return matchesQuery && matchesType && matchesPrivacy && matchesStatus;
+  });
+}
+
+export function clampPage(page: number, totalItems: number, pageSize: number = SMS_PAGE_SIZE): number {
+  const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
+  if (!Number.isFinite(page) || page < 1) return 1;
+  return Math.min(Math.floor(page), pageCount);
+}
+
+export function paginateSuppliers<T>(
+  items: readonly T[],
+  page: number,
+  pageSize: number = SMS_PAGE_SIZE
+): {
+  page: number;
+  pageCount: number;
+  totalItems: number;
+  pageRows: T[];
+} {
+  const totalItems = items.length;
+  const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = clampPage(page, totalItems, pageSize);
+  const start = (safePage - 1) * pageSize;
+  const pageRows = items.slice(start, start + pageSize);
+
+  return {
+    page: safePage,
+    pageCount,
+    totalItems,
+    pageRows,
+  };
 }

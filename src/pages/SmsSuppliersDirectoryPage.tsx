@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import {
   SMS_SUPPLIERS,
@@ -8,11 +8,13 @@ import {
   type SmsSupplierVerificationStatus,
 } from '@/content/smsSuppliersDirectory';
 import {
+  filterSuppliers,
   getListedSourceUrl,
   LINK_REASON_MESSAGES,
+  paginateSuppliers,
+  SMS_PAGE_SIZE,
 } from '@/lib/smsSuppliers';
 
-const PAGE_SIZE = 15;
 const SERVICE_TYPES: readonly SmsSupplierServiceType[] = [
   'activation', 'rental', 'public', 'app', 'messaging', 'bot', 'unknown',
 ];
@@ -137,20 +139,14 @@ export default function SmsSuppliersDirectoryPage() {
   const officialCount = SMS_SUPPLIERS.filter((supplier) => supplier.verificationStatus === 'official').length;
   const reviewCount = SMS_SUPPLIERS.length - officialCount;
   const filtered = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase(ar ? 'ar' : 'en');
-    return SMS_SUPPLIERS.filter((supplier) => {
-      const matchesQuery = !needle || `${supplier.name} ${supplier.domain} ${supplier.id}`
-        .toLocaleLowerCase(ar ? 'ar' : 'en').includes(needle);
-      const matchesType = serviceType === 'all' || supplier.serviceTypes.includes(serviceType);
-      const matchesPrivacy = privacy === 'all' || supplier.privacy === privacy;
-      const matchesStatus = status === 'all' || supplier.verificationStatus === status;
-      return matchesQuery && matchesType && matchesPrivacy && matchesStatus;
-    });
+    return filterSuppliers(
+      SMS_SUPPLIERS,
+      { query, serviceType, privacy, status },
+      ar ? 'ar' : 'en'
+    );
   }, [ar, privacy, query, serviceType, status]);
 
-  useEffect(() => setPage(1), [query, serviceType, privacy, status]);
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { page: safePage, pageCount, pageRows } = paginateSuppliers(filtered, page, SMS_PAGE_SIZE);
 
   const resetFilters = () => {
     setQuery('');
@@ -192,7 +188,10 @@ export default function SmsSuppliersDirectoryPage() {
               id="sms-supplier-search"
               type="search"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
               placeholder={copy.searchPlaceholder}
               autoComplete="off"
               className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
@@ -201,21 +200,45 @@ export default function SmsSuppliersDirectoryPage() {
           </div>
           <div>
             <label htmlFor="sms-supplier-type" className="mb-1.5 block text-sm font-semibold text-slate-200">{copy.type}</label>
-            <select id="sms-supplier-type" value={serviceType} onChange={(event) => setServiceType(event.target.value as 'all' | SmsSupplierServiceType)} className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30">
+            <select
+              id="sms-supplier-type"
+              value={serviceType}
+              onChange={(event) => {
+                setServiceType(event.target.value as 'all' | SmsSupplierServiceType);
+                setPage(1);
+              }}
+              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+            >
               <option value="all">{copy.allTypes}</option>
               {SERVICE_TYPES.map((type) => <option key={type} value={type}>{serviceLabels[type][lang]}</option>)}
             </select>
           </div>
           <div>
             <label htmlFor="sms-supplier-privacy" className="mb-1.5 block text-sm font-semibold text-slate-200">{copy.privacy}</label>
-            <select id="sms-supplier-privacy" value={privacy} onChange={(event) => setPrivacy(event.target.value as 'all' | SmsSupplierPrivacy)} className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30">
+            <select
+              id="sms-supplier-privacy"
+              value={privacy}
+              onChange={(event) => {
+                setPrivacy(event.target.value as 'all' | SmsSupplierPrivacy);
+                setPage(1);
+              }}
+              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+            >
               <option value="all">{copy.allPrivacy}</option>
               {PRIVACY_TYPES.map((value) => <option key={value} value={value}>{privacyLabels[value][lang]}</option>)}
             </select>
           </div>
           <div>
             <label htmlFor="sms-supplier-status" className="mb-1.5 block text-sm font-semibold text-slate-200">{copy.status}</label>
-            <select id="sms-supplier-status" value={status} onChange={(event) => setStatus(event.target.value as 'all' | SmsSupplierVerificationStatus)} className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30">
+            <select
+              id="sms-supplier-status"
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value as 'all' | SmsSupplierVerificationStatus);
+                setPage(1);
+              }}
+              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+            >
               <option value="all">{copy.allStatus}</option>
               {STATUS_TYPES.map((value) => (
                 <option key={value} value={value}>
@@ -247,13 +270,13 @@ export default function SmsSuppliersDirectoryPage() {
 
       {filtered.length > 0 && (
         <nav className="mt-6 flex flex-wrap items-center justify-center gap-3" aria-label={ar ? 'صفحات النتائج' : 'Result pages'}>
-          <button type="button" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+          <button type="button" disabled={safePage <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
             {copy.previous}
           </button>
           <span className="text-sm text-slate-400" aria-live="polite">
-            {copy.page} <bdi dir="ltr">{page} / {pageCount}</bdi>
+            {copy.page} <bdi dir="ltr">{safePage} / {pageCount}</bdi>
           </span>
-          <button type="button" disabled={page >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+          <button type="button" disabled={safePage >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
             {copy.next}
           </button>
         </nav>
