@@ -7,7 +7,10 @@ import {
   type SmsSupplierServiceType,
   type SmsSupplierVerificationStatus,
 } from '@/content/smsSuppliersDirectory';
-import { safeUrl } from '@/lib/safeUrl';
+import {
+  getListedSourceUrl,
+  LINK_REASON_MESSAGES,
+} from '@/lib/smsSuppliers';
 
 const PAGE_SIZE = 15;
 const SERVICE_TYPES: readonly SmsSupplierServiceType[] = [
@@ -33,24 +36,11 @@ const privacyLabels: Record<SmsSupplierPrivacy, { ar: string; en: string }> = {
   unknown: { ar: 'الخصوصية غير معلومة', en: 'Privacy not stated' },
 };
 
-function getListedSourceUrl(supplier: SmsSupplier): string | null {
-  if (supplier.verificationStatus !== 'official') return null;
-  const url = safeUrl(supplier.url);
-  if (!url) return null;
-  try {
-    const hostname = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
-    const listedDomain = supplier.domain.toLowerCase().replace(/^www\./, '');
-    return hostname === listedDomain || hostname.endsWith(`.${listedDomain}`) ? url : null;
-  } catch {
-    return null;
-  }
-}
-
 function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 'en' }) {
   const statusText = supplier.verificationStatus === 'official'
     ? lang === 'ar' ? 'المصدر مصنّف رسميًا في الملف' : 'Source marked official in supplied file'
     : lang === 'ar' ? 'بحاجة إلى مراجعة' : 'Needs review';
-  const sourceUrl = getListedSourceUrl(supplier);
+  const sourceResult = getListedSourceUrl(supplier);
 
   return (
     <article className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5">
@@ -91,9 +81,9 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
         </div>
       </dl>
 
-      {sourceUrl ? (
+      {sourceResult.ok ? (
         <a
-          href={sourceUrl}
+          href={sourceResult.url}
           target="_blank"
           rel="noopener noreferrer nofollow"
           className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 text-sm font-semibold text-emerald-200 underline-offset-4 hover:border-emerald-400/50 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
@@ -103,7 +93,7 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
         </a>
       ) : (
         <p className="mt-4 text-xs leading-relaxed text-slate-500">
-          {lang === 'ar' ? 'لا يوجد رابط آمن مطابق للنطاق يمكن عرضه هنا.' : 'No safe, domain-matched link is available for this entry.'}
+          {LINK_REASON_MESSAGES[sourceResult.reason][lang]}
         </p>
       )}
     </article>
