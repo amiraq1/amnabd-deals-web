@@ -8,6 +8,7 @@ import {
   type SmsSupplierVerificationStatus,
 } from '@/content/smsSuppliersDirectory';
 import {
+  buildSmsDirectorySummary,
   filterSuppliers,
   getListedSourceUrl,
   LINK_REASON_MESSAGES,
@@ -110,10 +111,11 @@ export default function SmsSuppliersDirectoryPage() {
   const [status, setStatus] = useState<'all' | SmsSupplierVerificationStatus>('all');
   const [page, setPage] = useState(1);
   const ar = lang === 'ar';
+  const summary = useMemo(() => buildSmsDirectorySummary(SMS_SUPPLIERS), []);
   const copy = ar
     ? {
-        title: 'دليل خدمات وأدلة أرقام SMS — 75 سجلًا',
-        intro: 'قائمة ثنائية اللغة لخدمات الأرقام وصناديق الرسائل كما وردت في الملف المرسل. يتضمن الملف 39 سجلًا موسومًا بأن مصدره رسمي و36 سجلًا بحاجة إلى مراجعة؛ لم نُعِد التحقق من هذه التصنيفات لهذه الصفحة.',
+        title: summary.title.ar,
+        intro: summary.intro.ar,
         caution: 'تنبيه خصوصية: لا تستخدم صناديق الوارد العامة لاستقبال رموز دخول أو رسائل شخصية حساسة؛ قد تكون الرسائل مرئية للآخرين. قد ترفض الخدمات الخارجية الأرقام الافتراضية أو تشترط رقمًا تملكه. راجع شروط كل خدمة قبل الاستخدام.',
         total: 'إجمالي السجلات', markedOfficial: 'مصنّف رسميًا في الملف', needsReview: 'بحاجة إلى مراجعة',
         search: 'ابحث بالاسم أو النطاق', searchPlaceholder: 'مثال: SMSPool أو example.com',
@@ -124,8 +126,8 @@ export default function SmsSuppliersDirectoryPage() {
         dataNote: 'التصنيفات ومؤشرات الخصوصية ودعم API وحالة المصدر منقولة من البيانات المرفقة، وليست ضمانًا للتوفر أو تدقيقًا مستقلًا. لم تُدرج الأسعار أو شروط القبول لأنها غير متوفرة بصورة موثوقة هنا.',
       }
     : {
-        title: 'SMS Number Services & Directories — 75 Entries',
-        intro: 'A bilingual list of number and inbox services based on the supplied file. That file marks 39 entries as having an official source and 36 as needing review; these labels were not independently re-checked for this page.',
+        title: summary.title.en,
+        intro: summary.intro.en,
         caution: 'Privacy note: do not use public inboxes for login codes or sensitive personal messages; messages may be visible to others. Third-party services may reject virtual numbers or require a number you control. Check each service’s terms before use.',
         total: 'Total entries', markedOfficial: 'Marked official in file', needsReview: 'Need review',
         search: 'Search by name or domain', searchPlaceholder: 'e.g. SMSPool or example.com',
@@ -136,8 +138,6 @@ export default function SmsSuppliersDirectoryPage() {
         dataNote: 'Categories, privacy indicators, API support and source status are carried over from the supplied data; they are not a guarantee of availability or an independent audit. Prices and account-acceptance terms are omitted because they are not reliably established here.',
       };
 
-  const officialCount = SMS_SUPPLIERS.filter((supplier) => supplier.verificationStatus === 'official').length;
-  const reviewCount = SMS_SUPPLIERS.length - officialCount;
   const filtered = useMemo(() => {
     return filterSuppliers(
       SMS_SUPPLIERS,
@@ -159,7 +159,7 @@ export default function SmsSuppliersDirectoryPage() {
   return (
     <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto w-full max-w-5xl px-4 pb-10 pt-8 sm:px-6 sm:pt-10">
       <header>
-        <p className="text-sm font-semibold text-emerald-300">{ar ? 'دليل مستقل — 75 سجلًا' : 'Standalone directory — 75 entries'}</p>
+        <p className="text-sm font-semibold text-emerald-300">{summary.badge[lang]}</p>
         <h1 className="mt-2 font-heading text-3xl font-extrabold leading-tight text-white">{copy.title}</h1>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">{copy.intro}</p>
         <aside className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm leading-relaxed text-amber-100" aria-label={ar ? 'تنبيه الخصوصية' : 'Privacy notice'}>
@@ -169,9 +169,9 @@ export default function SmsSuppliersDirectoryPage() {
 
       <section className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3" aria-label={ar ? 'ملخص الدليل' : 'Directory summary'}>
         {[
-          { label: copy.total, value: SMS_SUPPLIERS.length },
-          { label: copy.markedOfficial, value: officialCount },
-          { label: copy.needsReview, value: reviewCount },
+          { label: copy.total, value: summary.totalCount },
+          { label: copy.markedOfficial, value: summary.officialCount },
+          { label: copy.needsReview, value: summary.reviewCount },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3">
             <p className="text-sm text-slate-400">{stat.label}</p>

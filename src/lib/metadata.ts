@@ -9,9 +9,13 @@
 // overrides the defaults with its own metadata; every other route gets its own
 // instead of inheriting the previous page's.
 import type { Lang } from '@/types';
+import { SMS_SUPPLIERS } from '../content/smsSuppliersDirectory.js';
 import { getAggregationConfig } from './aggregations.js';
 import { routePath, type Route } from './routes.js';
 import { DEFAULT_SITE_URL, type DealSeoMetadata } from './seoFacts.js';
+import { buildSmsDirectorySummary } from './smsSuppliers.js';
+
+const smsSummary = buildSmsDirectorySummary(SMS_SUPPLIERS);
 
 export interface RouteMetadata {
   title: string;
@@ -90,11 +94,8 @@ const COPY: Record<string, RouteCopy> = {
     },
   },
   smsSuppliersDirectory: {
-    title: { ar: 'دليل خدمات وأدلة أرقام SMS — 75 سجلًا', en: 'SMS Number Services & Directories — 75 Entries' },
-    description: {
-      ar: 'دليل ثنائي اللغة لـ75 سجلًا من خدمات وأدلة أرقام SMS، مع فصل السجلات الموسومة رسميًا في الملف عن الإدخالات التي تحتاج إلى مراجعة.',
-      en: 'A bilingual directory of 75 SMS number and inbox entries, separating records marked official in the supplied file from entries that need review.',
-    },
+    title: smsSummary.title,
+    description: smsSummary.description,
   },
   notfound: {
     title: { ar: 'الصفحة غير موجودة (404)', en: 'Page Not Found (404)' },
@@ -179,6 +180,7 @@ export function routeMetadata(
       '@context': 'https://schema.org',
       '@type': route.name === 'collection' || route.name === 'apiDirectory' || route.name === 'aiModelsDirectory' || route.name === 'smsSuppliersDirectory' ? 'CollectionPage' : 'WebSite',
       name: copy.title[lang],
+      ...(route.name === 'smsSuppliersDirectory' ? { numberOfItems: smsSummary.totalCount } : {}),
       url: `${base}${path}`,
     },
   };

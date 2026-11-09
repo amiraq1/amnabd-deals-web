@@ -3,7 +3,7 @@ import type {
   SmsSupplierPrivacy,
   SmsSupplierServiceType,
   SmsSupplierVerificationStatus,
-} from '@/content/smsSuppliersDirectory';
+} from '../content/smsSuppliersDirectory.js';
 
 export type ListedSourceUrlReason =
   | 'needsReview'
@@ -41,6 +41,51 @@ const BLOCKED_HOSTS = ['studentoffers.co', 'www.studentoffers.co'];
 
 export function isListedAsOfficial(supplier: Pick<SmsSupplier, 'verificationStatus'>): boolean {
   return supplier.verificationStatus === 'official';
+}
+
+export interface SmsDirectorySummary {
+  totalCount: number;
+  officialCount: number;
+  reviewCount: number;
+  badge: { ar: string; en: string };
+  title: { ar: string; en: string };
+  seoTitle: { ar: string; en: string };
+  description: { ar: string; en: string };
+  intro: { ar: string; en: string };
+}
+
+export function buildSmsDirectorySummary(
+  suppliers: readonly Pick<SmsSupplier, 'verificationStatus'>[]
+): SmsDirectorySummary {
+  const totalCount = suppliers.length;
+  const officialCount = suppliers.filter(isListedAsOfficial).length;
+  const reviewCount = totalCount - officialCount;
+
+  return {
+    totalCount,
+    officialCount,
+    reviewCount,
+    badge: {
+      ar: `دليل مستقل — ${totalCount} سجلًا`,
+      en: `Standalone directory — ${totalCount} entries`,
+    },
+    title: {
+      ar: `دليل خدمات وأدلة أرقام SMS — ${totalCount} سجلًا`,
+      en: `SMS Number Services & Directories — ${totalCount} Entries`,
+    },
+    seoTitle: {
+      ar: `دليل خدمات وأدلة أرقام SMS — ${totalCount} سجلًا — نبض`,
+      en: `SMS Number Services & Directories — ${totalCount} Entries — AMNABD Deals`,
+    },
+    description: {
+      ar: `دليل ثنائي اللغة لـ${totalCount} سجلًا من خدمات وأدلة أرقام SMS، مع فصل السجلات الموسومة رسميًا في الملف عن الإدخالات التي تحتاج إلى مراجعة.`,
+      en: `A bilingual directory of ${totalCount} SMS number and inbox entries, separating records marked official in the supplied file from entries that need review.`,
+    },
+    intro: {
+      ar: `دليل استرشادي يضم ${totalCount} خدمة ودليلًا لأرقام واستقبال الرسائل، نُقلت كما وردت في قائمة مستقلة. ${officialCount} سجلًا منها يحمل تصنيف مصدر رسمي في الملف، و${reviewCount} سجلًا بحاجة إلى مراجعة. لم نُعِد التحقق من هذه التصنيفات لهذه الصفحة.`,
+      en: `An informational directory of ${totalCount} SMS number and reception entries transcribed from an independent list. The source marks ${officialCount} entries as having an official source and ${reviewCount} as needing review; classifications are not independently re-checked for this page.`,
+    },
+  };
 }
 
 export function getListedSourceUrl(

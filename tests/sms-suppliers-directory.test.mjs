@@ -16,6 +16,7 @@ const {
   paginateSuppliers,
   clampPage,
   SMS_PAGE_SIZE,
+  buildSmsDirectorySummary,
 } = await import(built('src/lib/smsSuppliers.js'));
 
 const source = (rel) => readFileSync(join(process.cwd(), rel), 'utf8');
@@ -48,6 +49,8 @@ test('SMS directory route has a stable path, legacy hash, and bilingual collecti
 
 test('SMS directory is bilingual, discloses unverified source labels and public-inbox privacy risks', () => {
   const page = source('src/pages/SmsSuppliersDirectoryPage.tsx');
+  const lib = source('src/lib/smsSuppliers.ts');
+  const combined = `${page}\n${lib}`;
   const footer = source('src/components/Footer.tsx');
   for (const phrase of ['Search by name or domain', 'Service type', 'Privacy indicator', 'Record status', 'Needs review']) {
     assert.ok(page.includes(phrase), `missing English page text: ${phrase}`);
@@ -55,8 +58,8 @@ test('SMS directory is bilingual, discloses unverified source labels and public-
   for (const phrase of ['ابحث بالاسم أو النطاق', 'نوع الخدمة', 'مؤشر الخصوصية', 'حالة السجل', 'بحاجة إلى مراجعة']) {
     assert.ok(page.includes(phrase), `missing Arabic page text: ${phrase}`);
   }
-  assert.match(page, /not independently re-checked for this page/);
-  assert.match(page, /لم نُعِد التحقق من هذه التصنيفات لهذه الصفحة/);
+  assert.match(combined, /not independently re-checked for this page/);
+  assert.match(combined, /لم نُعِد التحقق من هذه التصنيفات لهذه الصفحة/);
   assert.match(page, /do not use public inboxes for login codes/);
   assert.match(page, /لا تستخدم صناديق الوارد العامة لاستقبال رموز دخول/);
   assert.match(page, /rel="noopener noreferrer nofollow"/);
@@ -65,6 +68,9 @@ test('SMS directory is bilingual, discloses unverified source labels and public-
 });
 
 test('Task 2: getListedSourceUrl directly validates protocol, domain match, and status with explicit reasons', () => {
+  assert.equal(isListedAsOfficial({ verificationStatus: 'official' }), true);
+  assert.equal(isListedAsOfficial({ verificationStatus: 'needsReview' }), false);
+
   // 1. Exact match success
   const exact = getListedSourceUrl({
     verificationStatus: 'official',
@@ -268,18 +274,19 @@ test('Task 3: behavioral tests for filter intersection', () => {
 });
 
 test('Task 3: safe page clamping and narrowing from advanced page prevents blank render', () => {
+  assert.equal(SMS_PAGE_SIZE, 15);
   // 1. Clamping behavior
-  assert.equal(clampPage(1, 75, 15), 1);
-  assert.equal(clampPage(3, 75, 15), 3);
-  assert.equal(clampPage(5, 75, 15), 5);
-  assert.equal(clampPage(6, 75, 15), 5); // 75 / 15 = 5 pages max
-  assert.equal(clampPage(999, 75, 15), 5);
-  assert.equal(clampPage(0, 75, 15), 1);
-  assert.equal(clampPage(-2, 75, 15), 1);
-  assert.equal(clampPage(NaN, 75, 15), 1);
+  assert.equal(clampPage(1, 75, SMS_PAGE_SIZE), 1);
+  assert.equal(clampPage(3, 75, SMS_PAGE_SIZE), 3);
+  assert.equal(clampPage(5, 75, SMS_PAGE_SIZE), 5);
+  assert.equal(clampPage(6, 75, SMS_PAGE_SIZE), 5); // 75 / 15 = 5 pages max
+  assert.equal(clampPage(999, 75, SMS_PAGE_SIZE), 5);
+  assert.equal(clampPage(0, 75, SMS_PAGE_SIZE), 1);
+  assert.equal(clampPage(-2, 75, SMS_PAGE_SIZE), 1);
+  assert.equal(clampPage(NaN, 75, SMS_PAGE_SIZE), 1);
 
   // 2. Normal pagination on page 3 of 5
-  const fullPage3 = paginateSuppliers(SMS_SUPPLIERS, 3, 15);
+  const fullPage3 = paginateSuppliers(SMS_SUPPLIERS, 3, SMS_PAGE_SIZE);
   assert.equal(fullPage3.page, 3);
   assert.equal(fullPage3.pageCount, 5);
   assert.equal(fullPage3.pageRows.length, 15);
@@ -314,4 +321,48 @@ test('Task 3: empty state and reset behavior', () => {
   });
   assert.equal(reset.length, 75);
   assert.deepEqual(reset, [...SMS_SUPPLIERS]);
+});
+
+test('Task 4: buildSmsDirectorySummary derives all counts, titles, descriptions, and intros from data', () => {
+  const synthetic = [
+    { verificationStatus: 'official' },
+    { verificationStatus: 'official' },
+    { verificationStatus: 'needsReview' },
+  ];
+
+  const summary = buildSmsDirectorySummary(synthetic);
+  assert.equal(summary.totalCount, 3);
+  assert.equal(summary.officialCount, 2);
+  assert.equal(summary.reviewCount, 1);
+
+  assert.equal(summary.badge.ar, 'دليل مستقل — 3 سجلًا');
+  assert.equal(summary.badge.en, 'Standalone directory — 3 entries');
+  assert.equal(summary.title.ar, 'دليل خدمات وأدلة أرقام SMS — 3 سجلًا');
+  assert.equal(summary.title.en, 'SMS Number Services & Directories — 3 Entries');
+  assert.match(summary.description.ar, /لـ3 سجلًا/);
+  assert.match(summary.description.en, /of 3 SMS number/);
+  assert.match(summary.intro.ar, /2 سجلًا/);
+  assert.match(summary.intro.ar, /1 سجلًا بحاجة إلى مراجعة/);
+  assert.match(summary.intro.en, /marks 2 entries as having an official source/);
+  assert.match(summary.intro.en, /and 1 as needing review/);
+});
+
+test('Task 4: metadata and directory summary share identical derived counts and texts', () => {
+  const realSummary = buildSmsDirectorySummary(SMS_SUPPLIERS);
+  assert.equal(realSummary.totalCount, 75);
+  assert.equal(realSummary.officialCount, 39);
+  assert.equal(realSummary.reviewCount, 36);
+
+  const route = { name: 'smsSuppliersDirectory' };
+  const metaAr = routeMetadata(route, 'ar');
+  const metaEn = routeMetadata(route, 'en');
+
+  assert.equal(metaAr.title, realSummary.seoTitle.ar);
+  assert.equal(metaEn.title, realSummary.seoTitle.en);
+  assert.equal(metaAr.description, realSummary.description.ar);
+  assert.equal(metaEn.description, realSummary.description.en);
+  assert.equal(metaAr.jsonLd.name, realSummary.title.ar);
+  assert.equal(metaEn.jsonLd.name, realSummary.title.en);
+  assert.equal(metaAr.jsonLd.numberOfItems, realSummary.totalCount);
+  assert.equal(metaEn.jsonLd.numberOfItems, realSummary.totalCount);
 });

@@ -18,6 +18,8 @@ const SHARED_MODULES = [
   'src/lib/aggregations.ts',
   'src/lib/dealTiming.ts',
   'src/lib/instants.ts',
+  'src/content/smsSuppliersDirectory.ts',
+  'src/lib/smsSuppliers.ts',
 ];
 
 export async function loadSharedSeo(rootDir) {
@@ -35,14 +37,18 @@ export async function loadSharedSeo(rootDir) {
     writeFileSync(dest, outputText, 'utf8');
   }
   writeFileSync(join(out, 'package.json'), '{"type":"module"}', 'utf8');
-  const [seo, instants, timing] = await Promise.all([
+  const [seo, instants, timing, smsContent, smsLib] = await Promise.all([
     import(pathToFileURL(join(out, 'src/lib/seoFacts.js')).href),
     import(pathToFileURL(join(out, 'src/lib/instants.js')).href),
     import(pathToFileURL(join(out, 'src/lib/dealTiming.js')).href),
+    import(pathToFileURL(join(out, 'src/content/smsSuppliersDirectory.js')).href),
+    import(pathToFileURL(join(out, 'src/lib/smsSuppliers.js')).href),
   ]);
   return {
     ...seo,
     timestampInstant: instants.timestampInstant,
     getTimingState: timing.getTimingState,
+    SMS_SUPPLIERS: smsContent.SMS_SUPPLIERS,
+    buildSmsDirectorySummary: smsLib.buildSmsDirectorySummary,
   };
 }

@@ -16,7 +16,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // Compiles the shared TS modules once per process; the app imports the same ones.
 const shared = await loadSharedSeo(ROOT);
-const { AGGREGATIONS, dealDisplayName, dealFacts, getTimingState } = shared;
+const {
+  AGGREGATIONS,
+  dealDisplayName,
+  dealFacts,
+  getTimingState,
+  SMS_SUPPLIERS,
+  buildSmsDirectorySummary,
+} = shared;
 
 // Re-exported so `verify-dist.mjs` reuses the already-compiled copy.
 export { shared as sharedSeo };
@@ -904,16 +911,17 @@ export async function runStaticSeoGeneration({
   const smsSuppliersDirectoryPath = '/sms-suppliers-directory';
   const smsSuppliersDirectoryDir = join(distDir, smsSuppliersDirectoryPath.slice(1));
   mkdirSync(smsSuppliersDirectoryDir, { recursive: true });
+  const smsSummary = buildSmsDirectorySummary(SMS_SUPPLIERS);
   const smsSuppliersDirectorySeo = {
-    title: 'دليل خدمات وأدلة أرقام SMS — 75 سجلًا — نبض',
-    description:
-      'دليل ثنائي اللغة لـ75 سجلًا من خدمات وأدلة أرقام SMS، مع فصل السجلات الموسومة رسميًا في الملف عن الإدخالات التي تحتاج إلى مراجعة.',
+    title: smsSummary.seoTitle.ar,
+    description: smsSummary.description.ar,
     canonicalUrl: `${baseUrl.replace(/\/+$/, '')}${smsSuppliersDirectoryPath}`,
     ogImageUrl: `${baseUrl.replace(/\/+$/, '')}/og-image.png`,
     jsonLd: {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'دليل خدمات وأدلة أرقام SMS — 75 سجلًا',
+      name: smsSummary.title.ar,
+      numberOfItems: smsSummary.totalCount,
       url: `${baseUrl.replace(/\/+$/, '')}${smsSuppliersDirectoryPath}`,
     },
   };
