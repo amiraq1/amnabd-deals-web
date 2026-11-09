@@ -5,12 +5,13 @@ import {
   type SmsSupplier,
   type SmsSupplierPrivacy,
   type SmsSupplierServiceType,
-  type SmsSupplierVerificationStatus,
+  type SmsSupplierSourceClassification,
 } from '@/content/smsSuppliersDirectory';
 import {
   buildSmsDirectorySummary,
   filterSuppliers,
   getListedSourceUrl,
+  isListedAsOfficial,
   LINK_REASON_MESSAGES,
   paginateSuppliers,
   SMS_PAGE_SIZE,
@@ -20,7 +21,7 @@ const SERVICE_TYPES: readonly SmsSupplierServiceType[] = [
   'activation', 'rental', 'public', 'app', 'messaging', 'bot', 'unknown',
 ];
 const PRIVACY_TYPES: readonly SmsSupplierPrivacy[] = ['private', 'mixed', 'public', 'unknown'];
-const STATUS_TYPES: readonly SmsSupplierVerificationStatus[] = ['official', 'needsReview'];
+const STATUS_TYPES: readonly SmsSupplierSourceClassification[] = ['official', 'needsReview'];
 
 const serviceLabels: Record<SmsSupplierServiceType, { ar: string; en: string }> = {
   activation: { ar: 'تفعيل لمرة واحدة', en: 'One-time activation' },
@@ -40,7 +41,8 @@ const privacyLabels: Record<SmsSupplierPrivacy, { ar: string; en: string }> = {
 };
 
 function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 'en' }) {
-  const statusText = supplier.verificationStatus === 'official'
+  const isOfficial = isListedAsOfficial(supplier);
+  const statusText = isOfficial
     ? lang === 'ar' ? 'المصدر مصنّف رسميًا في الملف' : 'Source marked official in supplied file'
     : lang === 'ar' ? 'بحاجة إلى مراجعة' : 'Needs review';
   const sourceResult = getListedSourceUrl(supplier);
@@ -53,7 +55,7 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
           <p className="mt-1 break-all text-sm text-slate-400"><bdi dir="ltr">{supplier.domain}</bdi></p>
         </div>
         <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
-          supplier.verificationStatus === 'official'
+          isOfficial
             ? 'border-slate-700 bg-slate-800 text-slate-200'
             : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
         }`}>
@@ -108,7 +110,7 @@ export default function SmsSuppliersDirectoryPage() {
   const [query, setQuery] = useState('');
   const [serviceType, setServiceType] = useState<'all' | SmsSupplierServiceType>('all');
   const [privacy, setPrivacy] = useState<'all' | SmsSupplierPrivacy>('all');
-  const [status, setStatus] = useState<'all' | SmsSupplierVerificationStatus>('all');
+  const [status, setStatus] = useState<'all' | SmsSupplierSourceClassification>('all');
   const [page, setPage] = useState(1);
   const ar = lang === 'ar';
   const summary = useMemo(() => buildSmsDirectorySummary(SMS_SUPPLIERS), []);
@@ -234,7 +236,7 @@ export default function SmsSuppliersDirectoryPage() {
               id="sms-supplier-status"
               value={status}
               onChange={(event) => {
-                setStatus(event.target.value as 'all' | SmsSupplierVerificationStatus);
+                setStatus(event.target.value as 'all' | SmsSupplierSourceClassification);
                 setPage(1);
               }}
               className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"

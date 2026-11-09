@@ -1,5 +1,6 @@
 export type SmsSupplierServiceType = 'activation' | 'rental' | 'public' | 'app' | 'messaging' | 'bot' | 'unknown';
-export type SmsSupplierVerificationStatus = 'official' | 'needsReview';
+export type SmsSupplierSourceClassification = 'official' | 'needsReview';
+export type SmsSupplierVerificationStatus = 'unchecked' | 'checked' | 'unverifiable';
 export type SmsSupplierPrivacy = 'private' | 'mixed' | 'public' | 'unknown';
 
 export interface SmsSupplier {
@@ -10,7 +11,10 @@ export interface SmsSupplier {
   serviceTypes: SmsSupplierServiceType[];
   privacy: SmsSupplierPrivacy;
   apiSupport: 'yes' | 'unknown';
+  sourceClassification: SmsSupplierSourceClassification;
   verificationStatus: SmsSupplierVerificationStatus;
+  sourceReferenceUrl?: string;
+  lastCheckedAt?: string;
 }
 
 // Curated from the user-supplied JSON. Statuses and classifications are retained as submitted, not independently re-verified here.
@@ -26,7 +30,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "5sim",
@@ -38,7 +43,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "sms-man",
@@ -52,7 +58,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "tiger-sms",
@@ -65,7 +72,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "pingme",
@@ -80,7 +88,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smssir",
@@ -94,7 +103,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "onlinesim",
@@ -108,7 +118,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "globalsms",
@@ -121,7 +132,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smspool",
@@ -134,7 +146,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "textverified",
@@ -147,7 +160,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "quackr",
@@ -160,7 +174,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "sms24",
@@ -172,7 +187,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "sms-online",
@@ -184,7 +200,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "getfreesmsnumber",
@@ -196,7 +213,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "sms-receive-net",
@@ -208,7 +226,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "7sim",
@@ -220,7 +239,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "hs3x",
@@ -232,7 +252,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receivefreesms-net",
@@ -244,7 +265,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receivesmsonline-in",
@@ -256,7 +278,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "groovl",
@@ -268,7 +291,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "sellaite",
@@ -280,7 +304,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "sendsmsnow",
@@ -292,7 +317,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "proovl",
@@ -305,7 +331,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "anon-sms",
@@ -317,7 +344,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "pinger",
@@ -329,7 +357,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "1s2u",
@@ -341,7 +370,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "virtty",
@@ -353,7 +383,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "textanywhere",
@@ -365,7 +396,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smspinverify",
@@ -378,7 +410,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "anonymsms",
@@ -392,7 +425,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "foxsims",
@@ -405,7 +439,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "buru",
@@ -418,7 +453,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "pvacodes",
@@ -430,7 +466,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "freeje",
@@ -443,7 +480,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "pvapins",
@@ -457,7 +495,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "sms7",
@@ -470,7 +509,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "private",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receiveasms",
@@ -482,7 +522,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "us-phone-number",
@@ -494,7 +535,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "public",
     "apiSupport": "unknown",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "sms-verification-number",
@@ -508,7 +550,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "mixed",
     "apiSupport": "yes",
-    "verificationStatus": "official"
+    "sourceClassification": "official",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smsreceivefree",
@@ -520,7 +563,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smsreceiveonline",
@@ -532,7 +576,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receivesmsonline-net",
@@ -544,7 +589,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "freesmsverifications",
@@ -556,7 +602,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receivefreesms",
@@ -568,7 +615,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receive-sms-online",
@@ -580,7 +628,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smsver",
@@ -592,7 +641,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receivesmsonline-eu",
@@ -604,7 +654,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "hidemynumbers",
@@ -616,7 +667,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "freeonlinephone",
@@ -628,7 +680,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "catchsms",
@@ -640,7 +693,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smsget",
@@ -652,7 +706,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "getsms",
@@ -664,7 +719,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receivesmsonline-me",
@@ -676,7 +732,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "virtualnumberbuy",
@@ -688,7 +745,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "freereceivesmsonline",
@@ -700,7 +758,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "ndtan",
@@ -712,7 +771,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smslisten",
@@ -724,7 +784,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "freevirtualsmsnumber",
@@ -736,7 +797,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smstibo",
@@ -748,7 +810,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receivesmsnumber",
@@ -760,7 +823,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "freesmscode",
@@ -772,7 +836,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smsnumbersonline",
@@ -784,7 +849,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smsreceiving",
@@ -796,7 +862,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "mytrashmobile",
@@ -808,7 +875,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smsplanet",
@@ -820,7 +888,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "cheapsms",
@@ -832,7 +901,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "vak-sms",
@@ -844,7 +914,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smsak",
@@ -856,7 +927,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "tqsms",
@@ -868,7 +940,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "smslive",
@@ -880,7 +953,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receivesmsrobot",
@@ -892,7 +966,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "kupitnomerbot",
@@ -904,7 +979,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "receive-robot",
@@ -916,7 +992,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "timeofsms-bot",
@@ -928,7 +1005,8 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   },
   {
     "id": "thephonebot",
@@ -940,6 +1018,7 @@ export const SMS_SUPPLIERS: readonly SmsSupplier[] = [
     ],
     "privacy": "unknown",
     "apiSupport": "unknown",
-    "verificationStatus": "needsReview"
+    "sourceClassification": "needsReview",
+    "verificationStatus": "unchecked"
   }
 ];

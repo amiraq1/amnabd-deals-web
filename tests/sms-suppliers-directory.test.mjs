@@ -24,8 +24,8 @@ const source = (rel) => readFileSync(join(process.cwd(), rel), 'utf8');
 test('SMS directory preserves all 75 submitted records and separates source statuses', () => {
   assert.equal(SMS_SUPPLIERS.length, 75);
   assert.equal(new Set(SMS_SUPPLIERS.map((entry) => entry.id)).size, 75);
-  assert.equal(SMS_SUPPLIERS.filter((entry) => entry.verificationStatus === 'official').length, 39);
-  assert.equal(SMS_SUPPLIERS.filter((entry) => entry.verificationStatus === 'needsReview').length, 36);
+  assert.equal(SMS_SUPPLIERS.filter((entry) => entry.sourceClassification === 'official').length, 39);
+  assert.equal(SMS_SUPPLIERS.filter((entry) => entry.sourceClassification === 'needsReview').length, 36);
   for (const entry of SMS_SUPPLIERS) {
     assert.ok(entry.name);
     assert.ok(entry.domain);
@@ -33,6 +33,10 @@ test('SMS directory preserves all 75 submitted records and separates source stat
     assert.ok(entry.serviceTypes.length > 0);
     assert.ok(['private', 'mixed', 'public', 'unknown'].includes(entry.privacy));
     assert.ok(['yes', 'unknown'].includes(entry.apiSupport));
+    assert.equal(entry.verificationStatus, 'unchecked');
+    assert.equal(entry.lastCheckedAt, undefined);
+    assert.equal(entry.sourceReferenceUrl, undefined);
+    assert.match(entry.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
   }
 });
 
@@ -68,12 +72,12 @@ test('SMS directory is bilingual, discloses unverified source labels and public-
 });
 
 test('Task 2: getListedSourceUrl directly validates protocol, domain match, and status with explicit reasons', () => {
-  assert.equal(isListedAsOfficial({ verificationStatus: 'official' }), true);
-  assert.equal(isListedAsOfficial({ verificationStatus: 'needsReview' }), false);
+  assert.equal(isListedAsOfficial({ sourceClassification: 'official' }), true);
+  assert.equal(isListedAsOfficial({ sourceClassification: 'needsReview' }), false);
 
   // 1. Exact match success
   const exact = getListedSourceUrl({
-    verificationStatus: 'official',
+    sourceClassification: 'official',
     url: 'https://example.com/login',
     domain: 'example.com',
   });
@@ -81,7 +85,7 @@ test('Task 2: getListedSourceUrl directly validates protocol, domain match, and 
 
   // 2. Legitimate subdomain success
   const sub = getListedSourceUrl({
-    verificationStatus: 'official',
+    sourceClassification: 'official',
     url: 'https://api.auth.example.com/',
     domain: 'example.com',
   });
@@ -89,7 +93,7 @@ test('Task 2: getListedSourceUrl directly validates protocol, domain match, and 
 
   // 3. Case-insensitive matching success
   const mixedCase = getListedSourceUrl({
-    verificationStatus: 'official',
+    sourceClassification: 'official',
     url: 'HTTPS://Sub.Example.COM/Path',
     domain: 'EXAMPLE.COM',
   });
@@ -97,7 +101,7 @@ test('Task 2: getListedSourceUrl directly validates protocol, domain match, and 
 
   // 4. Failure: needsReview status is withheld before URL checks
   const unreviewed = getListedSourceUrl({
-    verificationStatus: 'needsReview',
+    sourceClassification: 'needsReview',
     url: 'https://example.com/',
     domain: 'example.com',
   });
@@ -105,7 +109,7 @@ test('Task 2: getListedSourceUrl directly validates protocol, domain match, and 
 
   // 5. Failure: plain HTTP is withheld with notHttps reason
   const http = getListedSourceUrl({
-    verificationStatus: 'official',
+    sourceClassification: 'official',
     url: 'http://example.com/',
     domain: 'example.com',
   });
@@ -113,7 +117,7 @@ test('Task 2: getListedSourceUrl directly validates protocol, domain match, and 
 
   // 6. Failure: totally different domain
   const diffDomain = getListedSourceUrl({
-    verificationStatus: 'official',
+    sourceClassification: 'official',
     url: 'https://another-site.org/',
     domain: 'example.com',
   });
@@ -121,7 +125,7 @@ test('Task 2: getListedSourceUrl directly validates protocol, domain match, and 
 
   // 7. Failure: looks like domain suffix without a leading dot (evilexample.com vs example.com)
   const evilSuffix = getListedSourceUrl({
-    verificationStatus: 'official',
+    sourceClassification: 'official',
     url: 'https://evilexample.com/',
     domain: 'example.com',
   });
@@ -129,7 +133,7 @@ test('Task 2: getListedSourceUrl directly validates protocol, domain match, and 
 
   // 8. Failure: malformed URL
   const malformed = getListedSourceUrl({
-    verificationStatus: 'official',
+    sourceClassification: 'official',
     url: 'not-a-valid-url',
     domain: 'example.com',
   });
@@ -191,7 +195,7 @@ test('Task 2: dataset source link policy strictly preserves the exact 38 enabled
 
   // Every enabled supplier must have official status, HTTPS URL, and matching domain
   for (const s of enabled) {
-    assert.equal(s.verificationStatus, 'official');
+    assert.equal(s.sourceClassification, 'official');
     assert.ok(s.url.startsWith('https://'));
     const hostname = new URL(s.url).hostname.toLowerCase().replace(/^www\./, '');
     const domain = s.domain.toLowerCase().replace(/^www\./, '');
@@ -201,11 +205,11 @@ test('Task 2: dataset source link policy strictly preserves the exact 38 enabled
   // The one official supplier that fails due to plain HTTP
   const httpSupplier = SMS_SUPPLIERS.find((s) => s.id === 'sms-receive-net');
   assert.ok(httpSupplier);
-  assert.equal(httpSupplier.verificationStatus, 'official');
+  assert.equal(httpSupplier.sourceClassification, 'official');
   assert.deepEqual(getListedSourceUrl(httpSupplier), { ok: false, reason: 'notHttps' });
 
   // All 36 needsReview suppliers get needsReview reason
-  const reviewSuppliers = SMS_SUPPLIERS.filter((s) => s.verificationStatus === 'needsReview');
+  const reviewSuppliers = SMS_SUPPLIERS.filter((s) => s.sourceClassification === 'needsReview');
   assert.equal(reviewSuppliers.length, 36);
   for (const s of reviewSuppliers) {
     assert.deepEqual(getListedSourceUrl(s), { ok: false, reason: 'needsReview' });
@@ -251,7 +255,7 @@ test('Task 3: behavioral tests for filter intersection', () => {
   for (const s of filtered) {
     assert.ok(s.serviceTypes.includes('rental'), `${s.id} must support rental`);
     assert.equal(s.privacy, 'private', `${s.id} must be private`);
-    assert.equal(s.verificationStatus, 'official', `${s.id} must be official`);
+    assert.equal(s.sourceClassification, 'official', `${s.id} must be official`);
   }
 
   // Contrasting filter: status needsReview with the same filters
@@ -261,7 +265,7 @@ test('Task 3: behavioral tests for filter intersection', () => {
     status: 'needsReview',
   });
   for (const s of reviewFiltered) {
-    assert.equal(s.verificationStatus, 'needsReview');
+    assert.equal(s.sourceClassification, 'needsReview');
   }
 
   // Mutually disjoint check
@@ -325,9 +329,9 @@ test('Task 3: empty state and reset behavior', () => {
 
 test('Task 4: buildSmsDirectorySummary derives all counts, titles, descriptions, and intros from data', () => {
   const synthetic = [
-    { verificationStatus: 'official' },
-    { verificationStatus: 'official' },
-    { verificationStatus: 'needsReview' },
+    { sourceClassification: 'official' },
+    { sourceClassification: 'official' },
+    { sourceClassification: 'needsReview' },
   ];
 
   const summary = buildSmsDirectorySummary(synthetic);
@@ -365,4 +369,37 @@ test('Task 4: metadata and directory summary share identical derived counts and 
   assert.equal(metaEn.jsonLd.name, realSummary.title.en);
   assert.equal(metaAr.jsonLd.numberOfItems, realSummary.totalCount);
   assert.equal(metaEn.jsonLd.numberOfItems, realSummary.totalCount);
+});
+
+test('Task 5: separate source classification from site verification invariants', () => {
+  // 1. All 75 records have verificationStatus === 'unchecked'
+  assert.equal(SMS_SUPPLIERS.length, 75);
+  assert.ok(SMS_SUPPLIERS.every((s) => s.verificationStatus === 'unchecked'));
+
+  // 2. No record has invented dates or independent reference URLs
+  assert.ok(SMS_SUPPLIERS.every((s) => s.lastCheckedAt === undefined));
+  assert.ok(SMS_SUPPLIERS.every((s) => s.sourceReferenceUrl === undefined));
+
+  // 3. Distribution remains exactly 39 official and 36 needsReview
+  const official = SMS_SUPPLIERS.filter((s) => s.sourceClassification === 'official');
+  const review = SMS_SUPPLIERS.filter((s) => s.sourceClassification === 'needsReview');
+  assert.equal(official.length, 39);
+  assert.equal(review.length, 36);
+  assert.equal(official.length + review.length, 75);
+
+  // 4. Helper isListedAsOfficial behaves purely and hides field details
+  for (const s of official) {
+    assert.equal(isListedAsOfficial(s), true);
+  }
+  for (const s of review) {
+    assert.equal(isListedAsOfficial(s), false);
+  }
+  assert.equal(isListedAsOfficial({ sourceClassification: 'official' }), true);
+  assert.equal(isListedAsOfficial({ sourceClassification: 'needsReview' }), false);
+
+  // 5. Slug validation (valid URL slug, no slashes, no spaces)
+  for (const s of SMS_SUPPLIERS) {
+    assert.match(s.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    assert.doesNotMatch(s.id, /[\s/]/);
+  }
 });

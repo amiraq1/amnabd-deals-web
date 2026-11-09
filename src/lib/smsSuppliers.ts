@@ -2,8 +2,11 @@ import type {
   SmsSupplier,
   SmsSupplierPrivacy,
   SmsSupplierServiceType,
+  SmsSupplierSourceClassification,
   SmsSupplierVerificationStatus,
 } from '../content/smsSuppliersDirectory.js';
+
+export type { SmsSupplierSourceClassification, SmsSupplierVerificationStatus };
 
 export type ListedSourceUrlReason =
   | 'needsReview'
@@ -39,8 +42,8 @@ export const LINK_REASON_MESSAGES: Record<
 
 const BLOCKED_HOSTS = ['studentoffers.co', 'www.studentoffers.co'];
 
-export function isListedAsOfficial(supplier: Pick<SmsSupplier, 'verificationStatus'>): boolean {
-  return supplier.verificationStatus === 'official';
+export function isListedAsOfficial(supplier: Pick<SmsSupplier, 'sourceClassification'>): boolean {
+  return supplier.sourceClassification === 'official';
 }
 
 export interface SmsDirectorySummary {
@@ -55,7 +58,7 @@ export interface SmsDirectorySummary {
 }
 
 export function buildSmsDirectorySummary(
-  suppliers: readonly Pick<SmsSupplier, 'verificationStatus'>[]
+  suppliers: readonly Pick<SmsSupplier, 'sourceClassification'>[]
 ): SmsDirectorySummary {
   const totalCount = suppliers.length;
   const officialCount = suppliers.filter(isListedAsOfficial).length;
@@ -89,7 +92,7 @@ export function buildSmsDirectorySummary(
 }
 
 export function getListedSourceUrl(
-  supplier: Pick<SmsSupplier, 'verificationStatus' | 'url' | 'domain'>
+  supplier: Pick<SmsSupplier, 'sourceClassification' | 'url' | 'domain'>
 ): ListedSourceUrlResult {
   // Step 1: Status check - only official classification allowed to display link
   if (!isListedAsOfficial(supplier)) {
@@ -136,7 +139,7 @@ export interface SmsSupplierFilters {
   query?: string;
   serviceType?: 'all' | SmsSupplierServiceType;
   privacy?: 'all' | SmsSupplierPrivacy;
-  status?: 'all' | SmsSupplierVerificationStatus;
+  status?: 'all' | SmsSupplierSourceClassification;
 }
 
 export function filterSuppliers(
@@ -157,7 +160,7 @@ export function filterSuppliers(
         .includes(needle);
     const matchesType = serviceType === 'all' || supplier.serviceTypes.includes(serviceType);
     const matchesPrivacy = privacy === 'all' || supplier.privacy === privacy;
-    const matchesStatus = status === 'all' || supplier.verificationStatus === status;
+    const matchesStatus = status === 'all' || supplier.sourceClassification === status;
     return matchesQuery && matchesType && matchesPrivacy && matchesStatus;
   });
 }
