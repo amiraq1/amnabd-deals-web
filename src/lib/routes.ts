@@ -1,7 +1,7 @@
 import { parseLanguageFromSearch } from './languageStorage.js';
 
 export interface Route {
-  name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites' | 'changelog' | 'collection' | 'compare' | 'apiDirectory' | 'aiModelsDirectory';
+  name: 'home' | 'guide' | 'deal' | 'notfound' | 'favorites' | 'changelog' | 'collection' | 'compare' | 'apiDirectory' | 'aiModelsDirectory' | 'smsSuppliersDirectory';
   slug?: string;
   collectionKey?: string;
 }
@@ -40,6 +40,7 @@ export function parseHash(raw: unknown): Route {
     if (first === 'compare') return { name: 'compare' };
     if (first === 'free-api-keys-directory') return { name: 'apiDirectory' };
     if (first === 'free-ai-models-directory') return { name: 'aiModelsDirectory' };
+    if (first === 'sms-suppliers-directory') return { name: 'smsSuppliersDirectory' };
     if (['for-students', 'no-credit-card', 'coding', 'ending-soon'].includes(first)) {
       return { name: 'collection', collectionKey: first };
     }
@@ -61,6 +62,7 @@ export function routeHash(route: Route): string {
   if (route.name === 'compare') return '#/compare';
   if (route.name === 'apiDirectory') return '#/free-api-keys-directory';
   if (route.name === 'aiModelsDirectory') return '#/free-ai-models-directory';
+  if (route.name === 'smsSuppliersDirectory') return '#/sms-suppliers-directory';
   if (route.name === 'collection' && route.collectionKey) {
     return `#/${route.collectionKey}`;
   }
@@ -97,6 +99,7 @@ export function routePath(route: Route): string {
   if (route.name === 'compare') return '/compare';
   if (route.name === 'apiDirectory') return '/free-api-keys-directory';
   if (route.name === 'aiModelsDirectory') return '/free-ai-models-directory';
+  if (route.name === 'smsSuppliersDirectory') return '/sms-suppliers-directory';
   if (route.name === 'collection' && route.collectionKey) {
     return `/${route.collectionKey}`;
   }

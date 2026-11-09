@@ -41,6 +41,7 @@ const CollectionPage = lazy(() => import('@/pages/CollectionPage'));
 const ComparisonPage = lazy(() => import('@/pages/ComparisonPage'));
 const FreeApiKeysDirectoryPage = lazy(() => import('@/pages/FreeApiKeysDirectoryPage'));
 const FreeAiModelsDirectoryPage = lazy(() => import('@/pages/FreeAiModelsDirectoryPage'));
+const SmsSuppliersDirectoryPage = lazy(() => import('@/pages/SmsSuppliersDirectoryPage'));
 
 function AppInner() {
   const { lang } = useLanguage();
@@ -349,6 +350,7 @@ function AppInner() {
     content = <NotFoundPage onBack={() => navigate({ name: 'home' })} />;
   else if (route.name === 'apiDirectory') content = <FreeApiKeysDirectoryPage />;
   else if (route.name === 'aiModelsDirectory') content = <FreeAiModelsDirectoryPage />;
+  else if (route.name === 'smsSuppliersDirectory') content = <SmsSuppliersDirectoryPage />;
   else if (offers.status === 'error' && route.name !== 'guide') {
     // Applies before every deal-dependent route, including details/comparison.
     content = (
