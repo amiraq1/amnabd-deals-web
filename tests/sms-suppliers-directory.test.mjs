@@ -8,6 +8,7 @@ const built = (rel) => pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, rel));
 const { SMS_SUPPLIERS } = await import(built('src/content/smsSuppliersDirectory.js'));
 const { parseHash, routeHash, routePath } = await import(built('src/lib/routes.js'));
 const { routeMetadata } = await import(built('src/lib/metadata.js'));
+const { withLanguageSearch } = await import(built('src/lib/languageStorage.js'));
 const {
   getListedSourceUrl,
   LINK_REASON_MESSAGES,
@@ -17,6 +18,9 @@ const {
   clampPage,
   SMS_PAGE_SIZE,
   buildSmsDirectorySummary,
+  hasActiveSmsFilters,
+  parseSmsDirectoryUrlParams,
+  serializeSmsDirectoryUrlParams,
 } = await import(built('src/lib/smsSuppliers.js'));
 
 const source = (rel) => readFileSync(join(process.cwd(), rel), 'utf8');
@@ -402,4 +406,74 @@ test('Task 5: separate source classification from site verification invariants',
     assert.match(s.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
     assert.doesNotMatch(s.id, /[\s/]/);
   }
+});
+
+test('Task 6: URL query parameters parsing, serialization, clear-filters state, and language preservation', () => {
+  // 1. Reading full valid parameters from URL
+  const parsedFull = parseSmsDirectoryUrlParams('?q=SMSPool&type=activation&privacy=private&status=official&page=2');
+  assert.deepEqual(parsedFull, {
+    query: 'SMSPool',
+    serviceType: 'activation',
+    privacy: 'private',
+    status: 'official',
+    page: 2,
+  });
+
+  // 2. Ignoring invalid or malicious parameter values, safely falling back to defaults
+  const parsedInvalid = parseSmsDirectoryUrlParams('?q=%20%20test%20%20&type=malicious&privacy=bogus&status=fake&page=-5');
+  assert.deepEqual(parsedInvalid, {
+    query: 'test',
+    serviceType: 'all',
+    privacy: 'all',
+    status: 'all',
+    page: 1,
+  });
+
+  const parsedNonIntPage = parseSmsDirectoryUrlParams('?page=abc');
+  assert.equal(parsedNonIntPage.page, 1);
+
+  // 3. Serializing default state emits no query parameters
+  const serializedEmpty = serializeSmsDirectoryUrlParams({
+    query: '',
+    serviceType: 'all',
+    privacy: 'all',
+    status: 'all',
+    page: 1,
+  });
+  assert.equal(serializedEmpty, '');
+
+  // 4. Serializing active state only emits non-default keys
+  const serializedActive = serializeSmsDirectoryUrlParams({
+    query: 'smspool',
+    serviceType: 'all',
+    page: 1,
+  });
+  assert.equal(serializedActive, 'q=smspool');
+
+  // 5. Round-trip stability
+  const roundTripUrl = 'q=smspool&type=rental&privacy=mixed&status=needsReview&page=3';
+  const parsedRt = parseSmsDirectoryUrlParams(roundTripUrl);
+  const serializedRt = serializeSmsDirectoryUrlParams(parsedRt);
+  assert.equal(serializedRt, roundTripUrl);
+
+  // 6. hasActiveSmsFilters correctly detects when any filter or query is active
+  assert.equal(hasActiveSmsFilters({ query: '' }), false);
+  assert.equal(hasActiveSmsFilters({ query: '   ' }), false);
+  assert.equal(hasActiveSmsFilters({ query: 'smspool' }), true);
+  assert.equal(hasActiveSmsFilters({ serviceType: 'rental' }), true);
+  assert.equal(hasActiveSmsFilters({ privacy: 'public' }), true);
+  assert.equal(hasActiveSmsFilters({ status: 'needsReview' }), true);
+
+  // 7. Canonical URL remains parameter-free
+  const route = { name: 'smsSuppliersDirectory' };
+  assert.equal(routeMetadata(route, 'ar').canonicalUrl, 'https://amnabd.com/sms-suppliers-directory');
+  assert.equal(routeMetadata(route, 'en').canonicalUrl, 'https://amnabd.com/sms-suppliers-directory');
+
+  // 8. Language switching preserves page path and active SMS query parameters
+  const withLang = serializeSmsDirectoryUrlParams({ query: 'pool', page: 2 }, 'lang=en');
+  assert.equal(withLang, 'lang=en&q=pool&page=2');
+  const switchedToAr = withLanguageSearch(withLang, 'ar');
+  assert.equal(switchedToAr, 'q=pool&page=2');
+  const explicitAr = withLanguageSearch(withLang, 'ar', true);
+  assert.equal(explicitAr, 'q=pool&page=2&lang=ar');
 });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import {
   SMS_SUPPLIERS,
@@ -11,9 +11,12 @@ import {
   buildSmsDirectorySummary,
   filterSuppliers,
   getListedSourceUrl,
+  hasActiveSmsFilters,
   isListedAsOfficial,
   LINK_REASON_MESSAGES,
   paginateSuppliers,
+  parseSmsDirectoryUrlParams,
+  serializeSmsDirectoryUrlParams,
   SMS_PAGE_SIZE,
 } from '@/lib/smsSuppliers';
 
@@ -107,11 +110,16 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
 
 export default function SmsSuppliersDirectoryPage() {
   const { lang } = useLanguage();
-  const [query, setQuery] = useState('');
-  const [serviceType, setServiceType] = useState<'all' | SmsSupplierServiceType>('all');
-  const [privacy, setPrivacy] = useState<'all' | SmsSupplierPrivacy>('all');
-  const [status, setStatus] = useState<'all' | SmsSupplierSourceClassification>('all');
-  const [page, setPage] = useState(1);
+  const initialParams = useMemo(() => {
+    return parseSmsDirectoryUrlParams(typeof window !== 'undefined' ? window.location.search : '');
+  }, []);
+
+  const [query, setQuery] = useState(initialParams.query);
+  const [serviceType, setServiceType] = useState<'all' | SmsSupplierServiceType>(initialParams.serviceType);
+  const [privacy, setPrivacy] = useState<'all' | SmsSupplierPrivacy>(initialParams.privacy);
+  const [status, setStatus] = useState<'all' | SmsSupplierSourceClassification>(initialParams.status);
+  const [page, setPage] = useState(initialParams.page);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
   const ar = lang === 'ar';
   const summary = useMemo(() => buildSmsDirectorySummary(SMS_SUPPLIERS), []);
   const copy = ar
@@ -150,12 +158,59 @@ export default function SmsSuppliersDirectoryPage() {
 
   const { page: safePage, pageCount, pageRows } = paginateSuppliers(filtered, page, SMS_PAGE_SIZE);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const currentSearch = window.location.search;
+    const newSearch = serializeSmsDirectoryUrlParams(
+      { query, serviceType, privacy, status, page: safePage },
+      currentSearch
+    );
+    const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}${window.location.hash}`;
+    const currentUrl = `${window.location.pathname}${currentSearch}${window.location.hash}`;
+    if (newUrl !== currentUrl) {
+      try {
+        window.history.replaceState(window.history.state, '', newUrl);
+      } catch {
+        // Ignored in environments where replaceState throws
+      }
+    }
+  }, [privacy, query, safePage, serviceType, status]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const updated = parseSmsDirectoryUrlParams(window.location.search);
+      setQuery(updated.query);
+      setServiceType(updated.serviceType);
+      setPrivacy(updated.privacy);
+      setStatus(updated.status);
+      setPage(updated.page);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const hasActiveFilters = hasActiveSmsFilters({ query, serviceType, privacy, status });
+
   const resetFilters = () => {
     setQuery('');
     setServiceType('all');
     setPrivacy('all');
     setStatus('all');
     setPage(1);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setPage(nextPage);
+    if (resultsRef.current) {
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      resultsRef.current.focus({ preventScroll: true });
+      resultsRef.current.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    }
   };
 
   return (
@@ -249,36 +304,49 @@ export default function SmsSuppliersDirectoryPage() {
               ))}
             </select>
           </div>
-          <p className="self-end text-sm text-slate-300" aria-live="polite">
-            <span dir="ltr">{filtered.length}</span> {copy.resultCount}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 pt-2">
+            <p className="text-sm text-slate-300" aria-live="polite">
+              <span dir="ltr">{filtered.length}</span> {copy.resultCount}
+            </p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex min-h-9 items-center rounded-lg border border-slate-700 bg-slate-800/80 px-3 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+              >
+                {copy.reset}
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
       <p className="mt-4 text-xs leading-relaxed text-slate-500">{copy.dataNote}</p>
 
-      {pageRows.length ? (
-        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
-          {pageRows.map((supplier) => <SupplierCard key={supplier.id} supplier={supplier} lang={lang} />)}
-        </div>
-      ) : (
-        <section className="mt-6 rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center" aria-live="polite">
-          <p className="text-slate-300">{copy.empty}</p>
-          <button type="button" onClick={resetFilters} className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-emerald-500/40 px-4 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
-            {copy.reset}
-          </button>
-        </section>
-      )}
+      <div ref={resultsRef} tabIndex={-1} className="focus:outline-none">
+        {pageRows.length ? (
+          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {pageRows.map((supplier) => <SupplierCard key={supplier.id} supplier={supplier} lang={lang} />)}
+          </div>
+        ) : (
+          <section className="mt-6 rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center" aria-live="polite">
+            <p className="text-slate-300">{copy.empty}</p>
+            <button type="button" onClick={resetFilters} className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-emerald-500/40 px-4 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+              {copy.reset}
+            </button>
+          </section>
+        )}
+      </div>
 
       {filtered.length > 0 && (
         <nav className="mt-6 flex flex-wrap items-center justify-center gap-3" aria-label={ar ? 'صفحات النتائج' : 'Result pages'}>
-          <button type="button" disabled={safePage <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+          <button type="button" disabled={safePage <= 1} onClick={() => handlePageChange(Math.max(1, safePage - 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
             {copy.previous}
           </button>
           <span className="text-sm text-slate-400" aria-live="polite">
             {copy.page} <bdi dir="ltr">{safePage} / {pageCount}</bdi>
           </span>
-          <button type="button" disabled={safePage >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+          <button type="button" disabled={safePage >= pageCount} onClick={() => handlePageChange(Math.min(pageCount, safePage + 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
             {copy.next}
           </button>
         </nav>

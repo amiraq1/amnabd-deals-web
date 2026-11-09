@@ -194,3 +194,136 @@ export function paginateSuppliers<T>(
     pageRows,
   };
 }
+
+export const VALID_SMS_SERVICE_TYPES: readonly SmsSupplierServiceType[] = [
+  'activation', 'rental', 'public', 'app', 'messaging', 'bot', 'unknown',
+];
+export const VALID_SMS_PRIVACY_TYPES: readonly SmsSupplierPrivacy[] = [
+  'private', 'mixed', 'public', 'unknown',
+];
+export const VALID_SMS_STATUS_TYPES: readonly SmsSupplierSourceClassification[] = [
+  'official', 'needsReview',
+];
+
+export interface SmsDirectoryUrlState {
+  query: string;
+  serviceType: 'all' | SmsSupplierServiceType;
+  privacy: 'all' | SmsSupplierPrivacy;
+  status: 'all' | SmsSupplierSourceClassification;
+  page: number;
+}
+
+export const SMS_DIRECTORY_DEFAULT_STATE: SmsDirectoryUrlState = {
+  query: '',
+  serviceType: 'all',
+  privacy: 'all',
+  status: 'all',
+  page: 1,
+};
+
+export function hasActiveSmsFilters(
+  state: Partial<Pick<SmsDirectoryUrlState, 'query' | 'serviceType' | 'privacy' | 'status'>>
+): boolean {
+  if (typeof state.query === 'string' && state.query.trim().length > 0) return true;
+  if (state.serviceType && state.serviceType !== 'all') return true;
+  if (state.privacy && state.privacy !== 'all') return true;
+  if (state.status && state.status !== 'all') return true;
+  return false;
+}
+
+export function parseSmsDirectoryUrlParams(search: string): SmsDirectoryUrlState {
+  if (!search || typeof search !== 'string') {
+    return { ...SMS_DIRECTORY_DEFAULT_STATE };
+  }
+  const cleanSearch = search.startsWith('?') ? search.slice(1) : search;
+  const params = new URLSearchParams(cleanSearch);
+
+  const rawQ = params.get('q');
+  const query = typeof rawQ === 'string' ? rawQ.trim() : '';
+
+  const rawType = params.get('type');
+  const serviceType: 'all' | SmsSupplierServiceType =
+    rawType && (VALID_SMS_SERVICE_TYPES as readonly string[]).includes(rawType)
+      ? (rawType as SmsSupplierServiceType)
+      : 'all';
+
+  const rawPrivacy = params.get('privacy');
+  const privacy: 'all' | SmsSupplierPrivacy =
+    rawPrivacy && (VALID_SMS_PRIVACY_TYPES as readonly string[]).includes(rawPrivacy)
+      ? (rawPrivacy as SmsSupplierPrivacy)
+      : 'all';
+
+  const rawStatus = params.get('status');
+  const status: 'all' | SmsSupplierSourceClassification =
+    rawStatus && (VALID_SMS_STATUS_TYPES as readonly string[]).includes(rawStatus)
+      ? (rawStatus as SmsSupplierSourceClassification)
+      : 'all';
+
+  const rawPage = params.get('page');
+  let page = 1;
+  if (rawPage) {
+    const parsed = parseInt(rawPage, 10);
+    if (Number.isInteger(parsed) && parsed >= 1 && String(parsed) === rawPage.trim()) {
+      page = parsed;
+    }
+  }
+
+  return { query, serviceType, privacy, status, page };
+}
+
+export function serializeSmsDirectoryUrlParams(
+  state: Partial<SmsDirectoryUrlState>,
+  existingSearch = ''
+): string {
+  const cleanExisting = (existingSearch || '').replace(/^\?/, '');
+  const params = new URLSearchParams(cleanExisting);
+
+  // Query parameter `q`
+  if (state.query && state.query.trim().length > 0) {
+    params.set('q', state.query.trim());
+  } else {
+    params.delete('q');
+  }
+
+  // Service type `type`
+  if (
+    state.serviceType &&
+    state.serviceType !== 'all' &&
+    (VALID_SMS_SERVICE_TYPES as readonly string[]).includes(state.serviceType)
+  ) {
+    params.set('type', state.serviceType);
+  } else {
+    params.delete('type');
+  }
+
+  // Privacy `privacy`
+  if (
+    state.privacy &&
+    state.privacy !== 'all' &&
+    (VALID_SMS_PRIVACY_TYPES as readonly string[]).includes(state.privacy)
+  ) {
+    params.set('privacy', state.privacy);
+  } else {
+    params.delete('privacy');
+  }
+
+  // Source classification `status`
+  if (
+    state.status &&
+    state.status !== 'all' &&
+    (VALID_SMS_STATUS_TYPES as readonly string[]).includes(state.status)
+  ) {
+    params.set('status', state.status);
+  } else {
+    params.delete('status');
+  }
+
+  // Page `page`
+  if (typeof state.page === 'number' && Number.isInteger(state.page) && state.page > 1) {
+    params.set('page', String(state.page));
+  } else {
+    params.delete('page');
+  }
+
+  return params.toString();
+}
