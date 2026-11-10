@@ -2,7 +2,7 @@ import type { Deal, Lang, Localized } from '@/types';
 import { durationLabel } from './format.js';
 import { isValidSlug } from './routes.js';
 import { requirementState } from './eligibility.js';
-import { safeUrl } from './safeUrl.js';
+import { safeDealUrl } from './safeUrl.js';
 
 export type ComparisonCell =
   | { kind: 'text'; text: string }
@@ -124,7 +124,7 @@ function sourceFact(deal: Deal, lang: Lang): ComparisonCell {
   if (sources.length === 0) return unknownText(lang);
   return {
     kind: 'sources',
-    sources: sources.map((source) => ({ title: source.title, url: safeUrl(source.url) })),
+    sources: sources.map((source) => ({ title: source.title, url: safeDealUrl(source.url) })),
   };
 }
 

@@ -2,6 +2,7 @@ import { useMemo, useState, type MouseEvent } from 'react';
 import { ArrowLeft, ArrowRight, Rss, Send, History, Clock, CheckCircle2, Archive } from 'lucide-react';
 import type { Deal } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
+import { safeUrl } from '@/lib/safeUrl';
 import {
   buildChangelogEntries,
   groupChangelogByDate,
@@ -41,6 +42,7 @@ export default function ChangelogPage({
   onBackToHome,
 }: ChangelogPageProps) {
   const { lang, dir } = useLanguage();
+  const validTelegramChannelUrl = telegramChannelUrl ? safeUrl(telegramChannelUrl) : null;
   const [activeTab, setActiveTab] = useState<'all' | ReviewHistoryEvent>('all');
   const ArrowIcon = dir === 'rtl' ? ArrowRight : ArrowLeft;
   const filterTabs: { value: 'all' | ReviewHistoryEvent; labelAr: string; labelEn: string }[] = [
@@ -94,8 +96,8 @@ export default function ChangelogPage({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            {telegramChannelUrl && (
-              <a href={telegramChannelUrl} target="_blank" rel="noopener noreferrer"
+            {validTelegramChannelUrl && (
+              <a href={validTelegramChannelUrl} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-sky-500/40 bg-sky-500/15 px-3.5 py-2 text-xs font-medium text-sky-300 transition hover:bg-sky-500/25">
                 <Send className="h-3.5 w-3.5" />
                 <span>{lang === 'ar' ? 'تنبيهات تيليغرام' : 'Telegram Alerts'}</span>

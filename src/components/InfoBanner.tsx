@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, HelpCircle, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { safeUrl } from '@/lib/safeUrl';
 
 interface InfoBannerProps {
   kind: 'warning' | 'success' | 'info';
@@ -10,6 +11,7 @@ interface InfoBannerProps {
 
 export default function InfoBanner({ kind, text, sourceUrl, textClassName = '' }: InfoBannerProps) {
   const { lang } = useLanguage();
+  const validSourceUrl = sourceUrl ? safeUrl(sourceUrl) : null;
 
   const styles = {
     warning: {
@@ -30,9 +32,9 @@ export default function InfoBanner({ kind, text, sourceUrl, textClassName = '' }
     <div className={`flex items-start gap-3 rounded-xl border p-4 ${styles.wrap}`}>
       <span className="mt-0.5 shrink-0">{styles.icon}</span>
       <p className={`flex-1 text-sm leading-relaxed text-slate-200 ${textClassName}`}>{text}</p>
-      {sourceUrl && (
+      {validSourceUrl && (
         <a
-          href={sourceUrl}
+          href={validSourceUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-emerald-400 transition-colors hover:text-emerald-300"

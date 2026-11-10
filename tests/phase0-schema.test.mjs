@@ -115,11 +115,16 @@ test('REC-10: getDealIconSources and getDealOfficialDomain reject unsafe URLs an
 
   const safeDeal = dealFixture({
     icon_url: 'https://cdn.example.com/icon.svg',
-    official_sources: [{ url: 'https://example.com/offer' }],
+    official_sources: [{ url: 'https://www.figma.com/offer' }],
   });
   const safeSources = getDealIconSources(safeDeal);
   assert.equal(safeSources.primary, 'https://cdn.example.com/icon.svg');
-  assert.equal(getDealOfficialDomain(safeDeal), 'example.com');
+  assert.equal(getDealOfficialDomain(safeDeal), 'figma.com');
+
+  const lookalikeDeal = dealFixture({
+    official_sources: [{ url: 'https://www.figma.com.evil.example/offer' }],
+  });
+  assert.equal(getDealOfficialDomain(lookalikeDeal), null);
 });
 
 test('Phase 0: all 27 core deals are registered with official short names', () => {
