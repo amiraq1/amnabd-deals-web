@@ -2,6 +2,7 @@ import { isValidSlug } from './routes.js';
 import { applicantType, requirementState, truthState } from './eligibility.js';
 import { parseInstant } from './instants.js';
 import { hasSensitiveClaimCoverage } from './activationGuideSafety.js';
+import { isSafeUrl } from './safeUrl.js';
 import type {
   ActivationGuideStep,
   Benefit,
@@ -156,7 +157,7 @@ function parseSources(value: unknown, ctx: Context): OfficialSource[] {
   return array(value, ctx).flatMap((item) => {
     const row = object(item);
     const url = requiredText(get(row, 'url'));
-    if (!row || !url) {
+    if (!row || !url || !isSafeUrl(url)) {
       changed(ctx);
       return [];
     }

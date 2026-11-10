@@ -201,6 +201,15 @@ export function nonEmptyAggregations(deals: readonly Deal[]): { config: Aggregat
   });
 }
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 export function generateSitemapXml(deals: readonly Deal[], baseUrl = DEFAULT_SITE_URL): string {
   const cleanBase = baseUrl.replace(/\/+$/, '');
   const latestReview = deals
@@ -211,7 +220,7 @@ export function generateSitemapXml(deals: readonly Deal[], baseUrl = DEFAULT_SIT
 
   const url = (loc: string, priority: string, changefreq: string, lastmod?: string) =>
     `  <url>
-    <loc>${loc}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ''}
+    <loc>${escapeXml(loc)}</loc>${lastmod ? `\n    <lastmod>${escapeXml(lastmod)}</lastmod>` : ''}
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
   </url>`;
