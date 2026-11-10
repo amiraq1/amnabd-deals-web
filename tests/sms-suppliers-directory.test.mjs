@@ -73,6 +73,11 @@ test('SMS directory is bilingual, discloses unverified source labels and public-
   assert.match(page, /rel="noopener noreferrer nofollow"/);
   assert.match(footer, /localizedPath\('\/sms-suppliers-directory'\)/);
   assert.match(footer, /SMS Number Services Directory/);
+  const navbar = source('src/components/Navbar.tsx');
+  assert.match(navbar, /key: 'sms'/);
+  assert.match(navbar, /path: '\/sms-suppliers-directory'/);
+  assert.match(navbar, /sms: 'أرقام SMS'/);
+  assert.match(navbar, /sms: 'SMS Numbers'/);
 });
 
 test('Task 2: getListedSourceUrl directly validates protocol, domain match, and status with explicit reasons', () => {

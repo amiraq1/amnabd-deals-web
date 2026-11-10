@@ -5,6 +5,7 @@ import {
   Heart,
   History,
   Menu,
+  MessageSquare,
   Tag,
   X,
   Sparkles,
@@ -30,6 +31,7 @@ const translations = {
     favorites: 'المفضلة',
     guide: 'الدليل',
     aiModels: 'نماذج AI',
+    sms: 'أرقام SMS',
     changelog: 'المراجعات',
     savedDeals: 'عروض محفوظة',
     switchLang: 'EN — التبديل إلى الإنجليزية',
@@ -44,6 +46,7 @@ const translations = {
     favorites: 'Favorites',
     guide: 'Guide',
     aiModels: 'AI Models',
+    sms: 'SMS Numbers',
     changelog: 'Review History',
     savedDeals: 'saved deals',
     switchLang: 'ع — switch to Arabic',
@@ -54,7 +57,7 @@ const translations = {
   },
 } as const;
 
-type NavKey = 'offers' | 'favorites' | 'guide' | 'aiModels' | 'changelog';
+type NavKey = 'offers' | 'favorites' | 'guide' | 'aiModels' | 'sms' | 'changelog';
 
 interface NavItem {
   key: NavKey;
@@ -82,6 +85,12 @@ const navItems: readonly NavItem[] = [
     icon: Sparkles,
     routeTarget: { name: 'aiModelsDirectory' },
     path: '/free-ai-models-directory',
+  },
+  {
+    key: 'sms',
+    icon: MessageSquare,
+    routeTarget: { name: 'smsSuppliersDirectory' },
+    path: '/sms-suppliers-directory',
   },
   {
     key: 'changelog',
