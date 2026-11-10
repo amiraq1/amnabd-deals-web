@@ -21,7 +21,7 @@ import {
   reviewDateLabel,
 } from '@/lib/format';
 import { requirementLabel } from '@/lib/tristate';
-import { safeUrl, resolveDealOfficialUrl } from '@/lib/safeUrl';
+import { safeUrl, safeDealUrl, resolveDealOfficialUrl } from '@/lib/safeUrl';
 import InfoBanner from '@/components/InfoBanner';
 import { getDealDisplayName } from '@/lib/dealMetadata';
 import { primaryBenefit } from '@/lib/offerPresentation';
@@ -422,11 +422,11 @@ export default function DealDetailPage({
               {deal.official_sources.map((src, i) => (
                 <div key={i} className="min-w-0">
                   <a
-                    href={safeUrl(src.url) ?? '#'}
+                    href={safeDealUrl(src.url) ?? '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(ev) => {
-                      if (!safeUrl(src.url)) ev.preventDefault();
+                      if (!safeDealUrl(src.url)) ev.preventDefault();
                     }}
                     className="inline-flex min-h-11 max-w-full items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300"
                   >

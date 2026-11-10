@@ -1,4 +1,5 @@
 import type { Deal } from '@/types';
+import { isTrustedExternalHost } from './trustedDomains.js';
 
 const BLOCKED_HOSTS = ['studentoffers.co', 'www.studentoffers.co'];
 
@@ -58,11 +59,25 @@ export function safeUrl(url: string): string | null {
   return isSafeUrl(url) ? url : null;
 }
 
+/** Deal links must also belong to a reviewed provider domain. */
+export function isTrustedDealUrl(url: string): boolean {
+  if (!isSafeUrl(url)) return false;
+  try {
+    return isTrustedExternalHost(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
+export function safeDealUrl(url: string): string | null {
+  return isTrustedDealUrl(url) ? url : null;
+}
+
 export function resolveDealOfficialUrl(
   deal: Pick<Deal, 'official_sources' | 'get_offer'>
 ): string | null {
   const firstSourceUrl = deal.official_sources?.[0]?.url;
-  const safeFirst = firstSourceUrl ? safeUrl(firstSourceUrl) : null;
+  const safeFirst = firstSourceUrl ? safeDealUrl(firstSourceUrl) : null;
   if (safeFirst) return safeFirst;
-  return deal.get_offer?.url ? safeUrl(deal.get_offer.url) : null;
+  return deal.get_offer?.url ? safeDealUrl(deal.get_offer.url) : null;
 }

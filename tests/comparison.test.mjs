@@ -33,7 +33,7 @@ function deal(slug, overrides = {}) {
       conditions: { ar: 'شرط', en: 'Terms' },
     },
     official_sources: [
-      { url: 'https://official.example/offer', title: 'Official terms', claims: [] },
+      { url: 'https://www.figma.com/offer', title: 'Official terms', claims: [] },
     ],
     review: { unknown_fields: [], verification_status: 'unknown' },
     ...overrides,
@@ -71,7 +71,7 @@ test('comparison rows expose exactly the seven requested fields in both language
   assert.equal(valueFor(rows, 'countries', 0).text, 'قائمة مسجلة: IQ');
   assert.equal(valueFor(english, 'countries', 0).text, 'Listed: IQ');
   assert.equal(valueFor(english, 'duration', 0).text, '12 months');
-  assert.equal(valueFor(rows, 'source', 0).sources[0].url, 'https://official.example/offer');
+  assert.equal(valueFor(rows, 'source', 0).sources[0].url, 'https://www.figma.com/offer');
 });
 
 test('missing and review-marked fields stay explicitly unknown in Arabic and English', () => {
