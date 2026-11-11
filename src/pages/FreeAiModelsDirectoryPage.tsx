@@ -459,9 +459,9 @@ export default function FreeAiModelsDirectoryPage() {
           <div className="mt-4 border-t border-slate-800 pt-4">
             <h3 className="mb-2 text-sm font-semibold text-slate-300">{text.categories}</h3>
             <div className="flex flex-wrap gap-2">
-              <button type="button" aria-pressed={categoryFilter === 'all'} onClick={() => setCategoryFilter('all')} className={`min-h-10 rounded-full border px-3 text-xs font-semibold ${categoryFilter === 'all' ? 'border-emerald-400 bg-emerald-400/10 text-emerald-200' : 'border-slate-700 text-slate-300 hover:border-slate-500'}`}>{text.all} · {modelCount}</button>
+              <button type="button" aria-pressed={categoryFilter === 'all'} onClick={() => setCategoryFilter('all')} className={`min-h-11 rounded-full border px-3 text-xs font-semibold ${categoryFilter === 'all' ? 'border-emerald-400 bg-emerald-400/10 text-emerald-200' : 'border-slate-700 text-slate-300 hover:border-slate-500'}`}>{text.all} · {modelCount}</button>
               {categoryButtons.map((category) => (
-                <button type="button" key={category.id} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)} className={`min-h-10 rounded-full border px-3 text-xs font-semibold ${categoryFilter === category.id ? 'border-emerald-400 bg-emerald-400/10 text-emerald-200' : 'border-slate-700 text-slate-300 hover:border-slate-500'}`}>
+                <button type="button" key={category.id} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)} className={`min-h-11 rounded-full border px-3 text-xs font-semibold ${categoryFilter === category.id ? 'border-emerald-400 bg-emerald-400/10 text-emerald-200' : 'border-slate-700 text-slate-300 hover:border-slate-500'}`}>
                   {category.label} · {category.count}
                 </button>
               ))}

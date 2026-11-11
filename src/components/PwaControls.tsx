@@ -91,7 +91,7 @@ export default function PwaControls({ lang }: { lang: Lang }) {
         <button
           type="button"
           onClick={install}
-          className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20"
         >
           <Download className="h-4 w-4" aria-hidden="true" />
           {isAr ? 'تثبيت نبض' : 'Install AMNABD'}
@@ -101,7 +101,7 @@ export default function PwaControls({ lang }: { lang: Lang }) {
         <button
           type="button"
           onClick={applyUpdate}
-          className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-500/20"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-500/20"
         >
           <RefreshCw className="h-4 w-4" aria-hidden="true" />
           {isAr ? 'تحديث التطبيق' : 'Update app'}

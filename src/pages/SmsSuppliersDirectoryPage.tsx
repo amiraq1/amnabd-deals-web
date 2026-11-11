@@ -100,7 +100,7 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
           <span className="sr-only"> — {supplier.name}</span>
         </a>
       ) : (
-        <p className="mt-4 text-xs leading-relaxed text-slate-500">
+        <p className="mt-4 text-xs leading-relaxed text-slate-400">
           {LINK_REASON_MESSAGES[sourceResult.reason][lang]}
         </p>
       )}
@@ -312,7 +312,7 @@ export default function SmsSuppliersDirectoryPage() {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="inline-flex min-h-9 items-center rounded-lg border border-slate-700 bg-slate-800/80 px-3 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+                className="inline-flex min-h-11 items-center rounded-lg border border-slate-700 bg-slate-800/80 px-3 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
               >
                 {copy.reset}
               </button>
@@ -321,7 +321,7 @@ export default function SmsSuppliersDirectoryPage() {
         </div>
       </section>
 
-      <p className="mt-4 text-xs leading-relaxed text-slate-500">{copy.dataNote}</p>
+      <p className="mt-4 text-xs leading-relaxed text-slate-400">{copy.dataNote}</p>
 
       <div ref={resultsRef} tabIndex={-1} className="focus:outline-none">
         {pageRows.length ? (
