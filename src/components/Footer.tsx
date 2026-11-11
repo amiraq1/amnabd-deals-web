@@ -120,6 +120,16 @@ export default function Footer() {
                 {lang === 'ar' ? 'المشروع الأصلي' : 'Original project'}
                 <ExternalLink className="h-3 w-3" />
               </a>
+              <span className="text-slate-600">·</span>
+              <a
+                href="https://github.com/amiraq1/Am-free-ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-emerald-400 transition-colors hover:text-emerald-300"
+              >
+                {lang === 'ar' ? 'قائمة Am-free-ai المجانية' : 'Am-free-ai free list'}
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
             <div className="mt-4">
               <a
