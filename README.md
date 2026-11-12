@@ -219,7 +219,7 @@ CHROMIUM_PATH=/path/to/chromium node tests/browser-smoke.cjs
 | uncategorized | `1` فقط يعني غير مصنّف؛ غيره تشخيص خطأ |
 | applicant | all / student / any؛ غير الصالح يعود إلى all |
 | card | all / not_required؛ غير الصالح يعود إلى all |
-| sort | default / reviewed / deadline / ending_soon / highest_value؛ العروض المنتهية دائماً في الآخر. ending_soon: حالة ending_soon أولاً ثم أقرب تاريخ انتهاء مثبت. highest_value: الأعلى قيمة مثبتة أولاً، والبلا قيمة مثبتة بعدها. غير الصالح يعود إلى default |
+| sort | default / reviewed / deadline / ending_soon / highest_value؛ في كل الخيارات عدا default تُنقل العروض المنتهية إلى الآخر. default يرتب بتاريخ الإنشاء فقط ولا ينقل العروض المنتهية. ending_soon: حالة ending_soon أولاً ثم أقرب تاريخ انتهاء مثبت. highest_value: الأعلى قيمة مثبتة أولاً، والبلا قيمة مثبتة بعدها. غير الصالح يعود إلى default |
 | country | نص حر لاسم بلد، يُنظَّف من محارف التحكم ويُقص إلى 80 محرفاً، ويُطابَق بعد توحيد الأسماء المرادفة في `src/lib/countryAvailability.ts`. الفارغ يعني بلا تصفية بلد |
 | country_status | all / supported / unknown / excluded؛ يُقرأ فقط مع country غير فارغ، وغير الصالح أو الغائب يعود إلى all، ولا يُكتب في الرابط إلا مع country وقيمة غير all |
 
@@ -382,8 +382,8 @@ TypeScript منفصلاً لا يشمله المشغّل. tsconfig.test.json ي�
 ## الدفعة 1: AMN-023 وAMN-024 وAMN-027 وAMN-028
 
 - **ما تغيّر:**
-  - AMN-023: فقرتا الملاحظات في دليل SMS (`src/pages/SmsSuppliersDirectoryPage.tsx`) من `text-slate-500` إلى `text-slate-400`. النسبة المحسوبة على `slate-950` من 4.24:1 إلى 7.87:1.
-  - AMN-024: خمسة أزرار بارتفاع أدنى 40px أو 36px صارت `min-h-11` (44px): زران لفئات نماذج الذكاء الاصطناعي (`FreeAiModelsDirectoryPage.tsx`)، وزران للتثبيت والتحديث (`src/components/PwaControls.tsx`)، وزر إعادة الضبط في دليل SMS.
+  - AMN-023 (الحالة: جزئي): فقرتا الملاحظات في دليل SMS (`src/pages/SmsSuppliersDirectoryPage.tsx`) من `text-slate-500` إلى `text-slate-400`. النسبة المحسوبة على `slate-950` من 4.24:1 إلى 7.87:1.
+  - AMN-024: خمسة أزرار بارتفاع أدنى 40px أو 36px صارت `min-h-11` (44px): زران لفئات نماذج الذكاء الاصطناعي (`FreeAiModelsDirectoryPage.tsx`)، وزران للتثبيت والتحديث (`src/components/PwaControls.tsx`)، والزر في `SmsSuppliersDirectoryPage.tsx` الذي يعرض `copy.reset` ويستدعي `resetFilters` (السطر 315 يحمل `min-h-11`).
   - AMN-027 وAMN-028: وصف المطابقة وجدول قيم FilterState في هذا README. لم يتغيّر السلوك البرمجي.
-- **ما لم يتغيّر:** منطق البحث والفرز والرابط، والبيانات وRLS وmigrations وworkflow والاعتماديات، وتحذير lint المعلوم في `LanguageContext.tsx`. ما زالت placeholders في حقول البحث بلون `slate-500` (تباين 4.24:1) ولم تُعدَّل، لأنها ليست نصاً معلوماتياً وتنتظر قراراً منفصلاً.
-- **حدود الإثبات:** `tests/amn-023-024-ui-a11y-classes.test.mjs` يثبت الـclasses في ملفات المصدر فقط. لا يثبت التباين المعروض ولا حجم اللمس في المتصفح، لأن Chromium لم يتوفر في هذه الدفعة. `tests/amn-027-028-docs-contract.test.mjs` يقارن قيم README بالمجموعات الفعلية في `src/lib/filterState.ts`.
+- **ما لم يتغيّر:** منطق البحث والفرز والرابط، والبيانات وRLS وmigrations وworkflow والاعتماديات، وتحذير lint المعلوم في `LanguageContext.tsx`. حقول placeholder في البحث ما زالت بلون `slate-500` بتباين 4.24:1 على `slate-950` (`FreeAiModelsDirectoryPage.tsx:366` و`SmsSuppliersDirectoryPage.tsx:254`) ولم تُعالج في هذه الدفعة. لذلك AMN-023 جزئي: النص المعلوماتي معالج، والـplaceholders غير معالجة.
+- **حدود الإثبات:** `tests/amn-023-024-ui-a11y-classes.test.mjs` يثبت الـclasses في ملفات المصدر فقط. لا يثبت التباين المعروض ولا حجم اللمس في المتصفح، لأن Chromium لم يتوفر في هذه الدفعة. `tests/amn-027-028-docs-contract.test.mjs` يقارن قيم README بالمجموعات الفعلية في `src/lib/filterState.ts`، ويقارن حد الدولة بطول الناتج الفعلي للمحلل. `tests/amn-027-028-characterization.test.mjs` يثبت السلوك الحالي للمطابقة والفرز والمرادفات كما هو، ولا يعني أن هذا السلوك هو المطلوب؛ القرارات المعلّقة تبقى معلّقة.

@@ -3,10 +3,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const load = (rel) =>
+  import(pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, `src/lib/${rel}.js`)).href);
 const readme = readFileSync(join(root, 'README.md'), 'utf8');
 const filterSource = readFileSync(join(root, 'src/lib/filterState.ts'), 'utf8');
 
@@ -59,6 +61,13 @@ test('AMN-028: documented country_status values equal the values the parser acce
   sameValues(documentedValues('country_status'), codeSet('COUNTRY_STATUSES'));
 });
 
-test('AMN-028: the country row exists and says it is capped at 80 characters', () => {
-  assert.match(documentedRow('country'), /80/);
+test('AMN-028: README does not say expired offers sort last for every sort value', () => {
+  assert.doesNotMatch(documentedRow('sort'), /العروض المنتهية دائماً في الآخر/);
+});
+
+test('AMN-028: README country cap equals the length the parser keeps for a long country value', async () => {
+  const { parseFilterState } = await load('filterState');
+  const kept = Array.from(parseFilterState(`?country=${'x'.repeat(250)}`).country).length;
+  assert.ok(kept > 0 && kept < 250, `parser kept ${kept} characters`);
+  assert.match(documentedRow('country'), new RegExp(`${kept} محرفاً`));
 });
