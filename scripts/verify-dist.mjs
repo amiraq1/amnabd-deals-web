@@ -20,6 +20,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  DEFAULT_SITE_URL,
   isAuditFixtureEnv,
   isStaticDealSlug,
   loadDealsCatalog,
@@ -34,6 +35,7 @@ import { inspectDealDeadlineCoverage } from './deal-deadline-guard.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { dealFacts } = sharedSeo;
+const canonicalBase = DEFAULT_SITE_URL.replace(/\/+$/, '');
 
 // Per-deal claims: each phrase is allowed only when its own explicit field holds.
 export const DEAL_CLAIMS = [
@@ -335,7 +337,7 @@ function checkLlmsDealRoutes(report, distDir, deals) {
   const raw = readIfExists(join(distDir, 'llms.txt'));
   if (raw === null) return;
 
-  const canonicalOrigin = new URL(sharedSeo.DEFAULT_SITE_URL).origin;
+  const canonicalOrigin = new URL(canonicalBase).origin;
   const expected = new Set(deals.filter((deal) => isStaticDealSlug(deal?.slug)).map((deal) => deal.slug));
   const found = [];
   for (const match of raw.matchAll(/\]\(([^)\s]+)\)/g)) {
@@ -505,7 +507,7 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
   if (notFoundHtml === null) {
     report('404.html: static not-found route is missing');
   } else {
-    const expectedCanonical = `${sharedSeo.DEFAULT_SITE_URL.replace(/\/+$/, '')}/404`;
+    const expectedCanonical = `${canonicalBase}/404`;
     const canonicalCount = (notFoundHtml.match(/<link\s+rel=["']canonical["']/gi) ?? []).length;
     if (!/<meta\s+name=["']robots["']\s+content=["']noindex,follow["']/i.test(notFoundHtml)) {
       report('404.html: route must be explicitly noindex');
@@ -538,7 +540,7 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
   }
 
   const apiDirectoryHtml = readIfExists(join(distDir, 'free-api-keys-directory', 'index.html'));
-  const apiDirectoryCanonical = `${sharedSeo.DEFAULT_SITE_URL.replace(/\/+$/, '')}/free-api-keys-directory`;
+  const apiDirectoryCanonical = `${canonicalBase}/free-api-keys-directory`;
   if (apiDirectoryHtml === null) {
     report('free-api-keys-directory/index.html: static directory route is missing');
   } else if (
@@ -549,7 +551,7 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
   }
 
   const aiModelsDirectoryHtml = readIfExists(join(distDir, 'free-ai-models-directory', 'index.html'));
-  const aiModelsDirectoryCanonical = `${sharedSeo.DEFAULT_SITE_URL.replace(/\/+$/, '')}/free-ai-models-directory`;
+  const aiModelsDirectoryCanonical = `${canonicalBase}/free-ai-models-directory`;
   if (aiModelsDirectoryHtml === null) {
     report('free-ai-models-directory/index.html: static directory route is missing');
   } else if (
@@ -560,7 +562,7 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
   }
 
   const smsSuppliersDirectoryHtml = readIfExists(join(distDir, 'sms-suppliers-directory', 'index.html'));
-  const smsSuppliersDirectoryCanonical = `${sharedSeo.DEFAULT_SITE_URL.replace(/\/+$/, '')}/sms-suppliers-directory`;
+  const smsSuppliersDirectoryCanonical = `${canonicalBase}/sms-suppliers-directory`;
   if (smsSuppliersDirectoryHtml === null) {
     report('sms-suppliers-directory/index.html: static directory route is missing');
   } else if (

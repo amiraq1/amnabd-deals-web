@@ -5,7 +5,7 @@ export function isStaticDealSlug(value) {
   return (
     typeof value === 'string' &&
     value.length > 0 &&
-    value.length <= 200 &&
+    value.length <= 120 &&
     /^[a-zA-Z0-9_\-\u0600-\u06FF]+$/i.test(value)
   );
 }
