@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, before, test } from 'node:test';
@@ -70,29 +70,34 @@ function renderReactDetail(deal, lang = 'ar') {
   }
 }
 
-function runVerifyDist(distDir, extraArgs = []) {
+function runVerifyDist(distDir, extraArgs = [], extraEnv = {}) {
   return execFileSync(
     process.execPath,
     [join(process.cwd(), 'scripts/verify-dist.mjs'), '--dist', distDir, ...extraArgs],
-    { encoding: 'utf8', stdio: 'pipe', env: { ...process.env, SEO_PARITY_SOURCE: 'snapshot' } }
+    {
+      encoding: 'utf8',
+      stdio: 'pipe',
+      env: { ...process.env, SEO_PARITY_SOURCE: 'snapshot', ...extraEnv },
+    }
   );
 }
 
-function fixtureDist(files) {
+function fixtureDist(files, baseUrl = 'https://amnabd.com') {
   const root = mkdtempSync(join(tmpdir(), 'amnabd-dist-'));
+  const canonicalBase = baseUrl.replace(/\/+$/, '');
   const defaults = {
     'index.html':
       '<!doctype html><html><head><title>AMNABD Deals</title></head><body><div id="root"></div></body></html>',
     'compare/index.html':
       '<!doctype html><html><head><title>AMNABD Deals</title><meta name="robots" content="noindex,follow"></head><body><div id="root"></div></body></html>',
     '404.html':
-      '<!doctype html><html><head><title>AMNABD Deals</title><meta name="robots" content="noindex,follow"><link rel="canonical" href="https://amnabd.com/404"></head><body><div id="root"></div></body></html>',
+      `<!doctype html><html><head><title>AMNABD Deals</title><meta name="robots" content="noindex,follow"><link rel="canonical" href="${canonicalBase}/404"></head><body><div id="root"></div></body></html>`,
     'free-api-keys-directory/index.html':
-      '<!doctype html><html><head><title>دليل مفاتيح API المجانية</title><link rel="canonical" href="https://amnabd.com/free-api-keys-directory"></head></html>',
+      `<!doctype html><html><head><title>دليل مفاتيح API المجانية</title><link rel="canonical" href="${canonicalBase}/free-api-keys-directory"></head></html>`,
     'free-ai-models-directory/index.html':
-      '<!doctype html><html><head><title>دليل نماذج الذكاء الاصطناعي المجانية</title><link rel="canonical" href="https://amnabd.com/free-ai-models-directory"></head></html>',
+      `<!doctype html><html><head><title>دليل نماذج الذكاء الاصطناعي المجانية</title><link rel="canonical" href="${canonicalBase}/free-ai-models-directory"></head></html>`,
     'sms-suppliers-directory/index.html':
-      '<!doctype html><html><head><title>دليل خدمات وأدلة أرقام SMS</title><link rel="canonical" href="https://amnabd.com/sms-suppliers-directory"></head></html>',
+      `<!doctype html><html><head><title>دليل خدمات وأدلة أرقام SMS</title><link rel="canonical" href="${canonicalBase}/sms-suppliers-directory"></head></html>`,
   };
   for (const [rel, body] of Object.entries({ ...defaults, ...files })) {
     const full = join(root, rel);
@@ -107,6 +112,36 @@ function fixtureDist(files) {
 }
 
 const unverifiedSlug = 'docker-cloud-sandbox-250';
+
+test('verify-dist follows SITE_URL and VITE_SITE_URL for canonical and llms routes', () => {
+  const customRoot = mkdtempSync(join(tmpdir(), 'amnabd-root-'));
+  const siteUrl = 'https://preview.example.test';
+  mkdirSync(join(customRoot, 'public'), { recursive: true });
+  writeFileSync(
+    join(customRoot, 'public', 'deals-catalog.json'),
+    JSON.stringify([{ slug: 'route-deal', name: 'Route deal' }])
+  );
+  const distDir = fixtureDist(
+    {
+      'llms.txt': `# AMNABD Deals\n\n- [Route deal](${siteUrl}/deal/route-deal): sourced details.\n`,
+    },
+    siteUrl
+  );
+  try {
+    for (const env of [
+      { SITE_URL: siteUrl },
+      { SITE_URL: '', VITE_SITE_URL: siteUrl },
+    ]) {
+      assert.match(
+        runVerifyDist(distDir, ['--root', customRoot], env),
+        /verify-dist: OK/
+      );
+    }
+  } finally {
+    rmSync(customRoot, { recursive: true, force: true });
+    rmSync(distDir, { recursive: true, force: true });
+  }
+});
 
 test('AUD-011: unsupported Arabic claim (متاح للجميع) in deal page body <p> must fail', () => {
   const dirty = fixtureDist({

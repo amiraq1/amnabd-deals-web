@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 
-const { loadDealSlugSnapshot, verifySeoParity } = await import(
+const { isStaticDealSlug, loadDealSlugSnapshot, verifySeoParity } = await import(
   pathToFileURL(join(process.cwd(), 'scripts/seo-parity.mjs'))
 );
 
@@ -48,6 +48,12 @@ function verify(distDir, overrides = {}) {
     ...overrides,
   });
 }
+
+test('static SEO slug validation uses the application router 120-character limit', () => {
+  assert.equal(isStaticDealSlug('a'.repeat(120)), true);
+  assert.equal(isStaticDealSlug('a'.repeat(121)), false);
+  assert.equal(isStaticDealSlug('a'.repeat(200)), false);
+});
 
 test('F-07 accepts full live-route coverage and an exact generic shell for live-only deals', () => {
   const distDir = fixture();
