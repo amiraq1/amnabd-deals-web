@@ -18,7 +18,7 @@ import {
 } from '../scripts/verify-dist.mjs';
 import { sharedSeo } from '../scripts/generate-static-seo.mjs';
 
-const { dealFacts } = sharedSeo;
+const { dealFacts, buildDealSeo } = sharedSeo;
 
 let vite;
 let DealDetailPage;
@@ -105,6 +105,54 @@ function fixtureDist(files) {
   }
   return root;
 }
+
+function rootWithCatalogDeals(deals) {
+  const root = mkdtempSync(join(tmpdir(), 'amnabd-root-'));
+  mkdirSync(join(root, 'public'), { recursive: true });
+  writeFileSync(join(root, 'public', 'deals-catalog.json'), JSON.stringify(deals));
+  return root;
+}
+
+function htmlWithJsonLd(jsonLd) {
+  return '<!doctype html><html><head><title>Deal</title>' +
+    `<script type="application/ld+json" data-deal-jsonld="true">${JSON.stringify(jsonLd)}</script>` +
+    '</head><body></body></html>';
+}
+
+test('verify-dist mirrors the live status and end-date overlay used by static SEO', () => {
+  const slug = 'live-status-fact-deal';
+  const catalogDeal = { slug, name: 'Live status fact deal', summary: 'A plain test summary.' };
+  const rootDir = rootWithCatalogDeals([catalogDeal]);
+
+  for (const scenario of [
+    { status: 'active', ends_at: null, availability: 'InStock' },
+    { status: 'active', ends_at: '2000-01-01', availability: 'SoldOut' },
+  ]) {
+    const liveDeal = { slug, status: scenario.status, ends_at: scenario.ends_at };
+    const generated = buildDealSeo({ ...catalogDeal, ...liveDeal }).jsonLd;
+    assert.equal(generated.availability, `https://schema.org/${scenario.availability}`);
+
+    const distDir = fixtureDist({ [`deal/${slug}/index.html`]: htmlWithJsonLd(generated) });
+    const result = verifyDist({ rootDir, distDir, liveDeals: [liveDeal] });
+    assert.equal(result.violations.length, 0, result.violations.join('\n'));
+  }
+});
+
+test('verify-dist still rejects availability JSON-LD when live status is unknown or verifying', () => {
+  const slug = 'unknown-live-status-deal';
+  const catalogDeal = { slug, name: 'Unknown live status deal', summary: 'A plain test summary.' };
+  const rootDir = rootWithCatalogDeals([catalogDeal]);
+  // Simulate a stale/incorrect artifact that claims the previously explicit active state.
+  const unsupportedArtifact = buildDealSeo({ ...catalogDeal, status: 'active' }).jsonLd;
+
+  for (const status of [null, 'verifying']) {
+    const distDir = fixtureDist({ [`deal/${slug}/index.html`]: htmlWithJsonLd(unsupportedArtifact) });
+    const result = verifyDist({ rootDir, distDir, liveDeals: [{ slug, status, ends_at: null }] });
+    const violation = result.violations.find((item) => item.includes(`deal/${slug}/index.html: حقل availability`));
+    assert.ok(violation, `status ${status} should keep availability unsupported`);
+    assert.match(violation, status === null ? /status=غير معلوم/ : /status=verifying/);
+  }
+});
 
 const unverifiedSlug = 'docker-cloud-sandbox-250';
 
