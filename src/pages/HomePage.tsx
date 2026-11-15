@@ -76,7 +76,6 @@ const USE_CASE_LABELS: Record<string, { ar: string; en: string }> = {
   data: { ar: 'تحليل بيانات', en: 'Data Analytics' },
 };
 
-const SEARCH_DEBOUNCE_MS = 250;
 
 export default function HomePage({
   deals,
@@ -95,9 +94,7 @@ export default function HomePage({
 }: HomePageProps) {
   const { lang, pick } = useLanguage();
   const { savedList, savedSet, toggle, degraded, atLimit } = useSavedDeals();
-  const [savedOnly, setSavedOnly] = useState(false);
-  const [endingSoon, setEndingSoon] = useState(false);
-  const [selectedUseCases, setSelectedUseCases] = useState<string[]>([]);
+  const { savedOnly, endingSoon, useCases: selectedUseCases } = filterState;
   const [showFilters, setShowFilters] = useState(false);
   const [copyStatus, setCopyStatus] = useState<
     'idle' | 'copying' | 'success' | 'manual'
@@ -121,34 +118,11 @@ export default function HomePage({
 
   useEffect(() => {
     // تغيّر الرابط من الخارج (زر الرجوع، إعادة الضبط): نزامن الحقل معه.
-    if (filterState.q !== lastSentQ.current) {
-      lastSentQ.current = filterState.q;
+    if (cleanQuery(filterState.q) !== lastSentQ.current) {
+      lastSentQ.current = cleanQuery(filterState.q);
       setQDraft(filterState.q);
     }
   }, [filterState.q]);
-
-  useEffect(() => {
-    if (cleanQuery(qDraft) === lastSentQ.current) return;
-    const id = window.setTimeout(() => {
-      lastSentQ.current = cleanQuery(qDraft);
-      onFilterChange({ q: qDraft }, 'replace');
-    }, SEARCH_DEBOUNCE_MS);
-    return () => window.clearTimeout(id);
-  }, [qDraft, onFilterChange]);
-
-  useEffect(() => {
-    const resetLocalFilter = () => {
-      setSavedOnly(false);
-      setEndingSoon(false);
-      setSelectedUseCases([]);
-    };
-    window.addEventListener('popstate', resetLocalFilter);
-    window.addEventListener('hashchange', resetLocalFilter);
-    return () => {
-      window.removeEventListener('popstate', resetLocalFilter);
-      window.removeEventListener('hashchange', resetLocalFilter);
-    };
-  }, []);
 
   useEffect(() => {
     generation.current += 1;
@@ -167,6 +141,9 @@ export default function HomePage({
     filterState.country,
     filterState.countryStatus,
     filterState.sort,
+    filterState.savedOnly,
+    filterState.endingSoon,
+    filterState.useCases,
   ]);
 
   useEffect(() => {
@@ -278,9 +255,9 @@ export default function HomePage({
   }, [activeDeals, lang]);
 
   const toggleUseCase = (uc: string) => {
-    setSelectedUseCases((prev) =>
-      prev.includes(uc) ? prev.filter((item) => item !== uc) : [...prev, uc],
-    );
+    onFilterChange({ useCases: selectedUseCases.includes(uc)
+      ? selectedUseCases.filter((item) => item !== uc)
+      : [...selectedUseCases, uc] }, 'push');
   };
 
   // Unified matcher for filtering & smart empty state calculation
@@ -410,9 +387,6 @@ export default function HomePage({
   );
 
   const handleResetAll = () => {
-    setSavedOnly(false);
-    setEndingSoon(false);
-    setSelectedUseCases([]);
     onResetFilters();
   };
 
@@ -458,7 +432,7 @@ export default function HomePage({
           (d) => getTimingState(d, referenceNow).offer.state === 'ending_soon',
         ).length,
         isActive: endingSoon,
-        onToggle: () => setEndingSoon((prev) => !prev),
+        onToggle: () => onFilterChange({ endingSoon: !endingSoon }, 'push'),
       },
     ],
     [
@@ -506,7 +480,7 @@ export default function HomePage({
         candidates.push({
           label: lang === 'ar' ? 'ينتهي قريبًا' : 'Ending soon',
           count,
-          clear: () => setEndingSoon(false),
+          clear: () => onFilterChange({ endingSoon: false }, 'push'),
         });
       }
     }
@@ -559,7 +533,7 @@ export default function HomePage({
         candidates.push({
           label: lang === 'ar' ? 'حالات الاستخدام' : 'Use cases',
           count,
-          clear: () => setSelectedUseCases([]),
+          clear: () => onFilterChange({ useCases: [] }, 'push'),
         });
       }
     }
@@ -585,7 +559,7 @@ export default function HomePage({
         candidates.push({
           label: lang === 'ar' ? 'المحفوظة فقط' : 'Saved deals only',
           count,
-          clear: () => setSavedOnly(false),
+          clear: () => onFilterChange({ savedOnly: false }, 'push'),
         });
       }
     }
@@ -651,6 +625,11 @@ export default function HomePage({
 
   async function handleCopySearchLink() {
     if (busy.current) return;
+    // Flush text still inside the input debounce before creating the link.
+    if (cleanQuery(qDraft) !== lastSentQ.current) {
+      lastSentQ.current = cleanQuery(qDraft);
+      onFilterChange({ q: qDraft }, 'replace');
+    }
     const url = getSearchLink();
     const version = generation.current;
     busy.current = true;
@@ -848,7 +827,7 @@ export default function HomePage({
                   {selectedUseCases.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setSelectedUseCases([])}
+                      onClick={() => onFilterChange({ useCases: [] }, 'push')}
                       className="min-h-11 text-sm text-slate-400 transition hover:text-emerald-400"
                     >
                       {lang === 'ar'
@@ -978,7 +957,12 @@ export default function HomePage({
             <input
               type="search"
               value={qDraft}
-              onChange={(e) => setQDraft(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setQDraft(value);
+                lastSentQ.current = cleanQuery(value);
+                onFilterChange({ q: value }, 'replace');
+              }}
               maxLength={120}
               placeholder={
                 lang === 'ar'
@@ -1260,7 +1244,7 @@ export default function HomePage({
 
           <button
             type="button"
-            onClick={() => setSavedOnly((s) => !s)}
+            onClick={() => onFilterChange({ savedOnly: !savedOnly }, 'push')}
             aria-describedby="saved-deals-scope"
             aria-pressed={savedOnly}
             className={`${categoryButtonBase} inline-flex items-center gap-1.5 ${
@@ -1345,8 +1329,8 @@ export default function HomePage({
 
         <p className="mt-2.5 text-sm text-slate-400" id="saved-deals-scope">
           {lang === 'ar'
-            ? 'المحفوظات تخص هذا المتصفح ولا تنتقل مع رابط البحث. فلتر المحفوظة يعمل مع بقية الفلاتر.'
-            : 'Saved deals belong to this browser and are not included in shared search links.'}
+            ? 'المحفوظات تخص هذا المتصفح. يشارك الرابط تفعيل الفلتر فقط، لا قائمة المحفوظات؛ قد تختلف النتائج على جهاز آخر.'
+            : 'Saved deals belong to this browser. The link shares the filter, not the saved list; results may differ on another device.'}
         </p>
 
         {atLimit && (
