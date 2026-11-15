@@ -163,6 +163,8 @@ export default function HomePage({
     };
   }, []);
 
+  // Results update immediately for responsive feedback; only URL writes are
+  // debounced. Search text is pre-indexed, but large catalogs need profiling.
   const queryGroups = useMemo(
     () => compileQuery(filterState.q),
     [filterState.q],

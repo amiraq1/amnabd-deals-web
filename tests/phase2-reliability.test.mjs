@@ -9,6 +9,7 @@ const { isHashOnlyLocationChange, migrateLegacyHashLocation } = await load('rout
 const { parseModelFilters, serializeModelFilters, DEFAULT_MODEL_FILTERS } = await load('modelFilterState');
 const { importFavorites, exportFavorites } = await load('favoritesTransfer');
 const { buildComparisonRows } = await load('comparison');
+const { buildDealSeo, generateSitemapXml } = await load('seoFacts');
 
 test('discovery filters round trip, repeated Arabic use cases, legacy links and anchors', () => {
   const state = { ...DEFAULT_FILTER_STATE, q: 'GPT', savedOnly: true, endingSoon: true, useCases: ['برمجة', 'coding'] };
@@ -55,4 +56,31 @@ test('comparison preserves prices, units and explicit unknowns without ranking',
   const flaggedRows = buildComparisonRows([flagged, a], 'en');
   assert.equal(flaggedRows.find(r => r.key === 'price').values[0].text, 'Unknown');
   assert.doesNotMatch(flaggedRows.find(r => r.key === 'benefit').values[0].text, /100/);
+});
+
+
+test('sitemap includes the indexable guide once and omits private favorites', () => {
+  const xml = generateSitemapXml([], 'https://example.test/');
+  assert.equal((xml.match(/<loc>https:\/\/example\.test\/guide<\/loc>/g) ?? []).length, 1);
+  assert.match(xml, /<loc>https:\/\/example\.test\/guide<\/loc>\s*<changefreq>weekly<\/changefreq>\s*<priority>0\.6<\/priority>/);
+  assert.doesNotMatch(xml, /<loc>https:\/\/example\.test\/favorites<\/loc>/);
+});
+
+test('priceValidUntil requires a valid, explicitly known end date and a valid price', () => {
+  const deal = { slug: 'example', status: 'active', pricing: { offer_price: 0, currency: 'USD' }, review: { unknown_fields: [] } };
+  const value = (overrides) => buildDealSeo({ ...deal, ...overrides }, 'https://example.test', new Date('2026-01-01T00:00:00Z')).jsonLd.priceValidUntil;
+  assert.equal(value({ends_at:'2026-12-30'}), '2026-12-30');
+  assert.equal(value({ends_at:'2026-12-30T12:00:00+03:00'}), '2026-12-30T12:00:00+03:00');
+  for (const ends_at of ['invalid', '2026-02-30', '2026-12-30T12:00:00', '2026-12-30T12:00:00-00:00', '']) assert.equal(value({ends_at}), undefined);
+  for (const name of ['ends_at', 'offer end date', 'offer expiry']) assert.equal(value({ends_at:'2026-12-30', review:{unknown_fields:[name]}}), undefined);
+  assert.equal(value({ends_at:'2026-12-30', pricing:{offer_price:null, currency:'USD'}}), undefined);
+});
+
+test('favorites exports either round-trip or reject without silently dropping data', () => {
+  const limit = Array.from({length:500}, (_, i) => `slug-${i}`);
+  assert.deepEqual(importFavorites(exportFavorites(limit), []).slugs, limit);
+  assert.throws(() => exportFavorites([...limit, 'one-too-many']), /invalid_list/);
+  assert.throws(() => exportFavorites(['bad/slug']), /invalid_list/);
+  const huge = Array.from({length:500}, (_, i) => `${i}-${'漢'.repeat(110)}`);
+  assert.throws(() => exportFavorites(huge), /file_too_large/);
 });

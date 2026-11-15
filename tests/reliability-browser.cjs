@@ -25,10 +25,12 @@ const rows = [
    assert.equal(await p.getByRole('searchbox',{name:'Search deals'}).inputValue(),'Alpha');
    assert.equal(new URL(p.url()).searchParams.get('q'),'Alpha');
    assert.equal(new URL(p.url()).searchParams.get('use_case'),'coding');
+   assert.equal(new URL(p.url()).hash, '#main-content');
    await p.getByRole('button',{name:'Share search'}).click();
    await p.waitForFunction(()=>window.__copied.length>0);
    const url=await p.evaluate(()=>window.__copied[0]); const u=new URL(url);
    assert.equal(u.searchParams.get('q'),'Alpha'); assert.equal(u.searchParams.get('use_case'),'coding');
+   assert.equal(new URL(p.url()).hash, '#main-content'); assert.equal(u.hash, '');
    await p.goto(url); await p.getByRole('searchbox',{name:'Search deals'}).waitFor();
    await p.getByText('Alpha',{exact:true}).first().waitFor(); assert.equal(await p.getByText('Beta',{exact:true}).count(),0);
   });
@@ -42,6 +44,18 @@ const rows = [
    await p.getByText('missing-item',{exact:true}).waitFor();
    await p.locator('input[type=file]').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{}')});
    await p.getByText(/Import failed/).waitFor(); await p.getByText('missing-item',{exact:true}).waitFor();
+  });
+  await run('favorites export is importable and rejects oversized legacy lists',async p=>{
+   await p.goto(base+'/favorites?lang=en'); await p.getByText('Import and merge favorites').waitFor();
+   await p.locator('input[type=file]').setInputFiles({name:'favorites.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({version:1,slugs:['alpha']}))});
+   await p.getByText(/Added 1/).waitFor();
+   const [download] = await Promise.all([p.waitForEvent('download'), p.getByRole('button',{name:'Export favorites'}).click()]);
+   const content = JSON.parse(require('node:fs').readFileSync(await download.path(),'utf8'));
+   assert.deepEqual(content, {version:1,slugs:['alpha']});
+   await p.evaluate(() => localStorage.setItem('amnabd-favorites',JSON.stringify(Array.from({length:501},(_,i)=>`old-${i}`))));
+   await p.reload(); await p.getByRole('button',{name:'Export favorites'}).click();
+   await p.getByText(/Export failed/).waitFor();
+   assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('amnabd-favorites')).length),501);
   });
   await run('focus follows a slowly loaded detail heading',async p=>{
    await p.goto(base+'/?lang=en'); await p.getByRole('searchbox',{name:'Search deals'}).waitFor();
