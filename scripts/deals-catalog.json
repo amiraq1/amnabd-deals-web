@@ -15,7 +15,7 @@
     {
       "@type": "ItemList",
       "name": "AI tool deals",
-      "numberOfItems": 107,
+      "numberOfItems": 122,
       "itemListElement": [
         {
           "@type": "ListItem",
@@ -952,6 +952,126 @@
             "reviewed_on": "2026-11-15",
             "verified_on": "2026-11-15"
           }
+        },
+        {
+          "@type": "ListItem",
+          "position": 108,
+          "name": "AI21 Labs — Free Trial ($10 Credit for 7 Days, No Card)",
+          "alternateName": "AI21 Labs — تجربة مجانية ($10 رصيد لـ7 أيام، بلا بطاقة)",
+          "url": "https://amnabd.com/deal/ai21-labs-10-trial-credit",
+          "description": "Free trial on AI21 Labs Jamba models: the official pricing page lists $10 in credits for 7 days and explicitly says no credit card is needed. The source does not limit the offer to new accounts; Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 109,
+          "name": "SiliconFlow — $1 in Free Credits",
+          "alternateName": "SiliconFlow — $1 رصيد مجاني",
+          "url": "https://amnabd.com/deal/siliconflow-1-free-credit",
+          "description": "The official pricing FAQ says users can start with $1 in free credits. It does not explicitly tie the credit to signup or new accounts, and it does not state whether a payment card is required; Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 110,
+          "name": "Vercel AI Gateway — Monthly Free Credit (Amount Not Officially Stated)",
+          "alternateName": "Vercel AI Gateway — رصيد مجاني شهري (المبلغ غير محدد رسميًا)",
+          "url": "https://amnabd.com/deal/vercel-ai-gateway-monthly-credit",
+          "description": "Vercel provides teams with a free AI Gateway tier that includes a monthly free credit, starting with the first request. Vercel’s docs do not state a $5 amount. The free tier covers a subset of models at lower rate limits; purchasing paid credits ends the monthly free credit. Card requirements and Iraq eligibility are not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 111,
+          "name": "E2B — $100 One-Time Usage Credit (Free Hobby Plan, AI Agent Sandboxes)",
+          "alternateName": "E2B — $100 رصيد استخدام لمرة واحدة (خطة Hobby المجانية، sandbox لوكلاء AI)",
+          "url": "https://amnabd.com/deal/e2b-100-hobby-credit",
+          "description": "E2B’s free Hobby plan includes a one-time $100 usage credit. The official pricing page notes additional usage costs based on consumption and explicitly says no credit card is required. Credit expiry and Iraq eligibility are not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 112,
+          "name": "Sail Research — $5 Monthly Credit (Open-Model Inference + Linux VMs)",
+          "alternateName": "Sail Research — $5 رصيد شهري (استدلال نماذج مفتوحة + VMs لينكس)",
+          "url": "https://amnabd.com/deal/sail-research-5-monthly-credit",
+          "description": "A $5 monthly credit for inference via API or Sailboxes. The official pricing page explicitly requires attaching a payment method to receive the monthly credit; it does not state an end date or rollover of unused credit. Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 113,
+          "name": "Napkin AI — Free Plan (500 AI Credits per Week)",
+          "alternateName": "Napkin AI — خطة مجانية (500 رصيد AI أسبوعيًا)",
+          "url": "https://amnabd.com/deal/napkin-ai-free-500-weekly-credits",
+          "description": "Napkin AI’s $0 Free plan provides 500 AI credits per week. It includes visual editing, file import, and PNG/PDF export, with Napkin branding on visuals; PPT/SVG export and branding removal are in paid plans. The page does not specify a card requirement; Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 114,
+          "name": "OVHcloud AI Endpoints — 7 Free Models to Try in the Catalog (No Signup to Test)",
+          "alternateName": "OVHcloud AI Endpoints — 7 نماذج مجانية للاختبار في الكتالوج (بلا تسجيل للتجربة)",
+          "url": "https://amnabd.com/deal/ovhcloud-ai-endpoints-7-free-models",
+          "description": "The official catalog lists seven models tagged Free and says users can compare and test open models without signing up. This refers to trying the catalog; the API docs say integrations require a personalized access key. The sources do not establish a card requirement; Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 115,
+          "name": "Pollinations.ai — Free Classic API for Images and Text (No Signup or API Key)",
+          "alternateName": "Pollinations.ai — Classic API مجانية للصور والنص (بلا تسجيل أو مفتاح)",
+          "url": "https://amnabd.com/deal/pollinations-classic-api-free",
+          "description": "Pollinations’ official docs describe the Classic API as free, no-signup and rate-limited for existing apps: image requests must be at least 45 seconds apart and text requests at least 30 seconds apart per IP. Exceeding limits may return 402. The source does not state card requirements; Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 116,
+          "name": "Apify — Free Plan ($5 Monthly Usage, No Card)",
+          "alternateName": "Apify — خطة مجانية ($5 استخدام شهري، بلا بطاقة)",
+          "url": "https://amnabd.com/deal/apify-free-5-monthly",
+          "description": "Apify’s $0 Free plan includes $5 of monthly platform usage, and the pricing page explicitly says no credit card is required. Unused credit does not roll over and expires at the end of the billing cycle; once depleted, free-plan access is blocked until the next cycle. Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 117,
+          "name": "Bright Data Web Unlocker — Free Tier (5,000 Requests/Month)",
+          "alternateName": "Bright Data Web Unlocker — باقة مجانية (5,000 طلب/شهر)",
+          "url": "https://amnabd.com/deal/bright-data-web-unlocker-free-tier",
+          "description": "The official Web Unlocker page offers a free tier with 5,000 requests per month specifically for Web Unlocker. It does not state whether the allowance renews monthly or whether a card is not required; Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 118,
+          "name": "Parallel Decisions Fast — Free via Vercel AI Gateway Until 2026-11-23",
+          "alternateName": "Parallel Decisions Fast — مجاني عبر Vercel AI Gateway حتى 23-11-2026",
+          "url": "https://amnabd.com/deal/parallel-decisions-fast-free-vercel-gateway",
+          "description": "Parallel Decisions Fast is free through Vercel AI Gateway until November 23, 2026, with no separate Parallel account required. The price after that date and card requirements are not stated officially; Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 119,
+          "name": "Claude API — Small Free Trial Credits for New Users (to Test the API)",
+          "alternateName": "Claude API — رصيد تجريبي مجاني صغير للمستخدمين الجدد (لاختبار API)",
+          "url": "https://amnabd.com/deal/claude-api-free-trial-credits-new-users",
+          "description": "Official Claude Platform docs say new users receive a small amount of free credits to test the API. The source does not publish a numeric amount, card requirement or expiry date; Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 120,
+          "name": "Nanonets — $50 Free Credit on Signup (Document Data Extraction, No Card)",
+          "alternateName": "Nanonets — $50 رصيد مجاني عند التسجيل (استخراج بيانات من المستندات، بلا بطاقة)",
+          "url": "https://amnabd.com/deal/nanonets-50-free-credits",
+          "description": "Nanonets accounts start with $50 in free credits, and its pricing page explicitly says no credit card is required. Credits are shared across the team and never expire; after they run out, the page lists a $100/month plan for 100 credits. Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 121,
+          "name": "Datalab — Free Plan: $20/Month (Work Email) or $10/Month (Personal Email), No Card",
+          "alternateName": "Datalab — خطة مجانية: $20/شهر (بريد عمل) أو $10/شهر (بريد شخصي)، بلا بطاقة",
+          "url": "https://amnabd.com/deal/datalab-free-20-10-monthly",
+          "description": "Datalab’s Free plan provides a monthly usage allowance of $20 with a work email or $10 with a personal email across the hosted API; it resets each cycle and does not roll over. The pricing page says no card is needed to use the allowance, but a card is required to continue after it runs out. Iraq eligibility is not stated officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 122,
+          "name": "Voicegain — $50 Free Credit on Signup (Speech-to-Text, No Card)",
+          "alternateName": "Voicegain — $50 رصيد مجاني عند التسجيل (تحويل كلام إلى نص، بلا بطاقة)",
+          "url": "https://amnabd.com/deal/voicegain-50-free-credits",
+          "description": "Voicegain provides every account with $50 in platform credit on signup, and the official page explicitly says no demo call or credit card is required. The page does not state the credit expiry; Iraq eligibility is not stated officially."
         }
       ]
     }
