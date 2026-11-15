@@ -336,11 +336,24 @@ function AppInner() {
   // the destination's canonical, description, OG tags and JSON-LD back, instead
   // of leaving the deal's behind.
   useEffect(() => {
-    const dealSeo = deal ? buildDealSeo(deal) : null;
-    // A deal page has two empty states: still loading (keep its own canonical)
-    // and confirmed missing (404 copy).
-    const dealMissing = route.name === 'deal' && offers.status === 'ready' && !deal;
-    applyDocumentMetadata(routeMetadata(route, lang, dealSeo, undefined, dealMissing));
+    const refresh = () => {
+      const dealSeo = deal ? buildDealSeo(deal) : null;
+      const dealMissing = route.name === 'deal' && offers.status === 'ready' && !deal;
+      applyDocumentMetadata(routeMetadata(route, lang, dealSeo, undefined, dealMissing));
+      const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+      if (route.name === 'favorites' || route.name === 'compare' || route.name === 'notfound' || dealMissing) {
+        const tag = robots ?? document.createElement('meta');
+        tag.name = 'robots';
+        tag.content = 'noindex,follow';
+        if (!robots) document.head.appendChild(tag);
+      } else {
+        robots?.remove();
+      }
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 60000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
   }, [route, deal, lang, offers.status]);
 
   let content: JSX.Element;

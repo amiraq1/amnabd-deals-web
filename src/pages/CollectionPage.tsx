@@ -49,7 +49,7 @@ export default function CollectionPage({
 
   const matchingDeals = useMemo(() => {
     if (!config) return [];
-    return deals.filter(config.filter);
+    return deals.filter((deal) => config.filter(deal));
   }, [deals, config]);
 
   // Use the same explicit current/legacy review signals as the homepage.
@@ -146,8 +146,8 @@ export default function CollectionPage({
             <span className="text-slate-600">·</span>
             <span>
               {lang === 'ar'
-                ? `الموثّق: ${verifiedCount.toLocaleString('ar-EG')}`
-                : `Verified: ${verifiedCount}`}
+                ? `سجلات تمت مراجعتها: ${verifiedCount.toLocaleString('ar-EG')}`
+                : `Records reviewed: ${verifiedCount}`}
             </span>
             <span className="text-slate-600">·</span>
             <span>

@@ -1,13 +1,16 @@
 import { FileCheck2, FileQuestion, FileX2, CircleHelp } from 'lucide-react';
-import type { Lang } from '@/types';
+import type { Lang, Review } from '@/types';
+import { isVerifiedReview } from '@/lib/verification';
 import { evidenceLabel, evidenceStatus } from '@/lib/evidence';
 import { reviewDateLabel } from '@/lib/format';
 export default function EvidenceBadge({
   status,
+  review,
   reviewedOn,
   lang,
 }: {
   status: unknown;
+  review: Review;
   reviewedOn: string;
   lang: Lang;
 }) {
@@ -33,6 +36,9 @@ export default function EvidenceBadge({
         <Icon aria-hidden="true" className="mt-1 h-4 w-4 shrink-0" />
         <span>{evidenceLabel(status, lang)}</span>
       </span>
+      {isVerifiedReview(review) && (
+        <span>{lang === 'ar' ? 'تمت مراجعة السجل' : 'Record reviewed'}</span>
+      )}
       <span className="text-ink-muted">
         {lang === 'ar' ? 'آخر مراجعة' : 'Last reviewed'}:{' '}
         <bdi>{reviewDateLabel(reviewedOn, lang)}</bdi>

@@ -53,9 +53,9 @@ export const DEAL_CLAIMS = [
     needs: 'card_required=not_required',
   },
   {
-    phrases: ['موثّق', 'موثق', 'verified'],
+    phrases: ['موثّق', 'موثق', 'verified', 'تمت مراجعة السجل', 'record reviewed'],
     allowed: (facts) => facts.verified,
-    needs: 'review.verification_status=verified',
+    needs: 'review state verified under the documented compatibility rule',
   },
   {
     phrases: ['free for everyone', 'مجان للجميع', 'مجاني للجميع'],

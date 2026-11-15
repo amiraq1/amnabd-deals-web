@@ -168,6 +168,7 @@ export default function DealDetailPage({
             </div>
             <EvidenceBadge
               status={deal.review.verification_status}
+              review={deal.review}
               reviewedOn={deal.review.reviewed_on}
               lang={lang}
             />

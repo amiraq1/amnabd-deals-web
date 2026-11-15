@@ -157,7 +157,8 @@ test('H-03: "verified" wording is emitted only for an explicit verified status',
     status: 'active',
     review: { verification_status: 'verified', reviewed_on: '2026-10-18' },
   });
-  assert.match(verified.description, /موثّق/);
+  assert.match(verified.description, /تمت مراجعة السجل/);
+  assert.doesNotMatch(verified.description, /موثّق من المصدر/);
   assert.equal(verified.jsonLd.availability, 'https://schema.org/InStock');
   assert.equal(verified.jsonLd.dateModified, '2026-10-18');
 });
@@ -211,7 +212,7 @@ test('C-01: the OG card does not assert eligibility or verification it cannot pr
     },
   });
   assert.match(proven, /متاح للجميع/);
-  assert.match(proven, /موثّق/);
+  assert.match(proven, /تمت مراجعة السجل/);
   assert.doesNotMatch(proven, /راجع الشروط/);
 });
 

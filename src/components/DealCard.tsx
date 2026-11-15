@@ -133,6 +133,7 @@ export default function DealCard({
       <div className="mt-auto pt-5">
         <EvidenceBadge
           status={deal.review.verification_status}
+          review={deal.review}
           reviewedOn={deal.review.reviewed_on}
           lang={lang}
         />
