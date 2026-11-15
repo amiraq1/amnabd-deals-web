@@ -3,6 +3,19 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
+test('footer links to the active GitHub repository', () => {
+  const footer = readFileSync(
+    join(process.cwd(), 'src/components/Footer.tsx'),
+    'utf8',
+  );
+
+  assert.match(footer, /href="https:\/\/github\.com\/amiraq1\/amnabd-deals-web"/);
+  assert.doesNotMatch(
+    footer,
+    /github\.com\/amiraq1\/amnabd-deals(?:["/?#\s]|$)/,
+  );
+});
+
 test('footer includes the requested F6S Follow button with its expected destination and no third-party image', () => {
   const footer = readFileSync(
     join(process.cwd(), 'src/components/Footer.tsx'),
