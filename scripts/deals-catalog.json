@@ -15,7 +15,7 @@
     {
       "@type": "ItemList",
       "name": "AI tool deals",
-      "numberOfItems": 92,
+      "numberOfItems": 107,
       "itemListElement": [
         {
           "@type": "ListItem",
@@ -757,6 +757,201 @@
           "alternateName": "Z.ai — نماذج Flash مجانية بتسعير API ($0 للإدخال والإخراج)",
           "url": "https://amnabd.com/deal/zai-free-flash-models",
           "description": "The official pricing table lists three models as Free for input, cached input and output: GLM-4.7-Flash and GLM-4.5-Flash (text), and GLM-4.6V-Flash (vision). The page does not state a token limit or expiry and does not specify account/key, card or country eligibility; Iraq is not mentioned officially."
+        },
+        {
+          "@type": "ListItem",
+          "position": 93,
+          "name": "AMD Token Lab — 10 Free Token Lab Points, Valid 30 Days",
+          "alternateName": "AMD Token Lab — 10 نقاط Token Lab مجانية صالحة 30 يومًا",
+          "url": "https://amnabd.com/deal/amd-token-lab-10-points",
+          "description": "AMD says eligible AI Developer Program members receive 10 Token Lab points upon activation, valid for 30 days, with no credit request. This is distinct from Developer Cloud credits; card and Iraq eligibility are not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 94,
+          "name": "GonkaRouter — 1M Free Tokens to Start, No Card",
+          "alternateName": "GonkaRouter — مليون توكن مجاني للبدء بلا بطاقة",
+          "url": "https://amnabd.com/deal/gonkarouter-1m-free-tokens",
+          "description": "GonkaRouter offers 1M free tokens to start and says no card is required. Its docs describe OpenAI/Anthropic-compatible APIs and list GLM-5.3 Flash, DeepSeek V4 Flash and MiniMax M2.7. Token expiry and Iraq eligibility are not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 95,
+          "name": "Vectoree — $5 After CLI Login and Project Link",
+          "alternateName": "Vectoree — رصيد $5 بعد تسجيل الدخول وربط المشروع",
+          "url": "https://amnabd.com/deal/vectoree-5-welcome-credit",
+          "description": "Vectoree grants $5 after CLI login and project linking, with no monthly fee; later use is pay-as-you-go. Credit expiry, card requirement and Iraq eligibility are not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 96,
+          "name": "NovAI — $2 for 14 Days Plus Five Free Models",
+          "alternateName": "NovAI — $2 لمدة 14 يومًا وخمسة نماذج مجانية",
+          "url": "https://amnabd.com/deal/novai-2-credit-free-models",
+          "description": "New accounts receive $2 valid for 14 days, plus five free models with up to 10 calls/day and 5 requests/minute before top-up. The official registration page says no card is required; Iraq eligibility is not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 97,
+          "name": "AI Horde — Free Anonymous Image and Text Generation",
+          "alternateName": "AI Horde — توليد صور ونص مجانًا دون تسجيل",
+          "url": "https://amnabd.com/deal/ai-horde-free-generation",
+          "description": "AI Horde offers free anonymous image and text generation without signup or a card. Anonymous requests have lower priority and availability depends on volunteer workers; Iraq availability is not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 98,
+          "name": "Free Plan — 300 Daily Refresh Credits in 2.0 Lite",
+          "alternateName": "الخطة المجانية — 300 رصيد يومي لوضع 2.0 Lite",
+          "url": "https://amnabd.com/deal/manus-free-300-daily-credits",
+          "description": "Free users can claim 300 daily refresh credits, capped at 1,500/month. The refresh credits work only in Manus 2.0 Lite and reset daily without rollover. Card and Iraq eligibility are not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 99,
+          "name": "Searlo — 3,000 One-Time Credits, Valid One Year",
+          "alternateName": "Searlo — 3,000 رصيدًا لمرة واحدة صالحًا سنة",
+          "url": "https://amnabd.com/deal/searlo-3000-free-credits",
+          "description": "New users receive 3,000 credits once at signup, valid for one year, with no card or subscription. Iraq eligibility is not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 100,
+          "name": "Retell AI — $10 Trial Credit Once per Email",
+          "alternateName": "Retell AI — رصيد تجريبي $10 مرة لكل بريد",
+          "url": "https://amnabd.com/deal/retell-ai-10-free-credits",
+          "description": "New accounts receive $10 in trial credit once per email; voice-agent rates are $0.07–$0.31/min. Managed standard numbers are US/Canada only at $2/month, toll-free $5/month. Credit expiry, card and Iraq eligibility are not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 101,
+          "name": "MegaNova AI — Selected Free Tier-1 Models, No Card",
+          "alternateName": "MegaNova AI — نماذج Tier 1 مجانية مختارة بلا بطاقة",
+          "url": "https://amnabd.com/deal/meganova-ai-free-tier",
+          "description": "Tier 1 has selected free models: Manta Mini is limited to 50 requests/day, published free-model quotas total 550/day, and the limit is 60 requests/minute. No card is required; duration and Iraq eligibility are not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 102,
+          "name": "ngram — 1,000 Monthly Credits with Work Email",
+          "alternateName": "ngram — 1,000 رصيد شهريًا ببريد العمل",
+          "url": "https://amnabd.com/deal/ngram-free-1000-monthly-credits",
+          "description": "Free includes 1,000 monthly credits with a work email or 500 with a personal email, plus one premium video/month up to 60 seconds at 720p. No MP4 download or commercial use; no card. Iraq eligibility is not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 103,
+          "name": "Articul8 Bivia — 1B Free Tokens for First 10,000 Early Adopters",
+          "alternateName": "Articul8 Bivia — مليار توكن مجاني لأول 10,000 مستخدم مبكر",
+          "url": "https://amnabd.com/deal/articul8-bivia-1b-free-tokens",
+          "description": "Articul8 advertises 1B free tokens for the first 10,000 early adopters, with no subscription. The source does not specify input tokens, remaining slots, expiry, card policy or Iraq eligibility.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 104,
+          "name": "Lindy — $50 Free Credits for 7 Days; Check Billing Path",
+          "alternateName": "Lindy — $50 رصيدًا مجانيًا لمدة 7 أيام؛ تحقق من الفوترة",
+          "url": "https://amnabd.com/deal/lindy-50-free-credits",
+          "description": "Lindy advertises $50 in credits valid for 7 days and says no card is required. Its FAQ says direct signups are billed immediately while Slack joining grants a free week; check the signup path. Iraq eligibility is not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 105,
+          "name": "deAPI — $5 Free Signup Credit, No Card",
+          "alternateName": "deAPI — رصيد تسجيل $5 بلا بطاقة",
+          "url": "https://amnabd.com/deal/deapi-5-free-credits",
+          "description": "New accounts receive $5 at signup with no card; Basic limits are typically 1–10 requests/minute by endpoint. Official sources reviewed do not state expiry or temporary-email restrictions; Iraq eligibility is not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 106,
+          "name": "Dahl Inference — First 100M Tokens Free",
+          "alternateName": "Dahl Inference — أول 100 مليون توكن مجانًا",
+          "url": "https://amnabd.com/deal/dahl-inference-100m-free-tokens",
+          "description": "Dahl advertises the first 100M tokens free; they expire after 7 consecutive days without a request, and any request resets the timer. Public pages do not establish signup method; card and Iraq eligibility are not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 107,
+          "name": "VModel — $10 Signup Credit for Image, Video and Text",
+          "alternateName": "VModel — رصيد تسجيل $10 للصور والفيديو والنص",
+          "url": "https://amnabd.com/deal/vmodel-10-free-signup-credit",
+          "description": "New users receive $10 in API credit without a card, for image, video and text models. Free credit may expire, but no date is stated; purchased-credit expiry terms are separate. Iraq eligibility is not stated.",
+          "review": {
+            "verification_status": "verified",
+            "reviewed_on": "2026-11-15",
+            "verified_on": "2026-11-15"
+          }
         }
       ]
     }

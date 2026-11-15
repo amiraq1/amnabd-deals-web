@@ -134,11 +134,11 @@ test('F-07 rejects legacy hash routes in generated sitemap and llms artifacts', 
   }
 });
 
-test('curated SEO catalog includes all 13 newly reviewed production deals', () => {
+test('curated SEO catalog includes the 15 source-reviewed November 15 additions', () => {
   const catalog = JSON.parse(readFileSync(join(process.cwd(), 'scripts/deals-catalog.json'), 'utf8'));
   const itemList = catalog['@graph'].find((entry) => entry['@type'] === 'ItemList');
   assert.equal(itemList.numberOfItems, itemList.itemListElement.length);
-  assert.equal(itemList.itemListElement.length, 92);
+  assert.equal(itemList.itemListElement.length, 107);
   const slugs = new Set(itemList.itemListElement.map((entry) => new URL(entry.url).pathname.split('/').at(-1)));
   for (const slug of [
     'context-dev-1000-api',
@@ -166,6 +166,21 @@ test('curated SEO catalog includes all 13 newly reviewed production deals', () =
     'vercel-sandbox-free-hobby',
     'freestyle-free-vms',
     'zai-free-flash-models',
+    'amd-token-lab-10-points',
+    'gonkarouter-1m-free-tokens',
+    'vectoree-5-welcome-credit',
+    'novai-2-credit-free-models',
+    'ai-horde-free-generation',
+    'manus-free-300-daily-credits',
+    'searlo-3000-free-credits',
+    'retell-ai-10-free-credits',
+    'meganova-ai-free-tier',
+    'ngram-free-1000-monthly-credits',
+    'articul8-bivia-1b-free-tokens',
+    'lindy-50-free-credits',
+    'deapi-5-free-credits',
+    'dahl-inference-100m-free-tokens',
+    'vmodel-10-free-signup-credit',
   ]) {
     assert.ok(slugs.has(slug), `missing curated SEO slug: ${slug}`);
   }
@@ -173,7 +188,7 @@ test('curated SEO catalog includes all 13 newly reviewed production deals', () =
 
 test('reviewed public slug snapshot is valid, unique, and complete', () => {
   const slugs = loadDealSlugSnapshot(process.cwd());
-  assert.equal(slugs.length, 107);
+  assert.equal(slugs.length, 122);
   assert.deepEqual(slugs, [...slugs].sort());
   assert.ok(slugs.includes('anthropic-api-starter-credit'));
   assert.ok(slugs.includes('context-dev-1000-api'));
