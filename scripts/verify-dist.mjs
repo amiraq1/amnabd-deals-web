@@ -442,6 +442,11 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
 
   const deals = loadDealsCatalog(rootDir);
   const bySlug = new Map(deals.map((deal) => [deal.slug, deal]));
+  const liveStateBySlug = new Map(
+    (Array.isArray(liveDeals) ? liveDeals : [])
+      .filter((deal) => typeof deal?.slug === 'string')
+      .map((deal) => [deal.slug, { status: deal.status, ends_at: deal.ends_at }])
+  );
   const genericAppShell = readIfExists(join(distDir, 'index.html'));
   let deadlineWarnings = [];
   let deadlineCoverage = [];
@@ -475,7 +480,12 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
       report(`deal/${slug}: صفحة لعرض غير موجود في المصدر`);
       continue;
     }
-    checkDealPage(report, distDir, slug, dealFacts(deal), deal);
+    // Static SEO pages are generated from the catalog plus only the live status
+    // and end date. Mirror that narrow overlay for availability checks; review,
+    // eligibility, pricing and all other facts remain catalog-bound.
+    const liveState = liveStateBySlug.get(slug);
+    const factsSource = liveState ? { ...deal, ...liveState } : deal;
+    checkDealPage(report, distDir, slug, dealFacts(factsSource), deal);
   }
 
   const ogDir = join(distDir, 'og');
