@@ -178,6 +178,11 @@ export default function DealDetailPage({
             {description}
           </p>
 
+          {getTimingState(deal, referenceNow).offer.state === 'expired' && (
+            <p role="status" className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200">
+              {offerTimingLabel(getTimingState(deal, referenceNow).offer, deal.review.offer_status, lang)}
+            </p>
+          )}
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {offerUrl && (
               <a
@@ -422,23 +427,15 @@ export default function DealDetailPage({
             <div className="mt-4 space-y-5">
               {deal.official_sources.map((src, i) => (
                 <div key={i} className="min-w-0">
-                  <a
-                    href={safeDealUrl(src.url) ?? '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(ev) => {
-                      if (!safeDealUrl(src.url)) ev.preventDefault();
-                    }}
-                    className="inline-flex min-h-11 max-w-full items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300"
-                  >
-                    <bdi className="min-w-0 [overflow-wrap:anywhere]">
-                      {src.title}
-                    </bdi>
-                    <ExternalLink
-                      className="h-3.5 w-3.5 shrink-0"
-                      aria-hidden="true"
-                    />
-                  </a>
+                  {safeDealUrl(src.url) ? (
+                    <a href={safeDealUrl(src.url)!} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex min-h-11 max-w-full items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300">
+                      <bdi className="min-w-0 [overflow-wrap:anywhere]">{src.title}</bdi>
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    </a>
+                  ) : (
+                    <p className="text-sm text-slate-400"><bdi>{src.title}</bdi> — {lang === 'ar' ? 'الرابط غير متاح لأنه غير صالح أو غير آمن.' : 'Link unavailable because it is invalid or unsafe.'}</p>
+                  )}
                   {src.context && (
                     <p className="mt-1 text-sm leading-relaxed text-slate-400">
                       {src.context}

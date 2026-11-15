@@ -14,7 +14,7 @@ import { AGGREGATIONS, type AggregationConfig } from './aggregations.js';
 import { applicantType, isOpenToAll, requirementState, truthState } from './eligibility.js';
 import { reviewDateLabel } from './format.js';
 import { isVerifiedReview } from './verification.js';
-import { getTimingState } from './dealTiming.js';
+import { getTimingState, offerExpiryInstant } from './dealTiming.js';
 
 export { AGGREGATIONS } from './aggregations.js';
 
@@ -191,7 +191,9 @@ export function buildDealSeo(input: unknown, baseUrl = DEFAULT_SITE_URL, referen
     jsonLd.price = facts.price.value;
     jsonLd.priceCurrency = facts.price.currency;
     const endsAt = asString(row?.ends_at);
-    if (endsAt) jsonLd.priceValidUntil = endsAt;
+    const unknownFields = asStringArray(asObject(row?.review)?.unknown_fields);
+    const expiryUnknown = ['ends_at', 'offer end date', 'offer expiry'].some((field) => unknownFields.includes(field));
+    if (endsAt && !expiryUnknown && offerExpiryInstant(endsAt) !== null) jsonLd.priceValidUntil = endsAt;
   }
   if (facts.reviewedOn) jsonLd.dateModified = facts.reviewedOn;
   if (headline)
@@ -230,6 +232,7 @@ export function generateSitemapXml(deals: readonly Deal[], baseUrl = DEFAULT_SIT
   const urls = [
     url(`${cleanBase}/`, '1.0', 'daily', latestReview),
     url(`${cleanBase}/changelog`, '0.8', 'daily', latestReview),
+    url(`${cleanBase}/guide`, '0.6', 'weekly'),
     url(`${cleanBase}/free-api-keys-directory`, '0.8', 'weekly'),
     url(`${cleanBase}/free-ai-models-directory`, '0.8', 'weekly'),
     url(`${cleanBase}/sms-suppliers-directory`, '0.7', 'weekly'),

@@ -5,6 +5,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { buildSharedFavoritesUrl, formatFavoritesAsText } from '@/lib/shareFavorites';
 import { copyLink } from '@/lib/share';
+import { getFavorites, saveFavorites } from '@/lib/favorites';
+import { exportFavorites, importFavorites, FAVORITES_TRANSFER_MAX_BYTES } from '@/lib/favoritesTransfer';
 import { offerExpiryInstant } from '@/lib/dealTiming';
 import { getSavedOffersEndingSoon } from '@/lib/savedOfferExpiry';
 import DealCard from '@/components/DealCard';
@@ -42,7 +44,8 @@ function formatExpiryDate(value: string, lang: Lang): string {
 export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: FavoritesPageProps) {
   const { lang, dir } = useLanguage();
   const isAr = lang === 'ar';
-  const { favorites } = useFavorites();
+  const { favorites, toggleFavorite } = useFavorites();
+  const [transferMessage, setTransferMessage] = useState('');
   const [status, setStatus] = useState<CopyStatus>(null);
   const timer = useRef<number | undefined>(undefined);
 
@@ -61,7 +64,14 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       .filter((deal): deal is Deal => Boolean(deal));
   }, [favorites, deals]);
 
-  const referenceNow = new Date();
+  const [referenceNow, setReferenceNow] = useState(() => new Date());
+  useEffect(() => {
+    const refresh = () => setReferenceNow(new Date());
+    const timer = window.setInterval(refresh, 60000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
+  }, []);
+  const missingSlugs = useMemo(() => favorites.filter((slug) => !deals.some((deal) => deal.slug === slug)), [favorites, deals]);
   const soonEndingDeals = getSavedOffersEndingSoon(favoriteDeals, referenceNow);
 
   // نشارك العروض الموجودة فعلًا فقط، فلا تصل لمن يفتح الرابط مفضلات لعروض محذوفة.
@@ -86,6 +96,41 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
   const handleCopyText = async () => {
     const text = formatFavoritesAsText(deals, validSlugs);
     flash((await copyLink(text, writeText)) ? 'text' : 'error');
+  };
+
+  const handleExport = () => {
+    let url: string | null = null;
+    try {
+      const blob = new Blob([exportFavorites(favorites)], { type: 'application/json' });
+      url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'nabd-favorites.json';
+      link.hidden = true;
+      document.body.appendChild(link);
+      try { link.click(); } finally { link.remove(); }
+      const objectUrl = url;
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      setTransferMessage('');
+    } catch {
+      if (url) URL.revokeObjectURL(url);
+      setTransferMessage(isAr
+        ? 'تعذر التصدير: تحقق من المعرّفات وأزل الزائد عن 500 عنصر أو قلّل حجم القائمة إلى أقل من 100 كيلوبايت. لم تُحذف أي محفوظات.'
+        : 'Export failed: check the identifiers and reduce the list to 500 items and 100 KB or less. No saved items were removed.');
+    }
+  };
+  const handleImport = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      if (file.size > FAVORITES_TRANSFER_MAX_BYTES) throw new Error('file_too_large');
+      const result = importFavorites(await file.text(), getFavorites());
+      const persisted = saveFavorites(result.slugs);
+      setTransferMessage(isAr
+        ? `أضيف ${result.added}، وتُرك ${result.skipped} بسبب الحد الأقصى.${persisted ? '' : ' تعذر الحفظ الدائم؛ القائمة متاحة لهذه الجلسة فقط.'}`
+        : `Added ${result.added}; ${result.skipped} skipped at the limit.${persisted ? '' : ' Persistent storage failed; this list is available only for this session.'}`);
+    } catch {
+      setTransferMessage(isAr ? 'تعذر الاستيراد: اختر ملف مفضلة صالحًا لا يتجاوز 100 كيلوبايت.' : 'Import failed: choose a valid favorites file no larger than 100 KB.');
+    }
   };
 
   const BackIcon = dir === 'rtl' ? ArrowRight : ArrowLeft;
@@ -156,6 +201,23 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
           </div>
         )}
       </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <button type="button" onClick={handleExport} className={buttonClass}>{isAr ? 'تصدير المفضلة' : 'Export favorites'}</button>
+        <label className={`${buttonClass} cursor-pointer`}>
+          {isAr ? 'استيراد ودمج المفضلة' : 'Import and merge favorites'}
+          <input type="file" accept="application/json,.json" className="sr-only" onChange={(event) => { void handleImport(event.target.files?.[0]); event.target.value = ''; }} />
+        </label>
+      </div>
+      <p className="mt-2 text-xs text-slate-400">{isAr ? 'ملف التصدير يحتوي معرفات المحفوظات؛ شاركه فقط مع من تثق به. الاستيراد يضيف للقائمة ولا يستبدلها.' : 'The export contains saved identifiers; share it only with people you trust. Import merges rather than replaces.'}</p>
+      <p role="status" className="mt-2 text-sm text-slate-300">{transferMessage}</p>
+      {missingSlugs.length > 0 && (
+        <section className="mt-6 rounded-xl border border-amber-500/30 p-4" aria-labelledby="missing-saved-title">
+          <h2 id="missing-saved-title" className="font-semibold text-amber-200">{isAr ? 'محفوظات غير موجودة في الكتالوج المحمّل' : 'Saved items missing from the loaded catalog'}</h2>
+          <p className="mt-1 text-sm text-slate-400">{isAr ? 'قد يكون العرض أزيل أو غير متاح حاليًا؛ هذه الحالة تختلف عن انتهاء العرض.' : 'An item may have been removed or be temporarily unavailable; this is distinct from an expired offer.'}</p>
+          <ul className="mt-3 space-y-2">{missingSlugs.map((slug) => <li key={slug} className="flex flex-wrap items-center gap-3 text-sm"><bdi>{slug}</bdi><button type="button" onClick={() => toggleFavorite(slug)} className={buttonClass}>{isAr ? 'إزالة من المفضلة' : 'Remove from favorites'}</button></li>)}</ul>
+        </section>
+      )}
 
       {/* يقرؤها قارئ الشاشة عند نجاح النسخ أو فشله، ويراها الجميع عند الفشل */}
       <p

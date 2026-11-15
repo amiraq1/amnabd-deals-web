@@ -213,6 +213,8 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     assert.match(apiDirectoryHtml, /<link rel="canonical" href="https:\/\/deals\.example\.com\/free-api-keys-directory">/);
     assert.match(apiDirectoryHtml, /دليل مفاتيح API المجانية/);
     assert.match(apiDirectoryHtml, /"@type":"CollectionPage"/);
+    assert.match(readFileSync(join(distDir, 'sitemap.xml'), 'utf8'), /<loc>https:\/\/deals\.example\.com\/guide<\/loc>/);
+    assert.doesNotMatch(readFileSync(join(distDir, 'sitemap.xml'), 'utf8'), /<loc>https:\/\/deals\.example\.com\/favorites<\/loc>/);
     assert.match(readFileSync(join(distDir, 'sitemap.xml'), 'utf8'), /<loc>https:\/\/deals\.example\.com\/free-api-keys-directory<\/loc>/);
     const aiModelsDirectoryHtml = readFileSync(join(distDir, 'free-ai-models-directory', 'index.html'), 'utf8');
     assert.match(aiModelsDirectoryHtml, /<link rel="canonical" href="https:\/\/deals\.example\.com\/free-ai-models-directory">/);
