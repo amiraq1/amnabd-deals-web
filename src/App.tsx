@@ -146,7 +146,7 @@ function AppInner() {
     (url: string, method: 'push' | 'replace', preserveDraft = false) => {
       // A01: the whole address is compared, not just the hash. Navigating home
       // from `/deal/alpha` used to be skipped because the hash was already `#/`.
-      if (currentUrl() !== url) {
+      if (currentUrl() + window.location.hash !== url) {
         if (method === 'push') window.history.pushState(null, '', url);
         else window.history.replaceState(window.history.state, '', url);
       }
@@ -263,7 +263,7 @@ function AppInner() {
   );
   const flushDiscovery = useCallback(() => {
     cancelPending();
-    if (routeRef.current.name === 'home') writeLocation(currentDiscoveryUrl(), 'replace');
+    if (routeRef.current.name === 'home') writeLocation(currentDiscoveryUrl() + window.location.hash, 'replace');
   }, [cancelPending, currentDiscoveryUrl, writeLocation]);
   const navigate = useCallback(
     (next: Route, searchOverride?: string) => {
@@ -298,21 +298,21 @@ function AppInner() {
         timer.current = window.setTimeout(() => {
           timer.current = null;
           if (routeRef.current.name === 'home')
-            writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)), 'replace', true);
+            writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)) + window.location.hash, 'replace', true);
         }, 250);
-      else writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)), method);
+      else writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)) + window.location.hash, method);
     },
     [cancelPending, languageAwareSearch, writeLocation]
   );
   const handleResetFilters = useCallback(() => {
     cancelPending();
     filtersRef.current = { ...DEFAULT_FILTER_STATE };
-    writeLocation(routeUrl({ name: 'home' }, languageAwareSearch('')), 'push');
+    writeLocation(routeUrl({ name: 'home' }, languageAwareSearch('')) + window.location.hash, 'push');
   }, [cancelPending, languageAwareSearch, writeLocation]);
   const getSearchLink = useCallback(() => {
     cancelPending();
     const url = currentDiscoveryUrl();
-    writeLocation(url, 'replace', true);
+    writeLocation(url + window.location.hash, 'replace', true);
     return new URL(url, window.location.origin).href;
   }, [cancelPending, currentDiscoveryUrl, writeLocation]);
   const onOpenDeal = useCallback((slug: string) => navigate({ name: 'deal', slug }), [navigate]);

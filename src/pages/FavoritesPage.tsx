@@ -99,11 +99,25 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
   };
 
   const handleExport = () => {
-    const blob = new Blob([exportFavorites(favorites)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url; link.download = 'nabd-favorites.json'; link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    let url: string | null = null;
+    try {
+      const blob = new Blob([exportFavorites(favorites)], { type: 'application/json' });
+      url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'nabd-favorites.json';
+      link.hidden = true;
+      document.body.appendChild(link);
+      try { link.click(); } finally { link.remove(); }
+      const objectUrl = url;
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      setTransferMessage('');
+    } catch {
+      if (url) URL.revokeObjectURL(url);
+      setTransferMessage(isAr
+        ? 'تعذر التصدير: تحقق من المعرّفات وأزل الزائد عن 500 عنصر أو قلّل حجم القائمة إلى أقل من 100 كيلوبايت. لم تُحذف أي محفوظات.'
+        : 'Export failed: check the identifiers and reduce the list to 500 items and 100 KB or less. No saved items were removed.');
+    }
   };
   const handleImport = async (file: File | undefined) => {
     if (!file) return;

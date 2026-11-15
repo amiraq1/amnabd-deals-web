@@ -3,7 +3,12 @@ import { MAX_SAVED_DEALS } from './savedDeals.js';
 
 export const FAVORITES_TRANSFER_MAX_BYTES = 100_000;
 export function exportFavorites(slugs: readonly string[]): string {
-  return JSON.stringify({ version: 1, slugs: [...new Set(slugs)] }, null, 2);
+  const unique = [...new Set(slugs)];
+  // Never silently truncate legacy data or create a file this importer rejects.
+  if (unique.length > MAX_SAVED_DEALS || !unique.every(isValidSlug)) throw new Error('invalid_list');
+  const json = JSON.stringify({ version: 1, slugs: unique }, null, 2);
+  if (new TextEncoder().encode(json).length > FAVORITES_TRANSFER_MAX_BYTES) throw new Error('file_too_large');
+  return json;
 }
 // Validate the entire import before writing. Merge rather than overwrite, and
 // keep unrecognized-but-valid slugs so a temporarily unavailable deal survives.
