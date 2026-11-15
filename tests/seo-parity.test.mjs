@@ -9,6 +9,24 @@ const { loadDealSlugSnapshot, verifySeoParity } = await import(
   pathToFileURL(join(process.cwd(), 'scripts/seo-parity.mjs'))
 );
 
+const NOV_15_AUTO1_SLUGS = [
+  'ai21-labs-10-trial-credit',
+  'siliconflow-1-free-credit',
+  'vercel-ai-gateway-monthly-credit',
+  'e2b-100-hobby-credit',
+  'sail-research-5-monthly-credit',
+  'napkin-ai-free-500-weekly-credits',
+  'ovhcloud-ai-endpoints-7-free-models',
+  'pollinations-classic-api-free',
+  'apify-free-5-monthly',
+  'bright-data-web-unlocker-free-tier',
+  'parallel-decisions-fast-free-vercel-gateway',
+  'claude-api-free-trial-credits-new-users',
+  'nanonets-50-free-credits',
+  'datalab-free-20-10-monthly',
+  'voicegain-50-free-credits',
+];
+
 const baseHtml = '<!doctype html><html lang="ar"><head><title>AMNABD</title></head><body><div id="root"></div></body></html>';
 const catalogDeals = [{ slug: 'reviewed-deal' }];
 const liveDealSlugs = ['live-only-deal', 'reviewed-deal'];
@@ -134,11 +152,11 @@ test('F-07 rejects legacy hash routes in generated sitemap and llms artifacts', 
   }
 });
 
-test('curated SEO catalog includes the 15 source-reviewed November 15 additions', () => {
+test('curated SEO catalog includes the 15 source-reviewed November 15 auto1 additions', () => {
   const catalog = JSON.parse(readFileSync(join(process.cwd(), 'scripts/deals-catalog.json'), 'utf8'));
   const itemList = catalog['@graph'].find((entry) => entry['@type'] === 'ItemList');
   assert.equal(itemList.numberOfItems, itemList.itemListElement.length);
-  assert.equal(itemList.itemListElement.length, 107);
+  assert.equal(itemList.itemListElement.length, 122);
   const slugs = new Set(itemList.itemListElement.map((entry) => new URL(entry.url).pathname.split('/').at(-1)));
   for (const slug of [
     'context-dev-1000-api',
@@ -181,17 +199,21 @@ test('curated SEO catalog includes the 15 source-reviewed November 15 additions'
     'deapi-5-free-credits',
     'dahl-inference-100m-free-tokens',
     'vmodel-10-free-signup-credit',
+    ...NOV_15_AUTO1_SLUGS,
   ]) {
     assert.ok(slugs.has(slug), `missing curated SEO slug: ${slug}`);
   }
+  assert.ok(!slugs.has('gemini-4-hydrogen'), 'excluded gemini slug must stay out of the curated SEO catalog');
 });
 
 test('reviewed public slug snapshot is valid, unique, and complete', () => {
   const slugs = loadDealSlugSnapshot(process.cwd());
-  assert.equal(slugs.length, 122);
+  assert.equal(slugs.length, 137);
   assert.deepEqual(slugs, [...slugs].sort());
   assert.ok(slugs.includes('anthropic-api-starter-credit'));
   assert.ok(slugs.includes('context-dev-1000-api'));
   assert.ok(slugs.includes('requesty-free-200-day'));
   assert.ok(slugs.includes('zenmux'));
+  for (const slug of NOV_15_AUTO1_SLUGS) assert.ok(slugs.includes(slug), `missing public route snapshot slug: ${slug}`);
+  assert.ok(!slugs.includes('gemini-4-hydrogen'), 'excluded gemini slug must stay out of the public route snapshot');
 });
