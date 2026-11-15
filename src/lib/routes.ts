@@ -142,6 +142,9 @@ export const FILTER_KEYS = [
   'country',
   'country_status',
   'sort',
+  'saved',
+  'ending',
+  'use_case',
 ] as const;
 
 /**

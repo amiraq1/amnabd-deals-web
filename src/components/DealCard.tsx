@@ -15,6 +15,8 @@ import FavoriteButton from '@/components/FavoriteButton';
 import EvidenceBadge from '@/components/EvidenceBadge';
 import CategoryBadge from '@/components/CategoryBadge';
 import OfferFacts from '@/components/OfferFacts';
+import { getTimingState } from '@/lib/dealTiming';
+import { offerTimingLabel } from '@/lib/evidence';
 
 export interface DealCardProps {
   deal: Deal;
@@ -34,6 +36,7 @@ export interface DealCardProps {
 
 export default function DealCard({
   deal,
+  referenceNow,
   country,
   onOpen,
   isComparisonSelected = false,
@@ -88,6 +91,11 @@ export default function DealCard({
         </div>
       </div>
 
+      {getTimingState(deal, referenceNow).offer.state === 'expired' && (
+        <p className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200">
+          {offerTimingLabel(getTimingState(deal, referenceNow).offer, deal.review.offer_status, lang)}
+        </p>
+      )}
       <div className="mt-4 border-t border-line-subtle pt-4">
         <p className="text-sm text-ink-muted">
           {isAr ? 'المنفعة المسجّلة' : 'Recorded benefit'}
@@ -133,6 +141,7 @@ export default function DealCard({
       <div className="mt-auto pt-5">
         <EvidenceBadge
           status={deal.review.verification_status}
+          review={deal.review}
           reviewedOn={deal.review.reviewed_on}
           lang={lang}
         />

@@ -127,6 +127,7 @@ export default function FreeApiKeysDirectoryPage() {
       <header>
         <h1 className="font-heading text-3xl font-extrabold text-white">{t.title}</h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-400">{t.note}</p>
+        <p className="mt-3 rounded-xl border border-slate-700 p-4 text-sm text-slate-300">{lang === 'ar' ? 'الحصص تختلف في وحدتها ونطاقها ودورة تجديدها: يوم تقويمي أو نافذة متدحرجة، حساب أو نموذج، رصيد لمرة واحدة أو متجدد. إذا لم يذكر المصدر التفاصيل فتبقى غير معلومة؛ وقد تتطلب الزيادة شراءً مدفوعًا.' : 'Quotas differ in units, scope and reset: calendar day or rolling window, account or model, one-time or recurring credit. Details not stated by the source remain unknown; increased limits may require a purchase.'}</p>
         <a
           href="/free-ai-models-directory"
           className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 text-sm font-semibold text-emerald-200 transition hover:border-emerald-400/60 hover:bg-emerald-500/15 hover:text-emerald-100"

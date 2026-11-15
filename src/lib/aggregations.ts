@@ -27,8 +27,15 @@ export interface AggregationConfig {
     packTermsUrl: string;
     packTermsLabel: Localized;
   };
-  filter: (deal: Deal) => boolean;
+  filter: (deal: Deal, referenceNow?: Date) => boolean;
 }
+
+// Catalog classification is based on explicit category/use-case keys, not prose.
+const normalizeCollectionKey = (value: unknown): string => typeof value === 'string'
+  ? value.normalize('NFC').trim().replace(/\s+/gu, ' ').toLowerCase()
+  : '';
+const CODING_CATEGORY_KEYS = new Set(['coding', 'code', 'developer', 'development', 'coding & dev', 'برمجة', 'تطوير', 'برمجة وتطوير']);
+const CODING_USE_KEYS = new Set(['برمجة', 'تطوير', 'برمجة وتطوير', 'coding', 'code', 'developer', 'development', 'وكلاء ذكاء اصطناعي', 'agents', 'استضافة', 'deployment']);
 
 export const AGGREGATIONS: Record<string, AggregationConfig> = {
   'for-students': {
@@ -119,13 +126,13 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
     headingAr: 'أدوات وأرصدة ذكاء اصطناعي بدون بطاقة بنكية',
     headingEn: 'Free AI Tools & Credits Without Credit Card',
     descriptionAr:
-      'عروض وحزم ذكاء اصطناعي يمكنك تفعيلها والبدء في استخدامها فوراً دون الحاجة لإدخال أي وسيلة دفع أو بطاقة مصرفية.',
+      'عروض تسجّل بياناتها أن البطاقة غير مطلوبة. قد تنطبق شروط أهلية أو متطلبات أخرى؛ راجع شروط كل عرض.',
     descriptionEn:
-      'AI tool benefits and credits that you can activate immediately with zero credit card or billing details required.',
+      'Offers recorded as not requiring a card. Other eligibility or activation requirements may apply; check each offer’s terms.',
     metaDescriptionAr:
-      'تصفح أدوات الذكاء الاصطناعي والأرصدة السحابية التي لا تتطلب بطاقة بنكية أو وسيلة دفع للتفعيل.',
+      'تصفح عروض أدوات الذكاء الاصطناعي التي تسجّل بياناتها عدم اشتراط بطاقة، وراجع بقية شروط كل عرض.',
     metaDescriptionEn:
-      'Explore AI tools and cloud credits with zero credit card or payment method required.',
+      'Explore AI offers recorded as not requiring a card, and review their other terms.',
     badgeLabelAr: 'بدون بطاقة بنكية',
     badgeLabelEn: 'No Card Required',
     filter: (deal: Deal) => deal.eligibility?.card_required === 'not_required',
@@ -148,17 +155,10 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
     badgeLabelAr: 'برمجة وتطوير',
     badgeLabelEn: 'Coding & Dev',
     filter: (deal: Deal) => {
-      const uses = (deal.use_cases || []).map((u) => u.toLowerCase());
-      return Boolean(
-        uses.includes('برمجة') ||
-          uses.includes('coding') ||
-          uses.includes('وكلاء ذكاء اصطناعي') ||
-          uses.includes('agents') ||
-          uses.includes('استضافة') ||
-          uses.includes('deployment') ||
-          deal.category?.value?.toLowerCase()?.includes('code') ||
-          deal.category?.value?.toLowerCase()?.includes('developer')
-      );
+      // Exact normalized keys avoid false positives from substring matching.
+      // Keep legacy aliases explicit; never infer a category from description text.
+      return CODING_CATEGORY_KEYS.has(normalizeCollectionKey(deal.category?.value)) ||
+        (deal.use_cases || []).some((value) => CODING_USE_KEYS.has(normalizeCollectionKey(value)));
     },
   },
   'ending-soon': {
@@ -180,7 +180,7 @@ export const AGGREGATIONS: Record<string, AggregationConfig> = {
     badgeLabelEn: '⏳ Ending Soon',
     // Same model as the card and the sort: an explicit flag or an ends_at inside
     // the window. A registration deadline never qualifies an offer here.
-    filter: (deal: Deal) => getTimingState(deal, new Date()).offer.state === 'ending_soon',
+    filter: (deal: Deal, referenceNow = new Date()) => getTimingState(deal, referenceNow).offer.state === 'ending_soon',
   },
 };
 

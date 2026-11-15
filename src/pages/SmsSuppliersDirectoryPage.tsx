@@ -89,6 +89,8 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
         </div>
       </dl>
 
+      <p className="mt-3 text-xs text-slate-400">{lang === 'ar' ? 'آخر تحقق مستقل مسجّل: ' : 'Last recorded independent check: '}{supplier.lastCheckedAt ?? (lang === 'ar' ? 'غير معلوم' : 'Unknown')}</p>
+      {supplier.serviceTypes.includes('messaging') && <p className="mt-2 text-xs font-medium text-blue-200">{lang === 'ar' ? 'خدمة إرسال تجارية؛ ليست بالضرورة صندوق استقبال عامًا.' : 'Commercial messaging service; not necessarily a public inbox.'}</p>}
       {sourceResult.ok ? (
         <a
           href={sourceResult.url}

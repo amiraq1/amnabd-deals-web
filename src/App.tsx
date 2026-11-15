@@ -120,6 +120,7 @@ function AppInner() {
   const lastDiscoveryUrl = useRef(route.name === 'home' ? currentUrl() : '/');
   const lastAppliedPath = useRef(window.location.pathname);
   const lastAppliedSearch = useRef(window.location.search.replace(/^\?/, ''));
+  const lastAppliedHash = useRef(window.location.hash);
   const timer = useRef<number | null>(null);
   const cancelPending = useCallback(() => {
     const pending = timer.current !== null;
@@ -133,6 +134,7 @@ function AppInner() {
     setRoute(next);
     lastAppliedPath.current = window.location.pathname;
     lastAppliedSearch.current = window.location.search.replace(/^\?/, '');
+    lastAppliedHash.current = window.location.hash;
     if (next.name === 'home') {
       const parsed = parseFilterState(window.location.search);
       filtersRef.current = parsed;
@@ -144,13 +146,14 @@ function AppInner() {
     (url: string, method: 'push' | 'replace', preserveDraft = false) => {
       // A01: the whole address is compared, not just the hash. Navigating home
       // from `/deal/alpha` used to be skipped because the hash was already `#/`.
-      if (currentUrl() !== url) {
+      if (currentUrl() + window.location.hash !== url) {
         if (method === 'push') window.history.pushState(null, '', url);
         else window.history.replaceState(window.history.state, '', url);
       }
       if (preserveDraft) {
         lastAppliedPath.current = window.location.pathname;
         lastAppliedSearch.current = window.location.search.replace(/^\?/, '');
+        lastAppliedHash.current = window.location.hash;
         lastDiscoveryUrl.current = currentUrl();
       } else applyLocation();
     },
@@ -158,15 +161,21 @@ function AppInner() {
   );
   useEffect(() => {
     const onLocationChange = () => {
-      // A01 / A4: cancel any pending debounced filter write before inspecting the
-      // new location. `hadPending` must be captured first so that a back-press
-      // during an in-flight navigation (e.g. user presses Back before
-      // `lastAppliedPath` updates to `/deal/x`) still cancels the pending write
-      // AND forces `resolveLocationChange` to apply the location.
+      // Hash-only navigation (including Back between anchors) must not cancel
+      // a pending query write or reset filter state.
+      if (
+        window.location.hash !== lastAppliedHash.current &&
+        isHashOnlyLocationChange(
+          window.location.pathname,
+          window.location.search,
+          lastAppliedPath.current,
+          lastAppliedSearch.current
+        )
+      ) {
+        lastAppliedHash.current = window.location.hash;
+        return;
+      }
       const hadPending = cancelPending();
-      // An in-page anchor fires `popstate` too. It changes only the hash, so it
-      // must not apply a location change — unless a navigation was pending, in
-      // which case we still need to process it.
       if (
         !hadPending &&
         isHashOnlyLocationChange(
@@ -175,8 +184,7 @@ function AppInner() {
           lastAppliedPath.current,
           lastAppliedSearch.current
         )
-      )
-        return;
+      ) return;
       const decision = resolveLocationChange({
         pathname: window.location.pathname,
         search: window.location.search,
@@ -189,9 +197,7 @@ function AppInner() {
       window.scrollTo({ top: 0 });
     };
 
-    // Only `popstate` navigates. An in-page anchor (`#main-content`) fires
-    // `hashchange`, not `popstate`, so the skip link leaves the filters and the
-    // scroll position exactly as they are (H-10).
+    // Handle browser navigation while keeping in-page anchors independent of filters.
     window.addEventListener('popstate', onLocationChange);
     return () => {
       cancelPending();
@@ -218,27 +224,32 @@ function AppInner() {
     // loading its heading, and leaving focus behind is the bug being fixed.
     container.focus({ preventScroll: true });
 
+    // Observe asynchronous content rather than guessing a loading duration. If
+    // the user has moved focus meanwhile, do not take it back from them.
+    const observer = new MutationObserver(() => focusHeading());
     const focusHeading = (): boolean => {
-      const heading = container.querySelector('h1');
+      // Suspense can retain the previous page hidden in the DOM.
+      const heading = Array.from(container.querySelectorAll('h1')).find(
+        (candidate) => candidate.getClientRects().length > 0
+      );
       if (!heading) return false;
-      if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
-      heading.focus({ preventScroll: true });
+      if (document.activeElement === container) {
+        if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+      }
       setRouteAnnouncement(heading.textContent?.trim() || document.title);
+      observer.disconnect();
       return true;
     };
-
-    let timer = 0;
-    const frame = requestAnimationFrame(() => {
-      if (focusHeading()) return;
-      // Content that renders asynchronously (a deal page, the guide) has no
-      // heading on the first frame. One short retry is enough to catch it.
-      setRouteAnnouncement(document.title);
-      timer = window.setTimeout(focusHeading, 200);
-    });
-
+    observer.observe(container, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'hidden'] });
+    setRouteAnnouncement(document.title);
+    const frame = requestAnimationFrame(focusHeading);
+    // Avoid retaining an observer indefinitely on an error view with no heading.
+    const timeout = window.setTimeout(() => observer.disconnect(), 30_000);
     return () => {
       cancelAnimationFrame(frame);
-      clearTimeout(timer);
+      clearTimeout(timeout);
+      observer.disconnect();
     };
   }, [viewIdentity]);
 
@@ -252,7 +263,7 @@ function AppInner() {
   );
   const flushDiscovery = useCallback(() => {
     cancelPending();
-    if (routeRef.current.name === 'home') writeLocation(currentDiscoveryUrl(), 'replace');
+    if (routeRef.current.name === 'home') writeLocation(currentDiscoveryUrl() + window.location.hash, 'replace');
   }, [cancelPending, currentDiscoveryUrl, writeLocation]);
   const navigate = useCallback(
     (next: Route, searchOverride?: string) => {
@@ -287,21 +298,21 @@ function AppInner() {
         timer.current = window.setTimeout(() => {
           timer.current = null;
           if (routeRef.current.name === 'home')
-            writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)), 'replace', true);
+            writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)) + window.location.hash, 'replace', true);
         }, 250);
-      else writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)), 'push');
+      else writeLocation(routeUrl({ name: 'home' }, languageAwareSearch(search)) + window.location.hash, method);
     },
     [cancelPending, languageAwareSearch, writeLocation]
   );
   const handleResetFilters = useCallback(() => {
     cancelPending();
     filtersRef.current = { ...DEFAULT_FILTER_STATE };
-    writeLocation(routeUrl({ name: 'home' }, languageAwareSearch('')), 'push');
+    writeLocation(routeUrl({ name: 'home' }, languageAwareSearch('')) + window.location.hash, 'push');
   }, [cancelPending, languageAwareSearch, writeLocation]);
   const getSearchLink = useCallback(() => {
     cancelPending();
     const url = currentDiscoveryUrl();
-    writeLocation(url, 'replace', true);
+    writeLocation(url + window.location.hash, 'replace', true);
     return new URL(url, window.location.origin).href;
   }, [cancelPending, currentDiscoveryUrl, writeLocation]);
   const onOpenDeal = useCallback((slug: string) => navigate({ name: 'deal', slug }), [navigate]);
@@ -336,11 +347,24 @@ function AppInner() {
   // the destination's canonical, description, OG tags and JSON-LD back, instead
   // of leaving the deal's behind.
   useEffect(() => {
-    const dealSeo = deal ? buildDealSeo(deal) : null;
-    // A deal page has two empty states: still loading (keep its own canonical)
-    // and confirmed missing (404 copy).
-    const dealMissing = route.name === 'deal' && offers.status === 'ready' && !deal;
-    applyDocumentMetadata(routeMetadata(route, lang, dealSeo, undefined, dealMissing));
+    const refresh = () => {
+      const dealSeo = deal ? buildDealSeo(deal) : null;
+      const dealMissing = route.name === 'deal' && offers.status === 'ready' && !deal;
+      applyDocumentMetadata(routeMetadata(route, lang, dealSeo, undefined, dealMissing));
+      const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+      if (route.name === 'favorites' || route.name === 'compare' || route.name === 'notfound' || dealMissing) {
+        const tag = robots ?? document.createElement('meta');
+        tag.name = 'robots';
+        tag.content = 'noindex,follow';
+        if (!robots) document.head.appendChild(tag);
+      } else {
+        robots?.remove();
+      }
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 60000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
   }, [route, deal, lang, offers.status]);
 
   let content: JSX.Element;

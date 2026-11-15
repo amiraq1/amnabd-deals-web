@@ -44,7 +44,7 @@ test('buildDealSeo produces valid metadata, canonical URL, and JSON-LD schema', 
     },
   };
 
-  const seo = buildDealSeo(deal, 'https://amnabd.com');
+  const seo = buildDealSeo(deal, 'https://amnabd.com', new Date('2026-10-20T00:00:00Z'));
 
   assert.equal(seo.canonicalUrl, 'https://amnabd.com/deal/cursor-pro');
   assert.equal(seo.ogImageUrl, 'https://amnabd.com/og/cursor-pro.png');

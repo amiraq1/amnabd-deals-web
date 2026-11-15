@@ -300,7 +300,7 @@ export function buildDealOgSvg(deal, facts = dealFacts(deal)) {
   if (!facts.openToAll && !facts.studentsOnly) tags.push('الأهلية: راجع الشروط');
 
   const verifiedText = facts.verified
-    ? `موثّق من المصدر${facts.reviewedOn ? ` · آخر مراجعة ${facts.reviewedOn}` : ''}`
+    ? `تمت مراجعة السجل${facts.reviewedOn ? ` · آخر مراجعة ${facts.reviewedOn}` : ''}`
     : '';
 
   const titleY = headline ? 250 : 300;
@@ -328,7 +328,7 @@ export function buildDealOgSvg(deal, facts = dealFacts(deal)) {
   const verifiedSvg = facts.verified
     ? `  <g transform="translate(820, 96)">
     <rect x="0" y="0" width="276" height="46" rx="23" fill="#064e3b" stroke="#10b981" stroke-width="1.5" />
-    <text x="138" y="30" fill="#6ee7b7" font-family="Cairo, Tajawal, sans-serif" font-size="18" font-weight="700" text-anchor="middle" direction="rtl">✓ عرض موثّق</text>
+    <text x="138" y="30" fill="#6ee7b7" font-family="Cairo, Tajawal, sans-serif" font-size="18" font-weight="700" text-anchor="middle" direction="rtl">✓ تمت مراجعة السجل</text>
   </g>`
     : '';
 
@@ -479,7 +479,7 @@ export function generateRssFeedXml(deals, baseUrl = DEFAULT_SITE_URL, referenceN
   const itemsXml = feedDeals
     .map((deal) => {
       const dealUrl = `${cleanBase}/deal/${deal.slug}`;
-      const prefix = deal.status === 'ending_soon' ? '⏳ ينتهي قريبًا: ' : '';
+      const prefix = getTimingState(deal, referenceNow).offer.state === 'ending_soon' ? '⏳ ينتهي قريبًا: ' : '';
       const headline = explicitText(deal.headline_value);
       const title = dealDisplayName(deal, deal.slug);
       const itemTitle = escapeHtml(`${prefix}${title}${headline ? ` (${headline})` : ''}`);
@@ -674,10 +674,10 @@ export function buildNotFoundPage(baseHtml, baseUrl = DEFAULT_SITE_URL) {
  * expired in the database. The build now owns it, and index.html ships an empty
  * placeholder that this function fills.
  */
-export function buildHomeItemList(deals, baseUrl = DEFAULT_SITE_URL) {
+export function buildHomeItemList(deals, baseUrl = DEFAULT_SITE_URL, referenceNow = new Date()) {
   const base = String(baseUrl).replace(/\/+$/, '');
   const live = (Array.isArray(deals) ? deals : []).filter(
-    (deal) => isStaticDealSlug(deal?.slug) && deal?.status !== 'expired'
+    (deal) => isStaticDealSlug(deal?.slug) && !isOfferEndedAt(deal, referenceNow)
   );
 
   return {
@@ -828,7 +828,7 @@ export async function runStaticSeoGeneration({
   // pages, and do it before any shell is written. Live-only slugs are served as
   // an exact copy of index.html and verify-dist compares them byte for byte, so
   // the shell source has to be the finished document, not the placeholder.
-  baseHtml = injectHomeItemList(baseHtml, buildHomeItemList(feedDeals, baseUrl));
+  baseHtml = injectHomeItemList(baseHtml, buildHomeItemList(feedDeals, baseUrl, referenceNow));
   writeFileSync(indexHtmlPath, baseHtml, 'utf8');
 
   // Sitemap follows the feed: an ended offer keeps its deal page but leaves the
@@ -841,13 +841,29 @@ export async function runStaticSeoGeneration({
     .filter((deal) => isOfferEndedAt(deal, referenceNow))
     .map((deal) => deal.slug);
   const sitemapEnded = new Set(sitemapEndedSlugs);
-  const sitemapDeals = seoDeals.filter((deal) => !sitemapEnded.has(deal.slug));
+  const sitemapDeals = sitemapCandidates.filter((deal) => !sitemapEnded.has(deal.slug));
 
-  writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(sitemapDeals, baseUrl), 'utf8');
+  writeFileSync(join(distDir, 'sitemap.xml'), generateSitemapXml(sitemapDeals, baseUrl, referenceNow), 'utf8');
   writeFileSync(join(distDir, 'robots.txt'), generateRobotsTxt(baseUrl), 'utf8');
   writeFileSync(join(distDir, 'feed.xml'), generateRssFeedXml(feedDeals, baseUrl, referenceNow), 'utf8');
   writeFileSync(join(distDir, 'llms.txt'), generateLlmsTxt(seoDeals, baseUrl), 'utf8');
   writeFileSync(join(distDir, '404.html'), buildNotFoundPage(baseHtml, baseUrl), 'utf8');
+
+  // Publish actual flat and directory entry points for direct GitHub Pages requests.
+  // Favorites is device-local and deliberately noindex, but has its own identity.
+  for (const [path, name, description, noindex] of [
+    ['guide', 'دليل الاستخدام والشروط', 'كيف تتحقق من شروط العرض قبل التفعيل، وما تعنيه حالة كل حقل في الدليل.', false],
+    ['favorites', 'مفضلتي', 'العروض التي حفظتها في هذا المتصفح.', true],
+  ]) {
+    const canonicalUrl = `${baseUrl.replace(/\/+$/, '')}/${path}`;
+    const seo = { title: `${name} — نبض`, description, canonicalUrl,
+      ogImageUrl: `${baseUrl.replace(/\/+$/, '')}/og-image.png`,
+      jsonLd: { '@context': 'https://schema.org', '@type': 'WebSite', name, url: canonicalUrl } };
+    const html = injectSeoIntoHtml(noindex ? buildNoIndexAppShell(baseHtml) : baseHtml, seo);
+    mkdirSync(join(distDir, path), { recursive: true });
+    writeFileSync(join(distDir, `${path}.html`), html, 'utf8');
+    writeFileSync(join(distDir, path, 'index.html'), html, 'utf8');
+  }
 
   // Comparisons are user-selected and may contain unreviewed combinations.
   // Publish a real path shell for HTTP 200, but no indexable metadata or claims.
@@ -933,7 +949,7 @@ export async function runStaticSeoGeneration({
   let publishedAggregations = 0;
   const skippedAggregations = [];
   for (const agg of STATIC_AGGREGATIONS) {
-    const matching = seoDeals.filter((deal) => agg.filter(deal));
+    const matching = sitemapDeals.filter((deal) => agg.filter(deal, referenceNow));
     const aggDir = join(distDir, agg.slug);
     mkdirSync(aggDir, { recursive: true });
     if (matching.length === 0) {
@@ -960,9 +976,11 @@ export async function runStaticSeoGeneration({
 
   const dealRootDir = join(distDir, 'deal');
   mkdirSync(dealRootDir, { recursive: true });
-  for (const deal of seoDeals) {
-    const facts = dealFacts(deal);
-    const seo = buildDealSeo(deal, baseUrl);
+  for (const catalogDeal of seoDeals) {
+    const liveState = liveStateBySlug?.get(catalogDeal.slug);
+    const deal = liveState ? { ...catalogDeal, status: liveState.status, ends_at: liveState.ends_at } : catalogDeal;
+    const facts = dealFacts(deal, referenceNow);
+    const seo = buildDealSeo(deal, baseUrl, referenceNow);
     const htmlContent = injectSeoIntoHtml(baseHtml, seo);
     // E3: write dist/deal/<slug>.html so GitHub Pages serves /deal/<slug> with
     // HTTP 200 directly. Without it, Pages issues a 301 to /deal/<slug>/ because

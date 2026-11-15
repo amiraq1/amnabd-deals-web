@@ -91,11 +91,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+      # Only real deployed HTTP responses can prove Pages routing and 404 behavior.
+      - name: Verify direct deployed routes
+        env:
+          DEPLOY_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node scripts/check-deployed-routes.mjs

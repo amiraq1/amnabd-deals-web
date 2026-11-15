@@ -1,5 +1,7 @@
 import type { Deal, Lang, Localized } from '@/types';
-import { durationLabel } from './format.js';
+import { benefitAmount, durationLabel, frequencyLabel } from './format.js';
+import { recordedPrice } from './cardFacts.js';
+import { offerExpiryInstant } from './dealTiming.js';
 import { isValidSlug } from './routes.js';
 import { requirementState } from './eligibility.js';
 import { safeDealUrl } from './safeUrl.js';
@@ -23,6 +25,9 @@ export interface ComparisonSelectionUpdate {
 
 const UNKNOWN: Localized = { ar: 'غير معلوم', en: 'Unknown' };
 const FIELD_LABELS: ReadonlyArray<{ key: string; label: Localized }> = [
+  { key: 'benefit', label: { ar: 'المنفعة الأساسية المسجلة', en: 'Recorded primary benefit' } },
+  { key: 'price', label: { ar: 'السعر المسجل ودورة الفوترة', en: 'Recorded price and billing period' } },
+  { key: 'expiry', label: { ar: 'موعد انتهاء العرض المسجل', en: 'Recorded offer end date' } },
   { key: 'student', label: { ar: 'اشتراط صفة الطالب', en: 'Student requirement' } },
   { key: 'card', label: { ar: 'اشتراط بطاقة ائتمان', en: 'Credit-card requirement' } },
   { key: 'new-account', label: { ar: 'اشتراط حساب جديد', en: 'New-account requirement' } },
@@ -117,6 +122,39 @@ function durationFact(deal: Deal, lang: Lang): ComparisonCell {
   return { kind: 'text', text: values.join(lang === 'ar' ? '؛ ' : '; ') };
 }
 
+function benefitFact(deal: Deal, lang: Lang): ComparisonCell {
+  if (markedUnknown(deal, ['benefits', 'benefits.0', 'primary benefit'])) return unknownText(lang);
+  const benefit = deal.benefits?.[0];
+  if (!benefit) return unknownText(lang);
+  const pieces: string[] = [];
+  if (!markedUnknown(deal, ['benefits.amount', 'benefits.0.amount', 'benefits.0.amount.value', 'benefits.0.amount.unit', 'benefits.0.amount.currency', 'benefits.amount.unit', 'benefits.amount.currency', 'benefit amount'])) {
+    const amount = benefitAmount(benefit.amount, lang);
+    if (amount !== UNKNOWN[lang]) pieces.push(amount);
+  }
+  if (!markedUnknown(deal, ['benefits.description', 'benefits.0.description', `benefits.0.description.${lang}`])) {
+    const description = benefit.description?.[lang]?.trim();
+    if (description) pieces.push(description);
+  }
+  if (pieces.length && !markedUnknown(deal, ['benefits.frequency', 'benefits.0.frequency'])) {
+    const frequency = frequencyLabel(benefit.frequency, lang);
+    if (frequency) pieces.push(frequency);
+  }
+  return pieces.length ? { kind: 'text', text: pieces.join(lang === 'ar' ? '؛ ' : '; ') } : unknownText(lang);
+}
+
+function priceFact(deal: Deal, lang: Lang): ComparisonCell {
+  if (!deal.pricing || markedUnknown(deal, ['pricing', 'pricing.offer_price', 'pricing.currency', 'pricing.billing_cycle', 'offer_price', 'price'])) return unknownText(lang);
+  if (typeof deal.pricing.offer_price !== 'number' || !Number.isFinite(deal.pricing.offer_price) || deal.pricing.offer_price < 0) return unknownText(lang);
+  // Show recorded units/period; never rank unlike benefits or prices.
+  return { kind: 'text', text: recordedPrice(deal.pricing, lang) };
+}
+
+function expiryFact(deal: Deal, lang: Lang): ComparisonCell {
+  if (markedUnknown(deal, ['ends_at', 'offer end date', 'offer expiry']) || offerExpiryInstant(deal.ends_at) === null)
+    return unknownText(lang);
+  return { kind: 'text', text: deal.ends_at! };
+}
+
 function sourceFact(deal: Deal, lang: Lang): ComparisonCell {
   if (markedUnknown(deal, ['official_sources', 'official source', 'source']))
     return unknownText(lang);
@@ -130,6 +168,12 @@ function sourceFact(deal: Deal, lang: Lang): ComparisonCell {
 
 function fact(deal: Deal, key: string, lang: Lang): ComparisonCell {
   switch (key) {
+    case 'benefit':
+      return benefitFact(deal, lang);
+    case 'price':
+      return priceFact(deal, lang);
+    case 'expiry':
+      return expiryFact(deal, lang);
     case 'student':
       return requirementFact(
         deal,

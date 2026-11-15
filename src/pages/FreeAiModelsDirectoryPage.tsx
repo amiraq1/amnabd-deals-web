@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ChevronDown,
   Code2,
@@ -22,10 +22,12 @@ import {
   type FreeAiModelEntry,
 } from '@/content/freeAiModelsDirectory';
 import { useLanguage } from '@/context/LanguageContext';
+import { matchesQuery } from '@/lib/normalize';
+import { parseModelFilters, serializeModelFilters, type ModelFilters, type ModelCategoryFilter, type ModelSortOrder } from '@/lib/modelFilterState';
 
 const MILLION_TOKENS = 1_000_000;
-type CategoryFilter = 'all' | AiModelCapability | 'no-card' | 'long-context';
-type SortOrder = 'recent' | 'context';
+type CategoryFilter = ModelCategoryFilter;
+type SortOrder = ModelSortOrder;
 type QuickUseChoice = 'coding' | 'vision' | 'long-context' | 'no-card';
 
 function contextLabel(tokens: number | null): string {
@@ -223,17 +225,35 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
 
 export default function FreeAiModelsDirectoryPage() {
   const { lang } = useLanguage();
-  const [query, setQuery] = useState('');
-  const [providerFilter, setProviderFilter] = useState('all');
-  const [accessFilter, setAccessFilter] = useState<'all' | AiModelAccessType>('all');
-  const [usageFilter, setUsageFilter] = useState<'all' | AiModelCapability>('all');
-  const [modalityFilter, setModalityFilter] = useState<'all' | AiModelModality>('all');
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
-  const [noCardOnly, setNoCardOnly] = useState(false);
-  const [noPhoneOnly, setNoPhoneOnly] = useState(false);
-  const [longContextOnly, setLongContextOnly] = useState(false);
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [sortOrder, setSortOrder] = useState<SortOrder>('recent');
+  const [filters, setFilters] = useState<ModelFilters>(() => parseModelFilters(window.location.search));
+  const { query, providerFilter, accessFilter, usageFilter, modalityFilter, categoryFilter,
+    noCardOnly, noPhoneOnly, longContextOnly, verifiedOnly, sortOrder } = filters;
+  const set = <K extends keyof ModelFilters>(key: K, value: ModelFilters[K]) =>
+    setFilters((current) => ({ ...current, [key]: value }));
+  const setQuery = (value: string) => set('query', value);
+  const setProviderFilter = (value: string) => set('providerFilter', value);
+  const setAccessFilter = (value: ModelFilters['accessFilter']) => set('accessFilter', value);
+  const setUsageFilter = (value: ModelFilters['usageFilter']) => set('usageFilter', value);
+  const setModalityFilter = (value: ModelFilters['modalityFilter']) => set('modalityFilter', value);
+  const setCategoryFilter = (value: CategoryFilter) => set('categoryFilter', value);
+  const setNoCardOnly = (value: boolean) => set('noCardOnly', value);
+  const setNoPhoneOnly = (value: boolean) => set('noPhoneOnly', value);
+  const setLongContextOnly = (value: boolean) => set('longContextOnly', value);
+  const setVerifiedOnly = (value: boolean) => set('verifiedOnly', value);
+  const setSortOrder = (value: SortOrder) => set('sortOrder', value);
+
+  useEffect(() => {
+    const onPopState = () => setFilters(parseModelFilters(window.location.search));
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+  useEffect(() => {
+    if (window.location.pathname.replace(/\/$/, '') !== '/free-ai-models-directory') return;
+    const search = serializeModelFilters(filters, window.location.search);
+    const url = `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`;
+    if (url !== `${window.location.pathname}${window.location.search}${window.location.hash}`)
+      window.history.replaceState(window.history.state, '', url);
+  }, [filters]);
 
   const ar = lang === 'ar';
   const text = ar
@@ -298,7 +318,7 @@ export default function FreeAiModelsDirectoryPage() {
     const normalizedQuery = query.trim().toLocaleLowerCase();
     const entries = FREE_AI_MODEL_ENTRIES.filter((entry) => {
       const searchable = [entry.name, entry.modelId, entry.providerName, entry.providerNameAr, entry.developer].join(' ').toLocaleLowerCase();
-      if (normalizedQuery && !searchable.includes(normalizedQuery)) return false;
+      if (normalizedQuery && !matchesQuery(searchable, normalizedQuery)) return false;
       if (providerFilter !== 'all' && entry.providerId !== providerFilter) return false;
       if (accessFilter !== 'all' && entry.accessType !== accessFilter) return false;
       if (usageFilter !== 'all' && !entry.capabilities.includes(usageFilter)) return false;
@@ -307,7 +327,7 @@ export default function FreeAiModelsDirectoryPage() {
       if (noCardOnly && entry.cardPolicy !== 'not_required') return false;
       if (noPhoneOnly && entry.phonePolicy !== 'not_required') return false;
       if (longContextOnly && (entry.contextTokens ?? 0) < MILLION_TOKENS) return false;
-      if (verifiedOnly && entry.evidenceStatus === 'unknown') return false;
+      if (verifiedOnly && entry.evidenceStatus !== 'verified') return false;
       return true;
     });
     return [...entries].sort((a, b) => sortOrder === 'context'

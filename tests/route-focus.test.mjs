@@ -55,7 +55,10 @@ test('REC-16: the app focuses the new heading only when the identity changes', (
   // fallback while an async page is still rendering.
   assert.match(app, /document\.getElementById\('main-content'\)/);
   assert.match(app, /container\.focus\(\{ preventScroll: true \}\)/);
-  assert.match(app, /container\.querySelector\('h1'\)/);
+  assert.match(app, /container\.querySelectorAll\('h1'\)/);
+  assert.match(app, /candidate\.getClientRects\(\)\.length > 0/);
+  assert.match(app, /new MutationObserver/);
+  assert.match(app, /document\.activeElement === container/);
   assert.match(app, /heading\.focus\(\{ preventScroll: true \}\)/);
 
   // The announcement region is polite and atomic, so a reader hears one message.

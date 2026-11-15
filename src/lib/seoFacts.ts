@@ -14,6 +14,7 @@ import { AGGREGATIONS, type AggregationConfig } from './aggregations.js';
 import { applicantType, isOpenToAll, requirementState, truthState } from './eligibility.js';
 import { reviewDateLabel } from './format.js';
 import { isVerifiedReview } from './verification.js';
+import { getTimingState, offerExpiryInstant } from './dealTiming.js';
 
 export { AGGREGATIONS } from './aggregations.js';
 
@@ -77,7 +78,7 @@ export interface DealFacts {
  * on raw catalog items alike, because it re-applies the same normalizers that
  * `validate.ts` uses instead of trusting the shape.
  */
-export function dealFacts(input: unknown): DealFacts {
+export function dealFacts(input: unknown, referenceNow: Date = new Date()): DealFacts {
   const row = asObject(input);
   const review = asObject(row?.review);
   const rawEligibility = asObject(row?.eligibility);
@@ -111,9 +112,19 @@ export function dealFacts(input: unknown): DealFacts {
       ? { value: rawPrice, currency }
       : null;
 
+  const timing = getTimingState(input, referenceNow).offer;
+  // A malformed recorded end cannot substantiate a positive availability claim.
+  const hasInvalidEnd = asString(row?.ends_at) !== null && timing.expiresAt === null;
+  const availability = timing.state === 'expired'
+    ? getAvailabilitySchema('expired')
+    : hasInvalidEnd ? null
+      : status === 'active' && timing.state === 'ending_soon'
+        ? getAvailabilitySchema('ending_soon')
+        : getAvailabilitySchema(status);
+
   return {
     status,
-    availability: getAvailabilitySchema(status),
+    availability,
     verified: isVerifiedReview(review),
     reviewedOn,
     openToAll: isOpenToAll(eligibility),
@@ -144,9 +155,9 @@ export interface DealSeoMetadata {
   jsonLd: Record<string, unknown>;
 }
 
-export function buildDealSeo(input: unknown, baseUrl = DEFAULT_SITE_URL): DealSeoMetadata {
+export function buildDealSeo(input: unknown, baseUrl = DEFAULT_SITE_URL, referenceNow: Date = new Date()): DealSeoMetadata {
   const row = asObject(input);
-  const facts = dealFacts(input);
+  const facts = dealFacts(input, referenceNow);
   const cleanBase = baseUrl.replace(/\/+$/, '');
   const slug = asString(row?.slug) ?? '';
   const canonicalUrl = `${cleanBase}/deal/${slug}`;
@@ -165,7 +176,7 @@ export function buildDealSeo(input: unknown, baseUrl = DEFAULT_SITE_URL): DealSe
   const notes: string[] = [];
   if (facts.studentsOnly) notes.push('مخصص للطلاب.');
   if (facts.noCard) notes.push('بدون بطاقة ائتمانية.');
-  if (facts.verified) notes.push('موثّق من المصدر.');
+  if (facts.verified) notes.push('تمت مراجعة السجل.');
   const description = notes.length > 0 ? `${summary} ${notes.join(' ')}` : summary;
 
   const jsonLd: Record<string, unknown> = {
@@ -180,7 +191,9 @@ export function buildDealSeo(input: unknown, baseUrl = DEFAULT_SITE_URL): DealSe
     jsonLd.price = facts.price.value;
     jsonLd.priceCurrency = facts.price.currency;
     const endsAt = asString(row?.ends_at);
-    if (endsAt) jsonLd.priceValidUntil = endsAt;
+    const unknownFields = asStringArray(asObject(row?.review)?.unknown_fields);
+    const expiryUnknown = ['ends_at', 'offer end date', 'offer expiry'].some((field) => unknownFields.includes(field));
+    if (endsAt && !expiryUnknown && offerExpiryInstant(endsAt) !== null) jsonLd.priceValidUntil = endsAt;
   }
   if (facts.reviewedOn) jsonLd.dateModified = facts.reviewedOn;
   if (headline)
@@ -194,14 +207,14 @@ export function buildDealSeo(input: unknown, baseUrl = DEFAULT_SITE_URL): DealSe
 }
 
 /** Collections that actually contain at least one deal — the only ones worth publishing. */
-export function nonEmptyAggregations(deals: readonly Deal[]): { config: AggregationConfig; count: number }[] {
+export function nonEmptyAggregations(deals: readonly Deal[], referenceNow: Date = new Date()): { config: AggregationConfig; count: number }[] {
   return Object.values(AGGREGATIONS).flatMap((config) => {
-    const count = deals.filter((deal) => config.filter(deal)).length;
+    const count = deals.filter((deal) => config.filter(deal, referenceNow)).length;
     return count > 0 ? [{ config, count }] : [];
   });
 }
 
-export function generateSitemapXml(deals: readonly Deal[], baseUrl = DEFAULT_SITE_URL): string {
+export function generateSitemapXml(deals: readonly Deal[], baseUrl = DEFAULT_SITE_URL, referenceNow: Date = new Date()): string {
   const cleanBase = baseUrl.replace(/\/+$/, '');
   const latestReview = deals
     .map((deal) => deal.review?.reviewed_on)
@@ -219,10 +232,11 @@ export function generateSitemapXml(deals: readonly Deal[], baseUrl = DEFAULT_SIT
   const urls = [
     url(`${cleanBase}/`, '1.0', 'daily', latestReview),
     url(`${cleanBase}/changelog`, '0.8', 'daily', latestReview),
+    url(`${cleanBase}/guide`, '0.6', 'weekly'),
     url(`${cleanBase}/free-api-keys-directory`, '0.8', 'weekly'),
     url(`${cleanBase}/free-ai-models-directory`, '0.8', 'weekly'),
     url(`${cleanBase}/sms-suppliers-directory`, '0.7', 'weekly'),
-    ...nonEmptyAggregations(deals).map(({ config }) =>
+    ...nonEmptyAggregations(deals, referenceNow).map(({ config }) =>
       url(`${cleanBase}/${config.slug}`, '0.9', 'daily', latestReview)
     ),
   ];
