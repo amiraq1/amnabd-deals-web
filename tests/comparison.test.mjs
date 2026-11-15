@@ -42,12 +42,15 @@ function deal(slug, overrides = {}) {
 
 const valueFor = (rows, key, index) => rows.find((row) => row.key === key).values[index];
 
-test('comparison rows expose exactly the seven requested fields in both languages', () => {
+test('comparison rows expose all recorded fields in both languages', () => {
   const rows = buildComparisonRows([deal('a'), deal('b')], 'ar');
   assert.deepEqual(rows.map((row) => row.key), [
-    'student', 'card', 'new-account', 'phone', 'countries', 'duration', 'source',
+    'benefit', 'price', 'expiry', 'student', 'card', 'new-account', 'phone', 'countries', 'duration', 'source',
   ]);
   assert.deepEqual(rows.map((row) => row.label.ar), [
+    'المنفعة الأساسية المسجلة',
+    'السعر المسجل ودورة الفوترة',
+    'موعد انتهاء العرض المسجل',
     'اشتراط صفة الطالب',
     'اشتراط بطاقة ائتمان',
     'اشتراط حساب جديد',
@@ -58,6 +61,9 @@ test('comparison rows expose exactly the seven requested fields in both language
   ]);
   const english = buildComparisonRows([deal('a'), deal('b')], 'en');
   assert.deepEqual(english.map((row) => row.label.en), [
+    'Recorded primary benefit',
+    'Recorded price and billing period',
+    'Recorded offer end date',
     'Student requirement',
     'Credit-card requirement',
     'New-account requirement',

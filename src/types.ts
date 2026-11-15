@@ -28,6 +28,9 @@ export interface FilterState {
   country: string;
   countryStatus: CountryAvailabilityFilter;
   sort: SortOption;
+  savedOnly: boolean;
+  endingSoon: boolean;
+  useCases: string[];
   invalidCategory?: string;
 }
 
