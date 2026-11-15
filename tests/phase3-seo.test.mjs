@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -95,6 +96,27 @@ test('generateSitemapXml builds valid XML with prioritization and dates', () => 
   // Expired deal has reduced priority
   assert.match(xml, /<loc>https:\/\/amnabd\.com\/deal\/expired-deal<\/loc>/);
   assert.match(xml, /<priority>0\.4<\/priority>/);
+});
+
+test('generateSitemapXml escapes XML special characters and produces parseable XML', () => {
+  const specialCharacters = `&<>"'`;
+  const baseUrl = `https://deals.example.com/path?value=${specialCharacters}`;
+  const lastmod = `2026-11-15${specialCharacters}`;
+  const xml = generateSitemapXml(
+    [{ slug: 'xml-escape-test', status: 'active', review: { reviewed_on: lastmod } }],
+    baseUrl
+  );
+  const escapedSpecialCharacters = '&amp;&lt;&gt;&quot;&apos;';
+
+  assert.ok(xml.includes(`<loc>${baseUrl.replace(specialCharacters, escapedSpecialCharacters)}/</loc>`));
+  assert.ok(xml.includes(`<lastmod>${lastmod.replace(specialCharacters, escapedSpecialCharacters)}</lastmod>`));
+
+  const parsed = spawnSync(
+    'python3',
+    ['-c', 'import sys, xml.etree.ElementTree as ET; ET.fromstring(sys.stdin.read())'],
+    { input: xml, encoding: 'utf8' }
+  );
+  assert.equal(parsed.status, 0, parsed.stderr || 'sitemap output must be valid XML');
 });
 
 test('routes.ts supports clean paths and migrates legacy hash routes once', () => {
