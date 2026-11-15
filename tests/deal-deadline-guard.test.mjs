@@ -164,6 +164,7 @@ test('F-04: verify-dist fails timed live copy and warns on Google-style date-onl
     mkdirSync(join(distDir, 'free-api-keys-directory'), { recursive: true });
     mkdirSync(join(distDir, 'free-ai-models-directory'), { recursive: true });
     mkdirSync(join(distDir, 'sms-suppliers-directory'), { recursive: true });
+    mkdirSync(join(distDir, 'privacy-policy'), { recursive: true });
     writeFileSync(
       join(distDir, '404.html'),
       '<html><head><meta name="robots" content="noindex,follow"><link rel="canonical" href="https://amnabd.com/404"></head></html>'
@@ -183,6 +184,10 @@ test('F-04: verify-dist fails timed live copy and warns on Google-style date-onl
     writeFileSync(
       join(distDir, 'sms-suppliers-directory', 'index.html'),
       '<html><head><title>دليل خدمات وأدلة أرقام SMS</title><link rel="canonical" href="https://amnabd.com/sms-suppliers-directory"></head></html>'
+    );
+    writeFileSync(
+      join(distDir, 'privacy-policy', 'index.html'),
+      '<html><head><title>سياسة الخصوصية — نبض</title><link rel="canonical" href="https://amnabd.com/privacy-policy"></head></html>'
     );
     const timed = verifyDist({
       distDir,
