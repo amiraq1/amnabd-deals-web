@@ -217,6 +217,11 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
               }
               className="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 outline-none transition focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/20"
             />
+            <p role="note" className="mt-2 text-xs text-amber-300">
+              {lang === 'ar'
+                ? 'لا تُدخل معلومات شخصية في نص البلاغ.'
+                : 'Do not include personal information in your report.'}
+            </p>
           </div>
 
           {errorMsg && (
