@@ -74,18 +74,20 @@ export default function DealDetailPage({
   const offerUrl = resolveDealOfficialUrl(deal);
   const firstBenefit = deal.benefits[0];
 
+  // Keep the safe-area clearance responsive without writing an inline style.
   const mobileBar = useRef<HTMLElement>(null);
   useEffect(() => {
     const bar = mobileBar.current;
     if (!bar) return;
     const root = document.documentElement;
-    const property = '--amnabd-mobile-actions-height';
-    const previous = root.style.getPropertyValue(property);
-    const measure = () =>
-      root.style.setProperty(
-        property,
-        `${Math.ceil(bar.getBoundingClientRect().height)}px`,
-      );
+    const attribute = 'data-amnabd-mobile-actions-height';
+    const previous = root.getAttribute(attribute);
+    const measure = () => {
+      const rem = Number.parseFloat(getComputedStyle(root).fontSize) || 16;
+      const heightInRem = Math.ceil(bar.getBoundingClientRect().height / rem);
+      const clearance = [7, 9, 12, 16, 20].find((step) => step >= heightInRem) ?? 20;
+      root.setAttribute(attribute, String(clearance));
+    };
     measure();
     const observer =
       typeof ResizeObserver === 'undefined'
@@ -96,8 +98,8 @@ export default function DealDetailPage({
     return () => {
       observer?.disconnect();
       window.removeEventListener('resize', measure);
-      if (previous) root.style.setProperty(property, previous);
-      else root.style.removeProperty(property);
+      if (previous !== null) root.setAttribute(attribute, previous);
+      else root.removeAttribute(attribute);
     };
   }, []);
 
@@ -131,12 +133,6 @@ export default function DealDetailPage({
 
   return (
     <>
-      {/* Mounted only on detail routes. Compensate the actual bar height even at
-          large text/safe-area sizes, including the Footer outside this component. */}
-      <style>{`@media (max-width: 639px) {
-        .deal-detail-content { padding-bottom: calc(var(--amnabd-mobile-actions-height, 7rem) + 1rem); }
-        footer { padding-bottom: calc(var(--amnabd-mobile-actions-height, 7rem) + 1rem); }
-      }`}</style>
       <main className="deal-detail-content mx-auto max-w-4xl px-4 pb-8 pt-8 sm:px-6 [overflow-wrap:anywhere]">
         <button
           onClick={onBack}
