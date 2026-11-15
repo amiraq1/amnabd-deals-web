@@ -10,7 +10,7 @@ const POLICY = {
         title: 'الاتصالات والخدمات الخارجية',
         paragraphs: [
           'Supabase: يطلب التطبيق بيانات العروض العامة وأدلة الاستخدام وإعدادات الموقع لعرضها. وإذا أرسلت بلاغًا عن عرض، يرسل معرّف العرض والسبب الذي اخترته والملاحظة الاختيارية (حتى 280 حرفًا) إلى قاعدة Supabase لمراجعتها. لا يحتوي نموذج البلاغ على حقول للاسم أو البريد أو الهاتف. يرسل المتصفح تلقائيًا بيانات الاتصال التقنية اللازمة للطلب.',
-          'أيقونات العروض: بحسب سجل العرض، قد يحمّل المتصفح صورة من رابط الأيقونة المسجل، أو يطلب أيقونة من Google Favicons أو SimpleIcons. طلب Google Favicons يتضمن نطاق مزوّد العرض، وطلب SimpleIcons يتضمن معرّف الأيقونة. يرى مزوّدو الصور بيانات الاتصال المعتادة للطلب.',
+          'أيقونات العروض: تعرض بطاقات العروض وصفحاتها حروفًا أولى تُنشأ محليًا؛ ولا تحمّل صورًا من روابط الأيقونات المسجلة أو من Google Favicons أو SimpleIcons.',
           'النطاق والاستضافة: يستخدم الموقع Cloudflare لخدمة DNS الخاصة بالنطاق؛ يتضمن استعلام DNS اسم النطاق المطلوب. وتُقدَّم ملفات الموقع الثابتة عبر GitHub Pages، الذي يتلقى طلبات الصفحات وبيانات الاتصال التقنية اللازمة لتقديمها.',
           'الخطوط: لا يحمّل التطبيق الحالي خطوطًا من Google Fonts؛ تستخدم الواجهة خطوط النظام المتاحة على جهازك. وعند فتح رابط مصدر عرض، تنتقل إلى موقع الجهة الخارجية وتخضع معالجة بياناتك لسياساتها.',
         ],
@@ -26,7 +26,7 @@ const POLICY = {
       {
         title: 'التحليلات والتتبّع',
         paragraphs: [
-          'لا تتضمن الشيفرة الحالية للموقع نصوص تحليلات أو أدوات تتبّع. مع ذلك، قد يتلقى Cloudflare وGitHub Pages وSupabase ومزوّدو الأيقونات بيانات اتصال تقنية عند تقديم طلباتك؛ وتخضع معالجة كل مزوّد لشروطه وسياسة الخصوصية الخاصة به.',
+          'لا تتضمن الشيفرة الحالية للموقع نصوص تحليلات أو أدوات تتبّع. مع ذلك، قد يتلقى Cloudflare وGitHub Pages وSupabase بيانات اتصال تقنية عند تقديم طلباتك؛ وتخضع معالجة كل مزوّد لشروطه وسياسة الخصوصية الخاصة به.',
         ],
       },
       {
@@ -46,7 +46,7 @@ const POLICY = {
         title: 'External connections and services',
         paragraphs: [
           'Supabase: the app requests public offer records, usage guides, and site settings for display. If you submit an offer report, it sends the offer identifier, your selected reason, and your optional note (up to 280 characters) to the Supabase database for review. The report form has no name, email, or phone fields. Your browser also sends the technical connection information needed for the request.',
-          'Offer icons: depending on an offer record, your browser may load an image from its recorded icon URL, or request an icon from Google Favicons or SimpleIcons. A Google Favicons request includes the offer provider’s domain; a SimpleIcons request includes the icon identifier. Icon providers receive ordinary request connection data.',
+          'Offer icons: offer cards and detail pages display locally generated initials; they do not load images from recorded icon URLs, Google Favicons, or SimpleIcons.',
           'Domain and hosting: Cloudflare provides DNS for the site domain; a DNS lookup includes the requested domain name. Static site files are served through GitHub Pages, which receives page requests and the technical connection data needed to serve them.',
           'Fonts: the current app does not load fonts from Google Fonts; it uses system fonts available on your device. Opening an offer-source link takes you to that external provider, whose privacy terms then apply.',
         ],
@@ -62,7 +62,7 @@ const POLICY = {
       {
         title: 'Analytics and tracking',
         paragraphs: [
-          'The current site code contains no analytics or tracking scripts. Cloudflare, GitHub Pages, Supabase, and icon providers may still receive technical connection data when handling requests; each provider’s own terms and privacy policy govern its processing.',
+          'The current site code contains no analytics or tracking scripts. Cloudflare, GitHub Pages, and Supabase may still receive technical connection data when handling requests; each provider’s own terms and privacy policy govern its processing.',
         ],
       },
       {
