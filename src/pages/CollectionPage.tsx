@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -15,6 +15,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { AGGREGATIONS, type AggregationConfig } from '@/lib/aggregations';
 import { isVerifiedReview } from '@/lib/verification';
+import { getTimingState } from '@/lib/dealTiming';
 import DealCard from '@/components/DealCard';
 
 interface CollectionPageProps {
@@ -41,7 +42,13 @@ export default function CollectionPage({
 }: CollectionPageProps) {
   const { lang, dir } = useLanguage();
   const { favorites, toggleFavorite } = useFavorites();
-  const referenceNow = new Date();
+  const [referenceNow, setReferenceNow] = useState(() => new Date());
+  useEffect(() => {
+    const refresh = () => setReferenceNow(new Date());
+    const timer = window.setInterval(refresh, 60000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
+  }, []);
 
   const config: AggregationConfig | undefined = AGGREGATIONS[collectionKey];
   const Icon = COLLECTION_ICONS[collectionKey] || Sparkles;
@@ -49,8 +56,8 @@ export default function CollectionPage({
 
   const matchingDeals = useMemo(() => {
     if (!config) return [];
-    return deals.filter((deal) => config.filter(deal));
-  }, [deals, config]);
+    return deals.filter((deal) => getTimingState(deal, referenceNow).offer.state !== 'expired' && config.filter(deal, referenceNow));
+  }, [deals, config, referenceNow]);
 
   // Use the same explicit current/legacy review signals as the homepage.
   const verifiedCount = useMemo(
@@ -131,6 +138,7 @@ export default function CollectionPage({
           <p className="mt-2.5 text-sm leading-relaxed text-slate-300 sm:text-base">
             {lang === 'ar' ? config.descriptionAr : config.descriptionEn}
           </p>
+          <p className="mt-2 text-xs text-slate-400">{lang === 'ar' ? 'تستبعد هذه المجموعة العروض التي ثبت انتهاءها؛ عدم ظهور الانتهاء لا يضمن التوفر.' : 'Offers known to have ended are excluded; absence of an expiry does not guarantee availability.'}</p>
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-400">
             <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-400">

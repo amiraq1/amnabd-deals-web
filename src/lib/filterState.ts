@@ -17,6 +17,9 @@ export const DEFAULT_FILTER_STATE: Readonly<FilterState> = Object.freeze({
   country: '',
   countryStatus: 'all',
   sort: 'default',
+  savedOnly: false,
+  endingSoon: false,
+  useCases: [],
 });
 const APPLICANTS = new Set<ApplicantFilter>(['all', 'student', 'any']);
 const CARDS = new Set<CardFilter>(['all', 'not_required']);
@@ -46,11 +49,16 @@ export function cleanCountry(value: string): string {
     .join('');
 }
 
+// Explicit case-sensitive use-case values, with bounded length and count.
+export function cleanUseCases(values: readonly string[]): string[] {
+  return [...new Set(values.map((value) => Array.from(value.replace(/[\p{Cc}]/gu, ' ').trim()).slice(0, 100).join('')).filter(Boolean))].slice(0, 20);
+}
+
 export function validateFilterState(
   state: FilterState,
   validCategories?: ReadonlySet<string>
 ): FilterState {
-  const next = { ...state };
+  const next = { ...state, useCases: cleanUseCases(state.useCases ?? []) };
   next.country = cleanCountry(typeof state.country === 'string' ? state.country : '');
   if (!COUNTRY_STATUSES.has(next.countryStatus) || !next.country)
     next.countryStatus = 'all';
@@ -90,6 +98,9 @@ export function parseFilterState(
   const applicant = params.get('applicant');
   const card = params.get('card');
   const sort = params.get('sort');
+  result.savedOnly = params.get('saved') === '1';
+  result.endingSoon = params.get('ending') === '1';
+  result.useCases = cleanUseCases(params.getAll('use_case'));
   result.country = cleanCountry(params.get('country') ?? '');
   const countryStatus = params.get('country_status');
   if (result.country && COUNTRY_STATUSES.has(countryStatus as CountryAvailabilityFilter))
@@ -121,6 +132,9 @@ export function serializeFilterState(state: FilterState): string {
       params.set('country_status', state.countryStatus);
   }
   if (SORTS.has(state.sort) && state.sort !== 'default') params.set('sort', state.sort);
+  if (state.savedOnly) params.set('saved', '1');
+  if (state.endingSoon) params.set('ending', '1');
+  for (const value of cleanUseCases(state.useCases ?? [])) params.append('use_case', value);
   return params.toString();
 }
 
