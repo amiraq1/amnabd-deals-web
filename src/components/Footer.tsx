@@ -112,7 +112,7 @@ export default function Footer() {
               </a>
               <span className="text-slate-600">·</span>
               <a
-                href="https://github.com/amiraq1/amnabd-deals"
+                href="https://github.com/amiraq1/amnabd-deals-web"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-sm text-emerald-400 transition-colors hover:text-emerald-300"
