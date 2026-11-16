@@ -28,6 +28,19 @@ test('REC-17: the note field has an explicit label, not just a placeholder', () 
   assert.match(source, /<input\s+id=\{noteId\}/);
 });
 
+test('AMN-06: the note field shows a privacy warning in Arabic and English', () => {
+  const noteIdAt = source.indexOf('id={noteId}');
+  const noteInputAt = source.lastIndexOf('<input', noteIdAt);
+  const noteContainerAt = source.lastIndexOf('<div>', noteInputAt);
+  const warningAt = source.indexOf('<p role="note"', noteIdAt);
+  const noteContainerEndAt = source.indexOf('</div>', warningAt);
+  assert.ok(noteIdAt >= 0 && noteInputAt > noteContainerAt && warningAt > noteIdAt &&
+    noteContainerEndAt > warningAt,
+    'privacy warning must appear next to the note input');
+  assert.match(source, /لا تُدخل معلومات شخصية في نص البلاغ\./);
+  assert.match(source, /Do not include personal information in your report\./);
+});
+
 test('REC-17: a failed submission is announced immediately', () => {
   assert.match(source, /<p role="alert"/);
 });
