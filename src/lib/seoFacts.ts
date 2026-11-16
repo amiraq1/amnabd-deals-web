@@ -20,6 +20,18 @@ export { AGGREGATIONS } from './aggregations.js';
 
 export const DEFAULT_SITE_URL = 'https://amnabd.com';
 
+const XML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&apos;',
+};
+
+function escapeXml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => XML_ESCAPES[character] ?? character);
+}
+
 const VALID_STATUSES: readonly DealStatus[] = ['active', 'ending_soon', 'expired', 'verifying'];
 
 function asObject(value: unknown): Record<string, unknown> | null {
@@ -224,7 +236,7 @@ export function generateSitemapXml(deals: readonly Deal[], baseUrl = DEFAULT_SIT
 
   const url = (loc: string, priority: string, changefreq: string, lastmod?: string) =>
     `  <url>
-    <loc>${loc}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ''}
+    <loc>${escapeXml(loc)}</loc>${lastmod ? `\n    <lastmod>${escapeXml(lastmod)}</lastmod>` : ''}
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
   </url>`;
