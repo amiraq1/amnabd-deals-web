@@ -151,7 +151,7 @@ export default function DealCard({
         <a
           href={href}
           onClick={handleOpen}
-          className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-control bg-brand px-3 py-2 text-sm font-semibold text-slate-950 transition-colors after:absolute after:inset-0 after:rounded-2xl hover:bg-brand-soft"
+          className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-control bg-brand px-3 py-2 text-sm font-semibold text-slate-950 transition-colors after:absolute after:inset-0 after:rounded-card hover:bg-brand-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           {isAr ? 'تفاصيل العرض' : 'View details'}
           <span className="sr-only">: {displayName}</span>
@@ -177,7 +177,7 @@ export default function DealCard({
               event.stopPropagation();
               onToggleComparison(deal.slug);
             }}
-            className="relative z-10 min-h-11 rounded-control px-2 text-sm text-ink-secondary hover:bg-surface-overlay disabled:cursor-not-allowed disabled:opacity-50"
+            className="relative z-10 min-h-11 rounded-control px-2 text-sm text-ink-secondary hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isComparisonSelected
               ? isAr
@@ -193,7 +193,7 @@ export default function DealCard({
             href={officialUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="relative z-10 inline-flex min-h-11 items-center gap-1.5 rounded-control px-2 text-sm text-ink-secondary hover:bg-surface-overlay"
+            className="relative z-10 inline-flex min-h-11 items-center gap-1.5 rounded-control px-2 text-sm text-ink-secondary hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             {isAr ? 'المصدر' : 'Source'}
             <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
