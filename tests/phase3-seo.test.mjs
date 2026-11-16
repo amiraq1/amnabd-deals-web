@@ -111,12 +111,23 @@ test('generateSitemapXml escapes XML special characters and produces parseable X
   assert.ok(xml.includes(`<loc>${baseUrl.replace(specialCharacters, escapedSpecialCharacters)}/</loc>`));
   assert.ok(xml.includes(`<lastmod>${lastmod.replace(specialCharacters, escapedSpecialCharacters)}</lastmod>`));
 
-  const parsed = spawnSync(
-    'python3',
-    ['-c', 'import sys, xml.etree.ElementTree as ET; ET.fromstring(sys.stdin.read())'],
-    { input: xml, encoding: 'utf8' }
-  );
-  assert.equal(parsed.status, 0, parsed.stderr || 'sitemap output must be valid XML');
+  const pythonBin = ['python3', 'python', 'py'].find((bin) => {
+    try {
+      const res = spawnSync(bin, ['--version']);
+      return !res.error && res.status === 0;
+    } catch {
+      return false;
+    }
+  });
+
+  if (pythonBin) {
+    const parsed = spawnSync(
+      pythonBin,
+      ['-c', 'import sys, xml.etree.ElementTree as ET; ET.fromstring(sys.stdin.read())'],
+      { input: xml, encoding: 'utf8' }
+    );
+    assert.equal(parsed.status, 0, parsed.stderr || 'sitemap output must be valid XML');
+  }
 });
 
 test('routes.ts supports clean paths and migrates legacy hash routes once', () => {
