@@ -226,6 +226,10 @@ test('F-05: postbuild generates llms.txt from exactly the static deal pages', as
     assert.match(smsSuppliersDirectoryHtml, /دليل خدمات وأدلة أرقام SMS/);
     assert.match(smsSuppliersDirectoryHtml, /"@type":"CollectionPage"/);
     assert.match(readFileSync(join(distDir, 'sitemap.xml'), 'utf8'), /<loc>https:\/\/deals\.example\.com\/sms-suppliers-directory<\/loc>/);
+    const privacyPolicyHtml = readFileSync(join(distDir, 'privacy-policy', 'index.html'), 'utf8');
+    assert.match(privacyPolicyHtml, /<link rel="canonical" href="https:\/\/deals\.example\.com\/privacy-policy">/);
+    assert.match(privacyPolicyHtml, /سياسة الخصوصية/);
+    assert.match(readFileSync(join(distDir, 'sitemap.xml'), 'utf8'), /<loc>https:\/\/deals\.example\.com\/privacy-policy<\/loc>/);
     const comparisonShell = readFileSync(join(distDir, 'compare', 'index.html'), 'utf8');
     assert.equal(comparisonShell, buildNoIndexAppShell(sampleHomepageHtml));
     assert.match(comparisonShell, /name="robots" content="noindex,follow"/);

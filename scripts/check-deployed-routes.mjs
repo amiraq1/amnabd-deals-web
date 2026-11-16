@@ -5,7 +5,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const base = process.env.DEPLOY_URL?.replace(/\/+$/, '');
 if (!base || new URL(base).protocol !== 'https:') throw new Error('DEPLOY_URL must be the deployed HTTPS Pages URL');
-const paths = ['/', '/guide', '/favorites', '/compare', '/changelog', '/for-students', '/no-credit-card', '/coding', '/ending-soon', '/free-api-keys-directory', '/free-ai-models-directory', '/sms-suppliers-directory'];
+const paths = ['/', '/guide', '/favorites', '/compare', '/changelog', '/for-students', '/no-credit-card', '/coding', '/ending-soon', '/free-api-keys-directory', '/free-ai-models-directory', '/sms-suppliers-directory', '/privacy-policy'];
 
 async function check() {
   for (const path of paths) {

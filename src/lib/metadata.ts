@@ -65,6 +65,13 @@ const COPY: Record<string, RouteCopy> = {
       en: 'How to check an offer’s terms before activating it, and what each field in the directory means.',
     },
   },
+  privacyPolicy: {
+    title: { ar: 'سياسة الخصوصية', en: 'Privacy Policy' },
+    description: {
+      ar: 'توضح سياسة الخصوصية اتصالات الموقع الخارجية والبيانات المحفوظة محليًا في المتصفح.',
+      en: 'Learn which external services the site contacts and what information it stores locally in your browser.',
+    },
+  },
   favorites: {
     title: { ar: 'مفضلتي', en: 'My Favorites' },
     description: {
@@ -178,7 +185,7 @@ export function routeMetadata(
     ogImageUrl,
     jsonLd: {
       '@context': 'https://schema.org',
-      '@type': route.name === 'collection' || route.name === 'apiDirectory' || route.name === 'aiModelsDirectory' || route.name === 'smsSuppliersDirectory' ? 'CollectionPage' : 'WebSite',
+      '@type': route.name === 'privacyPolicy' ? 'WebPage' : route.name === 'collection' || route.name === 'apiDirectory' || route.name === 'aiModelsDirectory' || route.name === 'smsSuppliersDirectory' ? 'CollectionPage' : 'WebSite',
       name: copy.title[lang],
       ...(route.name === 'smsSuppliersDirectory' ? { numberOfItems: smsSummary.totalCount } : {}),
       url: `${base}${path}`,
