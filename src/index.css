@@ -175,6 +175,35 @@ bdi {
   min-height: 1.5rem;
 }
 
+:root {
+  --amnabd-mobile-actions-height: 7rem;
+}
+:root[data-amnabd-mobile-actions-height='9'] {
+  --amnabd-mobile-actions-height: 9rem;
+}
+:root[data-amnabd-mobile-actions-height='12'] {
+  --amnabd-mobile-actions-height: 12rem;
+}
+:root[data-amnabd-mobile-actions-height='16'] {
+  --amnabd-mobile-actions-height: 16rem;
+}
+:root[data-amnabd-mobile-actions-height='20'] {
+  --amnabd-mobile-actions-height: 20rem;
+}
+
+.bottom-mobile-actions {
+  bottom: calc(var(--amnabd-mobile-actions-height, 7rem) + 1rem);
+}
+
+@media (max-width: 639px) {
+  .deal-detail-content {
+    padding-bottom: calc(var(--amnabd-mobile-actions-height) + 1rem);
+  }
+  #root footer {
+    padding-bottom: calc(var(--amnabd-mobile-actions-height) + 1rem);
+  }
+}
+
 /* The audited controls keep a real 44px target, including text-only retries. */
 main button,
 main input,
