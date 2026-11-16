@@ -57,5 +57,5 @@ test('footer adds a localized policy link without changing the current repositor
   assert.match(footer, /localizedPath\('\/privacy-policy'\)/);
   assert.match(footer, /سياسة الخصوصية/);
   assert.match(footer, /Privacy Policy/);
-  assert.match(footer, /href="https:\/\/github\.com\/amiraq1\/amnabd-deals"/);
+  assert.match(footer, /href="https:\/\/github\.com\/amiraq1\/amnabd-deals-web"/);
 });
