@@ -580,6 +580,17 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
     report('sms-suppliers-directory/index.html: route must have its own canonical URL and title');
   }
 
+  const privacyPolicyHtml = readIfExists(join(distDir, 'privacy-policy', 'index.html'));
+  const privacyPolicyCanonical = `${sharedSeo.DEFAULT_SITE_URL.replace(/\/+$/, '')}/privacy-policy`;
+  if (privacyPolicyHtml === null) {
+    report('privacy-policy/index.html: static privacy route is missing');
+  } else if (
+    !privacyPolicyHtml.includes(`<link rel="canonical" href="${privacyPolicyCanonical}">`) ||
+    !privacyPolicyHtml.includes('سياسة الخصوصية')
+  ) {
+    report('privacy-policy/index.html: route must have its own canonical URL and title');
+  }
+
   // An empty collection page advertises deals that were never established.
   for (const agg of STATIC_AGGREGATIONS) {
     const matches = deals.filter((deal) => agg.filter(deal));

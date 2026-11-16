@@ -148,8 +148,26 @@ test('meaningful control borders pass non-text AA on raised and base surfaces', 
   for (const surface of [colors.surface.DEFAULT, colors.surface.raised])
     assert.ok(contrast(colors.line.control.slice(1), surface.slice(1)) >= 3);
 });
-test('audited surfaces have no remote fonts, provider images or urgency claims', () => {
-  assert.doesNotMatch(read('index.html'), /fonts\.google|preconnect/);
+test('CSP keeps external sources scoped and audited surfaces avoid remote assets or urgency claims', () => {
+  const policy = read('index.html').match(/<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]+)"/i)?.[1] ?? '';
+  for (const directive of [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "form-action 'self'",
+    "script-src 'self'",
+    "style-src 'self' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https://cdn.simpleicons.org https://www.google.com/s2/",
+    "connect-src 'self' https://*.supabase.co",
+    "worker-src 'self'",
+  ]) assert.ok(policy.includes(directive), `CSP includes ${directive}`);
+  assert.doesNotMatch(policy, /frame-ancestors|unsafe-inline|unsafe-eval/i);
+  assert.doesNotMatch(read('src/pages/DealDetailPage.tsx'), /<style>|style\.(?:setProperty|removeProperty)/);
+  assert.doesNotMatch(read('src/components/ScrollToTop.tsx'), /style\s*=/);
+  assert.doesNotMatch(read('index.html'), /<link\b[^>]*(?:fonts\.google|fonts\.gstatic)/i);
+  assert.doesNotMatch(read('index.html'), /<link\b[^>]*rel=["']?preconnect/i);
+  assert.doesNotMatch(read('src/index.css'), /fonts\.google|fonts\.gstatic/i);
   assert.doesNotMatch(
     read('src/components/DealIcon.tsx'),
     /<img|getDealIconSources|https:\/\//,

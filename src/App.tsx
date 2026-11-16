@@ -42,6 +42,7 @@ const ComparisonPage = lazy(() => import('@/pages/ComparisonPage'));
 const FreeApiKeysDirectoryPage = lazy(() => import('@/pages/FreeApiKeysDirectoryPage'));
 const FreeAiModelsDirectoryPage = lazy(() => import('@/pages/FreeAiModelsDirectoryPage'));
 const SmsSuppliersDirectoryPage = lazy(() => import('@/pages/SmsSuppliersDirectoryPage'));
+const PrivacyPolicyPage = lazy(() => import('@/pages/PrivacyPolicyPage'));
 
 function AppInner() {
   const { lang } = useLanguage();
@@ -375,6 +376,7 @@ function AppInner() {
   else if (route.name === 'apiDirectory') content = <FreeApiKeysDirectoryPage />;
   else if (route.name === 'aiModelsDirectory') content = <FreeAiModelsDirectoryPage />;
   else if (route.name === 'smsSuppliersDirectory') content = <SmsSuppliersDirectoryPage />;
+  else if (route.name === 'privacyPolicy') content = <PrivacyPolicyPage />;
   else if (offers.status === 'error' && route.name !== 'guide') {
     // Applies before every deal-dependent route, including details/comparison.
     content = (

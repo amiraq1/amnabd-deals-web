@@ -854,6 +854,7 @@ export async function runStaticSeoGeneration({
   for (const [path, name, description, noindex] of [
     ['guide', 'دليل الاستخدام والشروط', 'كيف تتحقق من شروط العرض قبل التفعيل، وما تعنيه حالة كل حقل في الدليل.', false],
     ['favorites', 'مفضلتي', 'العروض التي حفظتها في هذا المتصفح.', true],
+    ['privacy-policy', 'سياسة الخصوصية', 'توضح سياسة الخصوصية اتصالات الموقع الخارجية والبيانات المحفوظة محليًا في المتصفح.', false],
   ]) {
     const canonicalUrl = `${baseUrl.replace(/\/+$/, '')}/${path}`;
     const seo = { title: `${name} — نبض`, description, canonicalUrl,

@@ -112,13 +112,21 @@ export default function Footer() {
               </a>
               <span className="text-slate-600">·</span>
               <a
-                href="https://github.com/amiraq1/amnabd-deals"
+                href="https://github.com/amiraq1/amnabd-deals-web"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-sm text-emerald-400 transition-colors hover:text-emerald-300"
               >
                 {lang === 'ar' ? 'المشروع الأصلي' : 'Original project'}
                 <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+            <div className="mt-1">
+              <a
+                href={localizedPath('/privacy-policy')}
+                className="inline-flex min-h-11 items-center text-sm text-slate-400 hover:text-emerald-400"
+              >
+                {lang === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
               </a>
             </div>
             <div className="mt-4">
