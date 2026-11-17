@@ -56,7 +56,15 @@ test('escapeHtml properly escapes special HTML characters', () => {
 
 test('injectSeoIntoHtml replaces existing title and meta tags without duplication', () => {
   const seo = buildDealSeo(sampleDeal, 'https://deals.example.com');
-  const output = injectSeoIntoHtml(sampleBaseHtml, seo);
+  const baseHtmlWithExistingOg = sampleBaseHtml.replace(
+    '</head>',
+    `  <meta property="og:image" content="https://deals.example.com/old-image.png">
+  <meta property="og:image:secure_url" content="https://deals.example.com/old-image.png">
+  <meta property="og:image:alt" content="Old Alt">
+  <meta name="twitter:image:alt" content="Old Twitter Alt">
+</head>`
+  );
+  const output = injectSeoIntoHtml(baseHtmlWithExistingOg, seo);
 
   // Assert single instances (no duplication)
   const titleMatches = output.match(/<title>[\s\S]*?<\/title>/g);
@@ -68,11 +76,26 @@ test('injectSeoIntoHtml replaces existing title and meta tags without duplicatio
   const ogTitleMatches = output.match(/property=["']og:title["']/g);
   assert.equal(ogTitleMatches?.length, 1);
 
-  // Assert escaped quotes
+  const ogImageMatches = output.match(/property=["']og:image["']/g);
+  assert.equal(ogImageMatches?.length, 1);
+
+  const ogSecureUrlMatches = output.match(/property=["']og:image:secure_url["']/g);
+  assert.equal(ogSecureUrlMatches?.length, 1);
+
+  const ogAltMatches = output.match(/property=["']og:image:alt["']/g);
+  assert.equal(ogAltMatches?.length, 1);
+
+  const twitterAltMatches = output.match(/name=["']twitter:image:alt["']/g);
+  assert.equal(twitterAltMatches?.length, 1);
+
+  // Assert escaped quotes and correct image / alt URLs
   assert.ok(output.includes('&quot;للمطورين&quot;'));
   assert.ok(output.includes('https://deals.example.com/og/bolt-builders-week.png'));
+  assert.ok(output.includes(`<meta property="og:image:secure_url" content="https://deals.example.com/og/bolt-builders-week.png">`));
   assert.ok(output.includes('application/ld+json'));
   assert.ok(output.includes('data-deal-jsonld="true"'));
+  assert.ok(!output.includes('Old Alt'));
+  assert.ok(!output.includes('Old Twitter Alt'));
 });
 
 test('homepage ItemList is a build-time placeholder the generator fills with canonical paths', () => {

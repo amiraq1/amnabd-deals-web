@@ -574,6 +574,14 @@ export function injectSeoIntoHtml(baseHtml, seo) {
     `<meta property="og:image" content="${safeImage}">`
   );
   upsertTag(
+    /<meta\s+property=["']og:image:secure_url["'][^>]*>/i,
+    `<meta property="og:image:secure_url" content="${safeImage}">`
+  );
+  upsertTag(
+    /<meta\s+property=["']og:image:alt["'][^>]*>/i,
+    `<meta property="og:image:alt" content="${safeTitle}">`
+  );
+  upsertTag(
     /<meta\s+property=["']og:image:width["'][^>]*>/i,
     `<meta property="og:image:width" content="1200">`
   );
@@ -604,6 +612,10 @@ export function injectSeoIntoHtml(baseHtml, seo) {
   upsertTag(
     /<meta\s+name=["']twitter:image["'][^>]*>/i,
     `<meta name="twitter:image" content="${safeImage}">`
+  );
+  upsertTag(
+    /<meta\s+name=["']twitter:image:alt["'][^>]*>/i,
+    `<meta name="twitter:image:alt" content="${safeTitle}">`
   );
   upsertTag(
     /<link\s+rel=["']canonical["'][^>]*>/i,
