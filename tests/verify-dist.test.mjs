@@ -156,6 +156,37 @@ test('verify-dist still rejects availability JSON-LD when live status is unknown
   }
 });
 
+test('verify-dist recognizes live ending_soon status backing aggregation page', () => {
+  const slug = 'live-ending-soon-deal';
+  const catalogDeal = { slug, name: 'Ending soon live deal', summary: 'A deal ending soon.' };
+  const rootDir = rootWithCatalogDeals([catalogDeal]);
+  const liveDeal = { slug, status: 'ending_soon', ends_at: null };
+  const collectionHtml = '<!doctype html><html><head><title>عروض ذكاء اصطناعي تنتهي قريباً</title></head><body><h1>تنتهي قريباً</h1></body></html>';
+
+  // 1. With live deal having status: 'ending_soon', collection page is backed and passes.
+  const backedDist = fixtureDist({
+    'ending-soon/index.html': collectionHtml,
+    [`deal/${slug}/index.html`]: '<!doctype html><html><head><title>Deal</title></head><body></body></html>',
+  });
+  const backedResult = verifyDist({ rootDir, distDir: backedDist, liveDeals: [liveDeal] });
+  assert.equal(
+    backedResult.violations.filter((v) => v.includes('ending-soon')).length,
+    0,
+    `Backed collection page should not violate: ${backedResult.violations.join(', ')}`
+  );
+
+  // 2. Without live deal backing it, collection page violates unproven claims.
+  const unbackedDist = fixtureDist({
+    'ending-soon/index.html': collectionHtml,
+    [`deal/${slug}/index.html`]: '<!doctype html><html><head><title>Deal</title></head><body></body></html>',
+  });
+  const unbackedResult = verifyDist({ rootDir, distDir: unbackedDist, liveDeals: [] });
+  assert.ok(
+    unbackedResult.violations.some((v) => v.includes('ending-soon/index.html: صفحة مجموعة بلا أي عرض يثبتها المصدر')),
+    'Unbacked collection page should be flagged'
+  );
+});
+
 const unverifiedSlug = 'docker-cloud-sandbox-250';
 
 test('AUD-011: unsupported Arabic claim (متاح للجميع) in deal page body <p> must fail', () => {

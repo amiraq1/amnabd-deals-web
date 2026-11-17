@@ -592,8 +592,13 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
   }
 
   // An empty collection page advertises deals that were never established.
+  // Static aggregation pages mirror the live status/ends_at overlay used during generation.
+  const aggregationDeals = deals.map((deal) => {
+    const liveState = liveStateBySlug.get(deal.slug);
+    return liveState ? { ...deal, ...liveState } : deal;
+  });
   for (const agg of STATIC_AGGREGATIONS) {
-    const matches = deals.filter((deal) => agg.filter(deal));
+    const matches = aggregationDeals.filter((deal) => agg.filter(deal));
     const rel = `${agg.slug}/index.html`;
     const html = readIfExists(join(distDir, rel));
     if (matches.length === 0) {
