@@ -192,13 +192,26 @@ function persistSlugs(slugs: string[], storageOverride?: Storage | null): void {
   notifySavedDealsChanged();
 }
 
-export function saveDeal(slug: string, storageOverride?: Storage | null): boolean {
-  if (typeof slug !== 'string' || !slug.trim()) return false;
-  const key = slug.trim(),
-    current = getSavedDeals(storageOverride);
-  if (current.includes(key) || current.length >= MAX_SAVED_DEALS) return false;
+export type SaveDealStatus =
+  | 'added'
+  | 'added_memory_only'
+  | 'already_saved'
+  | 'limit_reached'
+  | 'invalid';
+
+export function saveDealDetailed(slug: string, storageOverride?: Storage | null): SaveDealStatus {
+  if (typeof slug !== 'string' || !slug.trim()) return 'invalid';
+  const key = slug.trim();
+  const current = getSavedDeals(storageOverride);
+  if (current.includes(key)) return 'already_saved';
+  if (current.length >= MAX_SAVED_DEALS) return 'limit_reached';
   persistSlugs([...current, key], storageOverride);
-  return true;
+  return isSavedDealsSessionOnly() ? 'added_memory_only' : 'added';
+}
+
+export function saveDeal(slug: string, storageOverride?: Storage | null): boolean {
+  const result = saveDealDetailed(slug, storageOverride);
+  return result === 'added' || result === 'added_memory_only';
 }
 
 export function removeSavedDeal(slug: string, storageOverride?: Storage | null): boolean {

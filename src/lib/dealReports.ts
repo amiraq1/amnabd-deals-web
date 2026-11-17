@@ -35,36 +35,70 @@ export const REPORT_REASON_OPTIONS: { value: ReportReason; label: string; labelE
   { value: 'broken_link', label: 'رابط المصدر لا يعمل', labelEn: 'Source link broken' },
 ];
 
-function getReportedMap(): Record<string, number> {
-  if (typeof window === 'undefined') return {};
+export function parseReportedMap(raw: unknown, now = Date.now()): Record<string, number> {
+  if (!raw || typeof raw !== 'string' || !raw.trim()) return {};
   try {
-    // F-04: one-time migration — move data from the old key on first read
-    // so existing visitors do not lose their 24-hour cooldown state.
-    const legacyRaw = window.localStorage.getItem(LEGACY_REPORT_STORAGE_KEY);
-    if (legacyRaw !== null) {
-      window.localStorage.setItem(REPORT_STORAGE_KEY, legacyRaw);
-      window.localStorage.removeItem(LEGACY_REPORT_STORAGE_KEY);
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
     }
-    const raw = window.localStorage.getItem(REPORT_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+
+    const safeMap: Record<string, number> = {};
+
+    for (const [slug, timestamp] of Object.entries(parsed as Record<string, unknown>)) {
+      if (
+        typeof slug === 'string' &&
+        slug.trim().length > 0 &&
+        typeof timestamp === 'number' &&
+        Number.isFinite(timestamp) &&
+        timestamp > 0 &&
+        timestamp <= now + 60_000
+      ) {
+        safeMap[slug.trim()] = timestamp;
+      }
+    }
+    return safeMap;
   } catch {
     return {};
   }
 }
 
-export function hasRecentlyReported(dealSlug: string, now = Date.now()): boolean {
-  const map = getReportedMap();
-  const timestamp = map[dealSlug];
-  if (!timestamp) return false;
+function getReportedMap(storageOverride?: Storage | null): Record<string, number> {
+  if (typeof window === 'undefined' && !storageOverride) return {};
+  try {
+    const storage = storageOverride !== undefined ? storageOverride : window.localStorage;
+    if (!storage) return {};
+    // F-04: one-time migration — move data from the old key on first read
+    // so existing visitors do not lose their 24-hour cooldown state.
+    const legacyRaw = storage.getItem(LEGACY_REPORT_STORAGE_KEY);
+    if (legacyRaw !== null) {
+      storage.setItem(REPORT_STORAGE_KEY, legacyRaw);
+      storage.removeItem(LEGACY_REPORT_STORAGE_KEY);
+    }
+    const raw = storage.getItem(REPORT_STORAGE_KEY);
+    return parseReportedMap(raw);
+  } catch {
+    return {};
+  }
+}
+
+export function hasRecentlyReported(dealSlug: string, now = Date.now(), storageOverride?: Storage | null): boolean {
+  if (typeof dealSlug !== 'string' || !dealSlug.trim()) return false;
+  const map = getReportedMap(storageOverride);
+  const timestamp = map[dealSlug.trim()];
+  if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return false;
   return now - timestamp < COOLDOWN_MS;
 }
 
-export function markDealAsReported(dealSlug: string, now = Date.now()): void {
-  if (typeof window === 'undefined') return;
+export function markDealAsReported(dealSlug: string, now = Date.now(), storageOverride?: Storage | null): void {
+  if (typeof dealSlug !== 'string' || !dealSlug.trim()) return;
+  if (typeof window === 'undefined' && !storageOverride) return;
   try {
-    const map = getReportedMap();
-    map[dealSlug] = now;
-    window.localStorage.setItem(REPORT_STORAGE_KEY, JSON.stringify(map));
+    const storage = storageOverride !== undefined ? storageOverride : window.localStorage;
+    if (!storage) return;
+    const map = getReportedMap(storage);
+    map[dealSlug.trim()] = now;
+    storage.setItem(REPORT_STORAGE_KEY, JSON.stringify(map));
   } catch {
     // Ignore private browsing or storage quota errors
   }
