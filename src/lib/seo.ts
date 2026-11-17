@@ -37,11 +37,14 @@ export function applyDocumentMetadata(seo: DealSeoMetadata): void {
   upsertMeta('meta[property="og:description"]', 'property', 'og:description', seo.description);
   upsertMeta('meta[property="og:url"]', 'property', 'og:url', seo.canonicalUrl);
   upsertMeta('meta[property="og:image"]', 'property', 'og:image', seo.ogImageUrl);
+  upsertMeta('meta[property="og:image:secure_url"]', 'property', 'og:image:secure_url', seo.ogImageUrl);
+  upsertMeta('meta[property="og:image:alt"]', 'property', 'og:image:alt', seo.title);
   upsertMeta('meta[property="og:type"]', 'property', 'og:type', 'website');
   upsertMeta('meta[name="twitter:card"]', 'name', 'twitter:card', 'summary_large_image');
   upsertMeta('meta[name="twitter:title"]', 'name', 'twitter:title', seo.title);
   upsertMeta('meta[name="twitter:description"]', 'name', 'twitter:description', seo.description);
   upsertMeta('meta[name="twitter:image"]', 'name', 'twitter:image', seo.ogImageUrl);
+  upsertMeta('meta[name="twitter:image:alt"]', 'name', 'twitter:image:alt', seo.title);
 
   // Update or insert canonical link
   let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
