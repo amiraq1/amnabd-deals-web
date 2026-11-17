@@ -847,7 +847,7 @@ export default function HomePage({
                         type="button"
                         aria-pressed={isSelected}
                         onClick={() => toggleUseCase(uc.value)}
-                        className={`min-h-11 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                        className={`min-h-11 rounded-full border px-3 py-1.5 text-sm font-medium transition-[colors,transform] duration-150 active:scale-[0.95] ${
                           isSelected
                             ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300 font-semibold  '
                             : 'border-slate-800 bg-surface-raised text-slate-300 hover:border-slate-700 hover:text-white'
@@ -893,7 +893,7 @@ export default function HomePage({
                     aria-pressed={qf.isActive}
                     disabled={qf.count === 0 && !qf.isActive}
                     onClick={qf.onToggle}
-                    className={`discovery-path relative flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-start transition-colors lg:gap-3 lg:p-3 ${
+                    className={`discovery-path relative flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-start transition-[colors,transform] duration-150 active:scale-[0.98] lg:gap-3 lg:p-3 ${
                       qf.isActive
                         ? 'border-emerald-400/60 bg-emerald-500/10 text-emerald-200'
                         : 'border-slate-800 bg-surface-raised text-slate-200 hover:border-emerald-500/40 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40'
@@ -1003,9 +1003,9 @@ export default function HomePage({
             aria-label={lang === 'ar' ? 'مشاركة البحث' : 'Share search'}
           >
             {copyStatus === 'success' ? (
-              <Check className="h-4 w-4 text-emerald-400" />
+              <Check className="h-4 w-4 text-emerald-400 transition-opacity duration-150" />
             ) : (
-              <Share2 className="h-4 w-4" />
+              <Share2 className="h-4 w-4 transition-opacity duration-150" />
             )}
             <span className="hidden sm:inline">
               {copyStatus === 'success'

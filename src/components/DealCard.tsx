@@ -151,7 +151,7 @@ export default function DealCard({
         <a
           href={href}
           onClick={handleOpen}
-          className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-control bg-brand px-3 py-2 text-sm font-semibold text-slate-950 transition-colors after:absolute after:inset-0 after:rounded-2xl hover:bg-brand-soft"
+          className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-control bg-brand px-3 py-2 text-sm font-semibold text-slate-950 transition-[colors,transform] duration-150 active:scale-[0.98] after:absolute after:inset-0 after:rounded-2xl hover:bg-brand-soft"
         >
           {isAr ? 'تفاصيل العرض' : 'View details'}
           <span className="sr-only">: {displayName}</span>
