@@ -411,6 +411,84 @@ function listSlugs(distDir, sub) {
     .map((entry) => entry.name);
 }
 
+/** Every HTML document under dist/deal, flat and directory form alike. */
+function listDealHtmlFiles(distDir) {
+  const root = join(distDir, 'deal');
+  if (!existsSync(root)) return [];
+  const files = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.html')) files.push(full);
+    }
+  };
+  walk(root);
+  return files;
+}
+
+function canonicalOf(html) {
+  return /<link\s+rel=["']canonical["']\s+href=["']([^"']+)["'][^>]*>/i.exec(html)?.[1];
+}
+
+/**
+ * A document under /deal/ must identify itself, never the site root. The
+ * homepage canonical on a deal URL makes a share preview and a crawler treat
+ * that offer as the home page — the defect this rule exists to prevent.
+ */
+function checkDealCanonicalIdentity(report, distDir, siteOrigin) {
+  for (const file of listDealHtmlFiles(distDir)) {
+    const html = readIfExists(file);
+    if (html === null) continue;
+    const rel = file.slice(distDir.length + 1).replace(/\\/g, '/');
+    const canonical = canonicalOf(html);
+    if (canonical === undefined) continue;
+    let parsed;
+    try {
+      parsed = new URL(canonical);
+    } catch {
+      report(`${rel}: canonical is not an absolute URL (${canonical})`);
+      continue;
+    }
+    const path = parsed.pathname.replace(/\/+$/, '');
+    if (parsed.origin === siteOrigin && (path === '' || path === '/')) {
+      report(`${rel}: canonical points at the site root instead of its own /deal/ path`);
+    }
+  }
+}
+
+/**
+ * A public deal the reviewed catalog does not describe still gets a document.
+ * It has to be neutral: noindex, its own canonical, and no inherited homepage
+ * identity (title, description, OG, ItemList). Anything else is either a stale
+ * homepage copy or an unreviewed SEO claim.
+ */
+function buildLiveOnlyShellExpectation(slug, siteOrigin) {
+  return {
+    canonical: `${siteOrigin}/deal/${encodeURIComponent(slug)}`,
+  };
+}
+
+function checkLiveOnlyShell(report, rel, html, slug, siteOrigin, homepageHtml) {
+  if (homepageHtml !== null && html === homepageHtml) {
+    report(`${rel}: copies the homepage document instead of a noindex offer shell`);
+    return;
+  }
+  const { canonical } = buildLiveOnlyShellExpectation(slug, siteOrigin);
+  if (canonicalOf(html) !== canonical) {
+    report(`${rel}: live-only route must declare its own canonical ${canonical}`);
+  }
+  if (!/<meta\s+name=["']robots["']\s+content=["']noindex,follow["']/i.test(html)) {
+    report(`${rel}: live-only route must be explicitly noindex`);
+  }
+  if (/<script[^>]*application\/ld\+json/i.test(html)) {
+    report(`${rel}: live-only route must not publish structured-data claims`);
+  }
+  if (/<meta\s+name=["']description["']/i.test(html)) {
+    report(`${rel}: live-only route must not publish a reviewable description claim`);
+  }
+}
+
 function summaryWarnings(deals) {
   const warnings = [];
   for (const deal of deals) {
@@ -472,12 +550,18 @@ export function verifyDist({ rootDir = ROOT, distDir = join(ROOT, 'dist'), liveD
     }
   }
 
+  const siteOrigin = new URL(sharedSeo.DEFAULT_SITE_URL).origin;
+  checkDealCanonicalIdentity(report, distDir, siteOrigin);
+
   for (const slug of listSlugs(distDir, 'deal')) {
     const deal = bySlug.get(slug);
     if (!deal) {
       const routeHtml = readIfExists(join(distDir, 'deal', slug, 'index.html'));
-      if (genericAppShell !== null && routeHtml === genericAppShell) continue;
-      report(`deal/${slug}: صفحة لعرض غير موجود في المصدر`);
+      if (routeHtml === null) {
+        report(`deal/${slug}: صفحة لعرض غير موجود في المصدر`);
+        continue;
+      }
+      checkLiveOnlyShell(report, `deal/${slug}/index.html`, routeHtml, slug, siteOrigin, genericAppShell);
       continue;
     }
     // Static SEO pages are generated from the catalog plus only the live status

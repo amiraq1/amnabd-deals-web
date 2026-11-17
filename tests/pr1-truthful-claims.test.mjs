@@ -344,13 +344,31 @@ test('verify-dist rejects a 404 that inherits homepage canonical or structured d
   });
 });
 
-test('verify-dist allows only exact generic app shells for live slugs outside the SEO catalog', () => {
+test('verify-dist requires a live-only deal route to be a noindex shell with its own canonical', () => {
   const shell = '<!doctype html><html><head><title>AMNABD Deals</title></head><body><div id="root"></div></body></html>';
+  const liveShell =
+    '<!doctype html><html><head><title>نبض — عرض قيد المزامنة</title>' +
+    '<meta name="robots" content="noindex,follow">' +
+    '<link rel="canonical" href="https://amnabd.com/deal/live-database-slug"></head>' +
+    '<body><div id="root"></div></body></html>';
   const clean = fixtureDist({
+    'index.html': shell,
+    'deal/live-database-slug/index.html': liveShell,
+  });
+  assert.match(runVerifyDist(clean), /verify-dist: OK/);
+
+  // The defect this rule exists to prevent: a deal URL that canonicalizes to
+  // the site root (and therefore shares the homepage's identity).
+  const rootCanonical = fixtureDist({
     'index.html': shell,
     'deal/live-database-slug/index.html': shell,
   });
-  assert.match(runVerifyDist(clean), /verify-dist: OK/);
+  assert.throws(() => runVerifyDist(rootCanonical), (error) => {
+    assert.equal(error.status, 1);
+    assert.match(String(error.stderr), /live-database-slug/);
+    assert.match(String(error.stderr), /site root|own canonical|homepage document/);
+    return true;
+  });
 
   const dirty = fixtureDist({
     'index.html': shell,

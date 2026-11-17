@@ -28,6 +28,13 @@ const NOV_15_AUTO1_SLUGS = [
 ];
 
 const baseHtml = '<!doctype html><html lang="ar"><head><title>AMNABD</title></head><body><div id="root"></div></body></html>';
+// A live-only route is a neutral noindex document that names its own address.
+const liveOnlyShell =
+  '<!doctype html><html lang="ar"><head><title>نبض — عرض قيد المزامنة</title>' +
+  '<meta name="robots" content="noindex,follow">' +
+  '<meta property="og:url" content="https://amnabd.com/deal/live-only-deal">' +
+  '<link rel="canonical" href="https://amnabd.com/deal/live-only-deal"></head>' +
+  '<body><div id="root"></div></body></html>';
 const catalogDeals = [{ slug: 'reviewed-deal' }];
 const liveDealSlugs = ['live-only-deal', 'reviewed-deal'];
 
@@ -41,7 +48,7 @@ function fixture() {
     '<!doctype html><html><head><link rel="canonical" href="https://amnabd.com/deal/reviewed-deal"></head></html>',
     'utf8'
   );
-  writeFileSync(join(distDir, 'deal', 'live-only-deal', 'index.html'), baseHtml, 'utf8');
+  writeFileSync(join(distDir, 'deal', 'live-only-deal', 'index.html'), liveOnlyShell, 'utf8');
   writeFileSync(join(distDir, 'og', 'reviewed-deal.svg'), '<svg></svg>', 'utf8');
   writeFileSync(
     join(distDir, 'sitemap.xml'),
@@ -100,9 +107,38 @@ test('F-07 fails when a live deal route is missing or a live-only route publishe
       '<html><head><title>Live-only: free and verified</title></head></html>',
       'utf8'
     );
-    assert.match(verify(claimDir).join('\n'), /must remain the exact generic app shell/);
+    assert.match(verify(claimDir).join('\n'), /live-only canonical mismatch/);
+    assert.match(verify(claimDir).join('\n'), /live-only route must be explicitly noindex/);
   } finally {
     rmSync(claimDir, { recursive: true, force: true });
+  }
+
+  // The exact defect: the route is a byte-for-byte copy of the homepage, so a
+  // share preview and a crawler see the homepage's canonical on a deal URL.
+  const copyDir = fixture();
+  try {
+    writeFileSync(join(copyDir, 'deal', 'live-only-deal', 'index.html'), baseHtml, 'utf8');
+    const result = verify(copyDir).join('\n');
+    assert.match(result, /copies the homepage shell/);
+    assert.match(result, /live-only canonical mismatch/);
+  } finally {
+    rmSync(copyDir, { recursive: true, force: true });
+  }
+
+  // A homepage canonical on an otherwise valid noindex shell is still refused.
+  const rootCanonicalDir = fixture();
+  try {
+    writeFileSync(
+      join(rootCanonicalDir, 'deal', 'live-only-deal', 'index.html'),
+      liveOnlyShell.replace(
+        'https://amnabd.com/deal/live-only-deal"></head>',
+        'https://amnabd.com/"></head>'
+      ),
+      'utf8'
+    );
+    assert.match(verify(rootCanonicalDir).join('\n'), /live-only canonical mismatch/);
+  } finally {
+    rmSync(rootCanonicalDir, { recursive: true, force: true });
   }
 });
 

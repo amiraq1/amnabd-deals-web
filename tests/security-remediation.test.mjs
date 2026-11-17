@@ -3,7 +3,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-const read = (path) => readFileSync(join(process.cwd(), path), 'utf8');
+// Git checks out CRLF on Windows (core.autocrlf=true) and LF on Linux CI.
+// Normalize once here so a line-anchored assertion tests the workflow, not the
+// developer's git configuration.
+const read = (path) => readFileSync(join(process.cwd(), path), 'utf8').replace(/\r\n/g, '\n');
 const workflow = read('.github/workflows/deploy.yml');
 const resources = read('src/lib/loadResources.ts');
 

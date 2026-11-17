@@ -98,21 +98,28 @@ test('uncatalogued public deal slugs receive safe static route shells', () => {
 
     const written = writeMissingDealRoutePages({
       distDir,
-      baseHtml: '<!doctype html><html><div id="root"></div></html>',
+      baseHtml: '<!doctype html><html><head><title>Home</title><link rel="canonical" href="https://amnabd.com/"></head><body><div id="root"></div></body></html>',
       catalogSlugs: ['catalogued'],
       databaseSlugs: ['catalogued', 'modal-30-monthly', 'modal-30-monthly', '../escape', 'bad/slug'],
     });
 
-    assert.equal(written, 1);
+    assert.deepEqual(written, ['modal-30-monthly']);
     assert.equal(readFileSync(knownFile, 'utf8'), 'catalog SEO page');
-    assert.equal(
-      readFileSync(join(distDir, 'deal', 'modal-30-monthly', 'index.html'), 'utf8'),
-      '<!doctype html><html><div id="root"></div></html>'
-    );
-    // E3: verify the flat file was also generated and is identical to index.html
+    const shell = readFileSync(join(distDir, 'deal', 'modal-30-monthly', 'index.html'), 'utf8');
+    // The shell owns its identity; it never copies the homepage document.
+    assert.match(shell, /<link rel="canonical" href="https:\/\/amnabd\.com\/deal\/modal-30-monthly">/);
+    assert.doesNotMatch(shell, /<link rel="canonical" href="https:\/\/amnabd\.com\/">/);
+    assert.match(shell, /<meta name="robots" content="noindex,follow">/);
+    assert.match(shell, /<meta property="og:url" content="https:\/\/amnabd\.com\/deal\/modal-30-monthly">/);
+    assert.match(shell, /<title>نبض — عرض قيد المزامنة<\/title>/);
+    assert.match(shell, /<h1>نبض — عرض قيد المزامنة<\/h1>/);
+    // No inherited homepage ItemList, and no claim the record cannot prove.
+    assert.doesNotMatch(shell, /application\/ld\+json/);
+    assert.doesNotMatch(shell, /مجان|free|خصم|متاح للجميع/);
+    // E3: the flat file exists and is byte-identical to the directory index.
     assert.equal(
       readFileSync(join(distDir, 'deal', 'modal-30-monthly.html'), 'utf8'),
-      '<!doctype html><html><div id="root"></div></html>'
+      shell
     );
     assert.equal(existsSync(join(distDir, 'escape', 'index.html')), false);
   } finally {

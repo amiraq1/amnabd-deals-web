@@ -39,6 +39,15 @@ function readText(path) {
   return existsSync(path) ? readFileSync(path, 'utf8') : null;
 }
 
+/** Pathname of a canonical href, or '' when it is not an absolute URL. */
+function routePathOf(href) {
+  try {
+    return new URL(href).pathname;
+  } catch {
+    return '';
+  }
+}
+
 function collectSitemapDealSlugs(xml, siteOrigin, violations) {
   const slugs = [];
   if (/https?:\/\/[^\s<]*#\/deal\//i.test(xml)) {
@@ -192,8 +201,27 @@ export function verifySeoParity({
         violations.push(`og/${slug}.svg: reviewed SEO artifact is missing`);
       }
     } else {
-      if (html !== baseHtml) {
-        violations.push(`deal/${slug}: live-only route must remain the exact generic app shell`);
+      // A live-only route must not inherit the homepage's identity. It is a
+      // neutral, noindex document that names its own address and makes no claim.
+      if (html === baseHtml) {
+        violations.push(
+          `deal/${slug}: live-only route copies the homepage shell instead of its own noindex document`
+        );
+      }
+      const liveCanonical = /<link\s+rel=["']canonical["']\s+href=["']([^"']+)["'][^>]*>/i.exec(
+        html
+      )?.[1];
+      const expectedLiveCanonical = `${cleanBase}/deal/${encodeURIComponent(slug)}`;
+      if (liveCanonical !== expectedLiveCanonical) {
+        violations.push(
+          `deal/${slug}: live-only canonical mismatch (expected ${expectedLiveCanonical}, got ${liveCanonical ?? 'none'})`
+        );
+      }
+      if (liveCanonical !== undefined && !/^\/deal\/[^/]+$/.test(routePathOf(liveCanonical))) {
+        violations.push(`deal/${slug}: live-only canonical must point at its own deal path`);
+      }
+      if (!/<meta\s+name=["']robots["']\s+content=["']noindex,follow["']/i.test(html)) {
+        violations.push(`deal/${slug}: live-only route must be explicitly noindex`);
       }
       if (existsSync(join(distDir, 'og', `${slug}.svg`))) {
         violations.push(`og/${slug}.svg: live-only route must not publish a generated SEO card`);
