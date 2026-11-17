@@ -36,7 +36,7 @@ import DealCard from '@/components/DealCard';
 import InfoBanner from '@/components/InfoBanner';
 import ScrollToTop from '@/components/ScrollToTop';
 import { useSavedDeals } from '@/hooks/useSavedDeals';
-import { countValidSavedDeals, saveDeal } from '@/lib/savedDeals';
+import { countValidSavedDeals, saveDealDetailed } from '@/lib/savedDeals';
 import { parseSharedListParam } from '@/lib/shareFavorites';
 
 interface HomePageProps {
@@ -101,7 +101,13 @@ export default function HomePage({
   >('idle');
   const [manualLink, setManualLink] = useState('');
   const [sharedListDismissed, setSharedListDismissed] = useState(false);
-  const [sharedSaveSuccess, setSharedSaveSuccess] = useState(false);
+  const [sharedSaveFeedback, setSharedSaveFeedback] = useState<{
+    added: number;
+    alreadySaved: number;
+    limitReached: number;
+    notFound: number;
+    memoryOnly: boolean;
+  } | null>(null);
   const sharedListSlugs = useMemo(() => {
     if (typeof window === 'undefined') return [];
     return parseSharedListParam(window.location.search || window.location.hash);
@@ -727,13 +733,56 @@ export default function HomePage({
             </div>
 
             <div className="flex items-center gap-2">
-              {sharedSaveSuccess ? (
-                <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300">
-                  <Check className="h-4 w-4" />
+              {sharedSaveFeedback ? (
+                <span
+                  role="status"
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold sm:px-4 sm:py-2 sm:text-sm ${
+                    sharedSaveFeedback.added > 0 || sharedSaveFeedback.alreadySaved > 0
+                      ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300'
+                      : 'border-amber-500/40 bg-amber-500/20 text-amber-200'
+                  }`}
+                >
+                  {sharedSaveFeedback.added > 0 ? (
+                    <Check className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <Bookmark className="h-4 w-4 shrink-0" />
+                  )}
                   <span>
-                    {lang === 'ar'
-                      ? 'تم الحفظ في مفضلتك!'
-                      : 'Saved to favorites!'}
+                    {sharedSaveFeedback.added > 0
+                      ? lang === 'ar'
+                        ? `تمت إضافة ${sharedSaveFeedback.added.toLocaleString('ar-EG')} ${
+                            sharedSaveFeedback.added === 1
+                              ? 'عرض'
+                              : sharedSaveFeedback.added === 2
+                                ? 'عرضين'
+                                : 'عروض'
+                          }${
+                            sharedSaveFeedback.alreadySaved > 0
+                              ? ` (${sharedSaveFeedback.alreadySaved.toLocaleString('ar-EG')} محفوظة مسبقًا)`
+                              : ''
+                          }${sharedSaveFeedback.memoryOnly ? ' (حفظ مؤقت)' : ''}`
+                        : `Added ${sharedSaveFeedback.added} offer${
+                            sharedSaveFeedback.added > 1 ? 's' : ''
+                          }${
+                            sharedSaveFeedback.alreadySaved > 0
+                              ? ` (${sharedSaveFeedback.alreadySaved} already saved)`
+                              : ''
+                          }${sharedSaveFeedback.memoryOnly ? ' (session only)' : ''}`
+                      : sharedSaveFeedback.alreadySaved > 0
+                        ? lang === 'ar'
+                          ? sharedSaveFeedback.alreadySaved === 1
+                            ? 'العرض محفوظ مسبقًا في مفضلتك'
+                            : `جميع العروض (${sharedSaveFeedback.alreadySaved.toLocaleString('ar-EG')}) محفوظة مسبقًا`
+                          : sharedSaveFeedback.alreadySaved === 1
+                            ? 'Offer already in your favorites'
+                            : `All ${sharedSaveFeedback.alreadySaved} offers already saved`
+                        : sharedSaveFeedback.limitReached > 0
+                          ? lang === 'ar'
+                            ? 'تعذر الحفظ: بلغت الحد الأقصى للمفضلة (500 عرض)'
+                            : 'Could not save: reached favorites limit (500 offers)'
+                          : lang === 'ar'
+                            ? 'لم يتم العثور على أي من العروض في الدليل الحالي'
+                            : 'None of the shared offers exist in the current catalog'}
                   </span>
                 </span>
               ) : (
@@ -741,14 +790,33 @@ export default function HomePage({
                   type="button"
                   onClick={() => {
                     const knownSlugs = new Set(deals.map((d) => d.slug));
+                    const feedback = {
+                      added: 0,
+                      alreadySaved: 0,
+                      limitReached: 0,
+                      notFound: 0,
+                      memoryOnly: false,
+                    };
                     for (const s of sharedListSlugs) {
-                      if (knownSlugs.has(s)) {
-                        saveDeal(s);
+                      if (!knownSlugs.has(s)) {
+                        feedback.notFound += 1;
+                        continue;
+                      }
+                      const status = saveDealDetailed(s);
+                      if (status === 'added') {
+                        feedback.added += 1;
+                      } else if (status === 'added_memory_only') {
+                        feedback.added += 1;
+                        feedback.memoryOnly = true;
+                      } else if (status === 'already_saved') {
+                        feedback.alreadySaved += 1;
+                      } else if (status === 'limit_reached') {
+                        feedback.limitReached += 1;
                       }
                     }
-                    setSharedSaveSuccess(true);
+                    setSharedSaveFeedback(feedback);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-600/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-600/30"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-600/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-600/30 active:scale-[0.98]"
                 >
                   <Bookmark className="h-3.5 w-3.5" />
                   <span>
