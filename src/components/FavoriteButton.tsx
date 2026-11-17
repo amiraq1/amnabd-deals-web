@@ -43,12 +43,12 @@ export default function FavoriteButton({
     : 'text-slate-400 hover:bg-slate-800 hover:text-rose-400';
 
   const defaultButtonClass = showText
-    ? `inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 ${
+    ? `inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 ${
         favorited
           ? 'border-rose-500/50 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
           : 'border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-600 hover:text-white'
       }`
-    : `flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 ${stateColorClass}`;
+    : `flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-[colors,transform] duration-150 active:scale-[0.92] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 ${stateColorClass}`;
 
   const resolvedClass = className ? `${defaultButtonClass} ${className}` : defaultButtonClass;
 
@@ -62,7 +62,7 @@ export default function FavoriteButton({
       className={resolvedClass}
     >
       <Heart
-        className={`${iconClassName} transition-transform duration-200 active:scale-90 ${
+        className={`${iconClassName} transition-colors duration-200 ${
           favorited ? 'fill-rose-500 text-rose-500' : ''
         }`}
       />
