@@ -30,6 +30,8 @@ export default function FavoriteButton({
         ? 'Remove from favorites'
         : 'Add to favorites';
 
+  const accessibleLabel = dealName ? `${label}: ${dealName}` : label;
+
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -55,7 +57,7 @@ export default function FavoriteButton({
       type="button"
       onClick={handleClick}
       aria-pressed={favorited}
-      aria-label={label}
+      aria-label={accessibleLabel}
       title={dealName ? `${dealName} — ${label}` : label}
       className={resolvedClass}
     >

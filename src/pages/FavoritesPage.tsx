@@ -20,7 +20,7 @@ interface FavoritesPageProps {
 type CopyStatus = 'link' | 'text' | 'error' | null;
 
 const buttonClass =
-  'inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2 text-xs font-medium text-slate-200 transition hover:border-emerald-500/50 hover:text-emerald-300';
+  'inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2 text-xs font-medium text-slate-200 transition hover:border-emerald-500/50 hover:text-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 active:scale-[0.98]';
 
 function countLabel(n: number, lang: Lang): string {
   if (lang === 'ar') {
@@ -151,7 +151,7 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
           <button
             type="button"
             onClick={onBackToHome}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-white"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-medium text-slate-400 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
           >
             <BackIcon className="h-4 w-4" aria-hidden="true" />
             <span>{isAr ? 'كل العروض' : 'All deals'}</span>
