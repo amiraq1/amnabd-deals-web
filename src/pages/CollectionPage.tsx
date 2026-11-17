@@ -89,7 +89,7 @@ export default function CollectionPage({
         <button
           type="button"
           onClick={onBackToHome}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-white"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-medium text-slate-400 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
         >
           <ArrowIcon className="h-4 w-4" />
           <span>{lang === 'ar' ? 'كل العروض' : 'All Deals'}</span>

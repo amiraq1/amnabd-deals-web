@@ -6,6 +6,20 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 5rem; /* room for the fixed navbar */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  button,
+  a,
+  [role='button'] {
+    touch-action: manipulation;
+  }
+
+  button,
+  [role='button'] {
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   body {
