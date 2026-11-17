@@ -79,7 +79,29 @@
     <script src="/init-language.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      Static first paint. React mounts with createRoot (not hydrateRoot), so this
+      block is replaced wholesale once the app boots.
+
+      It exists so a crawler, a slow connection and a share preview get real text
+      instead of an empty #root. It therefore states only what this site is — a
+      directory that links to each offer's own source — and asserts nothing about
+      any specific offer: no price, no cost claim, no eligibility, no expiry and
+      no review verdict.
+    -->
+    <div id="root">
+      <h1>نبض — دليل عروض أدوات الذكاء الاصطناعي والسحابة</h1>
+      <p>
+        دليل ثنائي اللغة يجمع عروض أدوات الذكاء الاصطناعي والحوسبة السحابية، ويصل كل عرض
+        برابط مصدره الرسمي، ويعرض الشروط كما يسجّلها المصدر وما لم يثبت بعد.
+      </p>
+      <noscript>
+        <p>
+          يعرض هذا الدليل بياناته من الشبكة مباشرة، ويحتاج تفعيل JavaScript لعرض قائمة
+          العروض والفلاتر. لا نعرض نسخة قديمة من القائمة عند تعطّله.
+        </p>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

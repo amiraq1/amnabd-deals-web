@@ -239,27 +239,68 @@ export async function loadBuildDealSlugs(options = {}) {
   return (await loadBuildDealData(options)).slugs;
 }
 
+/**
+ * A public deal that the database has but the reviewed SEO catalog does not
+ * yet describe still needs a document at its own address: GitHub Pages must
+ * answer `/deal/<slug>` with 200, and the tab title and share card must name
+ * that address instead of the homepage.
+ *
+ * It deliberately publishes no claim. It is `noindex,follow`, so a search
+ * engine records the URL without indexing an empty page, and it drops the
+ * homepage ItemList/OG/canonical rather than inheriting them. The visible
+ * fallback text is the same neutral line React replaces on mount; it names no
+ * price, no eligibility and no expiry.
+ */
+export function buildLiveOnlyDealShell(baseHtml, slug, baseUrl = DEFAULT_SITE_URL) {
+  const cleanBase = String(baseUrl).replace(/\/+$/, '');
+  const canonicalUrl = `${cleanBase}/deal/${encodeURIComponent(slug)}`;
+  let html = buildNoIndexAppShell(baseHtml)
+    .replace(/<title>[\s\S]*?<\/title>/i, `<title>نبض — عرض قيد المزامنة</title>`)
+    .replace(/<html([^>]*)>/i, (match, attributes) => {
+      const withoutLang = attributes.replace(/\s(?:lang|dir)=["'][^"']*["']/gi, '');
+      return `<html${withoutLang} lang="ar" dir="rtl">`;
+    });
+  // og:url is the one share tag worth keeping: it makes the preview point at
+  // this offer instead of the homepage. No og:title/description is added,
+  // because a title would have to describe a record we have not reviewed.
+  html = html
+    .replace(
+      '</head>',
+      `  <meta property="og:url" content="${escapeHtml(canonicalUrl)}">\n` +
+        `  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">\n</head>`
+    )
+    .replace(
+      /<div\s+id=["']root["'][^>]*>[\s\S]*?<\/div>/i,
+      `<div id="root"><h1>نبض — عرض قيد المزامنة</h1>\n` +
+        `      <p>هذا العرض موجود في قاعدة البيانات ولم تُراجع تفاصيله بعد. تُحدَّث الصفحة تلقائيًا عند توفر السجل المراجَع؛ وحتى ذلك الحين لا نعرض سعرًا ولا أهلية ولا موعد انتهاء.</p></div>`
+    );
+  return html;
+}
+
 export function writeMissingDealRoutePages({
   distDir,
   baseHtml,
   catalogSlugs = [],
   databaseSlugs = [],
+  baseUrl = DEFAULT_SITE_URL,
 }) {
   const existing = new Set(catalogSlugs);
-  const written = new Set();
+  const written = [];
   const dealRootDir = join(distDir, 'deal');
   mkdirSync(dealRootDir, { recursive: true });
   for (const slug of databaseSlugs) {
-    if (!isStaticDealSlug(slug) || existing.has(slug) || written.has(slug)) continue;
+    if (!isStaticDealSlug(slug) || existing.has(slug)) continue;
+    if (written.includes(slug)) continue;
+    const shell = buildLiveOnlyDealShell(baseHtml, slug, baseUrl);
     // E3: write the flat file so GitHub Pages serves /deal/<slug> with 200 OK
     // (no 301 redirect). The directory index handles /deal/<slug>/ with slash.
-    writeFileSync(join(dealRootDir, `${slug}.html`), baseHtml, 'utf8');
+    writeFileSync(join(dealRootDir, `${slug}.html`), shell, 'utf8');
     const indexPath = join(dealRootDir, slug, 'index.html');
     mkdirSync(dirname(indexPath), { recursive: true });
-    writeFileSync(indexPath, baseHtml, 'utf8');
-    written.add(slug);
+    writeFileSync(indexPath, shell, 'utf8');
+    written.push(slug);
   }
-  return written.size;
+  return written;
 }
 
 function wrapLines(text, max) {
@@ -661,6 +702,10 @@ export function buildNoIndexAppShell(baseHtml) {
     .replace(/<link\s+rel=["']canonical["'][^>]*\/?\s*>/gi, '')
     .replace(/<meta\s+(?:property|name)=["'](?:og:[^"']+|twitter:[^"']+)["'][^>]*\/?\s*>/gi, '')
     .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '');
+  // The homepage's static first paint describes the directory as a whole. A
+  // noindex route has to start from an empty mount point so the caller can put
+  // its own neutral text there instead of inheriting that description.
+  html = html.replace(/<div\s+id=["']root["'][^>]*>[\s\S]*?<\/div>/i, '<div id="root"></div>');
   html = html.replace(
     '</head>',
     '  <meta name="robots" content="noindex,follow">\n</head>'
@@ -1019,11 +1064,12 @@ export async function runStaticSeoGeneration({
     }
   }
 
-  const generatedRouteShellCount = writeMissingDealRoutePages({
+  const generatedRouteShells = writeMissingDealRoutePages({
     distDir,
     baseHtml,
     catalogSlugs: seoDeals.map((deal) => deal.slug),
     databaseSlugs: publishedSlugs,
+    baseUrl,
   });
 
   const parityViolations = verifySeoParity({
@@ -1042,11 +1088,47 @@ export async function runStaticSeoGeneration({
     `[SEO] sitemap/robots/feed + ${generatedHtmlCount} صفحة عرض + ${publishedAggregations} صفحة مجموعة` +
       (generatedPngCount > 0 ? ` + ${generatedPngCount} صورة OG.` : ' (OG بصيغة SVG).')
   );
-  if (generatedRouteShellCount > 0)
-    console.log(`[SEO] ${generatedRouteShellCount} direct deal routes added from the public slug list.`);
+  if (generatedRouteShells.length > 0)
+    console.log(
+      `[SEO] ${generatedRouteShells.length} direct deal routes added from the public slug list.`
+    );
+  // Diagnostics only: this reports why the sitemap is smaller than the catalog
+  // and never changes the exclusion rules. A slug is excluded because its
+  // recorded end has passed (status=expired or a past ends_at), because the
+  // reviewed catalog does not contain it, or because it is not a valid route.
+  const sitemapSlugSet = new Set(sitemapDeals.map((deal) => deal.slug));
+  const catalogSlugSet = new Set(seoDeals.map((deal) => deal.slug));
+  const liveSlugSet = new Set(publishedSlugs);
+  const sitemapExclusions = [
+    ...sitemapCandidates
+      .filter((deal) => !sitemapSlugSet.has(deal.slug))
+      .map((deal) => ({
+        slug: deal.slug,
+        reason:
+          deal.status === 'expired'
+            ? 'ended: recorded status=expired'
+            : isOfferEndedAt(deal, referenceNow)
+              ? 'ended: recorded ends_at has passed'
+              : 'excluded by the sitemap rules',
+      })),
+    ...publishedSlugs
+      .filter((slug) => !catalogSlugSet.has(slug))
+      .map((slug) => ({ slug, reason: 'live but absent from the reviewed SEO catalog' })),
+    ...deals
+      .filter((deal) => !isStaticDealSlug(deal?.slug))
+      .map((deal) => ({ slug: String(deal?.slug ?? '(missing)'), reason: 'invalid public slug' })),
+  ];
+  console.log(
+    `[SEO] sitemap: ${sitemapDeals.length} deal URLs from ${seoDeals.length} catalog entries ` +
+      `(${publishedSlugs.length} live public routes; ${liveSlugSet.size} distinct live slugs).`
+  );
+  if (sitemapExclusions.length > 0) {
+    console.log(`[SEO] ${sitemapExclusions.length} slug(s) excluded from the sitemap:`);
+    for (const { slug, reason } of sitemapExclusions) console.log(`  - ${slug}: ${reason}`);
+  }
   console.log(
     `[SEO parity] OK: ${publishedSlugs.length} current public routes, ${seoDeals.length} reviewed SEO entries, ` +
-      `${publishedSlugs.length - seoDeals.length} generic live-only shells.`
+      `${generatedRouteShells.length} generic live-only shells.`
   );
 }
 
