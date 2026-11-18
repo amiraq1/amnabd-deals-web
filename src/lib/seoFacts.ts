@@ -257,12 +257,18 @@ export function generateSitemapXml(deals: readonly Deal[], baseUrl = DEFAULT_SIT
   for (const deal of deals) {
     if (!deal?.slug) continue;
     const priority = deal.status === 'expired' ? '0.4' : '0.8';
+    const lastmod =
+      deal.review?.reviewed_on && typeof deal.review.reviewed_on === 'string'
+        ? String(deal.review.reviewed_on).slice(0, 10)
+        : (deal as unknown as { updated_at?: string })?.updated_at
+          ? String((deal as unknown as { updated_at?: string }).updated_at).slice(0, 10)
+          : undefined;
     urls.push(
       url(
         `${cleanBase}/deal/${deal.slug}`,
         priority,
         'weekly',
-        deal.review?.reviewed_on ? String(deal.review.reviewed_on) : undefined
+        lastmod
       )
     );
   }

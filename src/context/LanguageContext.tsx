@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Lang, Localized } from '@/types';
 import { readLanguage, saveLanguage, withLanguageSearch } from '@/lib/languageStorage';
 
@@ -40,13 +40,32 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const value: LanguageContextValue = {
-    lang,
-    dir,
-    setLang,
-    toggle: () => setLang(lang === 'ar' ? 'en' : 'ar'),
-    pick: (l) => (l ? l[lang] : ''),
-  };
+  const toggle = useCallback(() => {
+    updateLanguage((current) => {
+      const next: Lang = current === 'ar' ? 'en' : 'ar';
+      try {
+        const search = withLanguageSearch(window.location.search, next, true);
+        const url = `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`;
+        window.history.replaceState(window.history.state, '', url);
+      } catch {
+        /* History API may be blocked */
+      }
+      return next;
+    });
+  }, []);
+
+  const pick = useCallback((l: Localized) => (l ? l[lang] : ''), [lang]);
+
+  const value = useMemo<LanguageContextValue>(
+    () => ({
+      lang,
+      dir,
+      setLang,
+      toggle,
+      pick,
+    }),
+    [lang, dir, setLang, toggle, pick],
+  );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }

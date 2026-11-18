@@ -1,11 +1,11 @@
 import IsolatedText from '@/components/IsolatedText';
 import type { MouseEvent } from 'react';
-import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Search } from 'lucide-react';
 import type { Deal } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { resolveDealOfficialUrl } from '@/lib/safeUrl';
 import { getDealDisplayName } from '@/lib/dealMetadata';
-import { primaryBenefit } from '@/lib/offerPresentation';
+import { primaryBenefit, searchMatchReason } from '@/lib/offerPresentation';
 import { extraBenefitsLabel } from '@/lib/cardFacts';
 import { countryAvailability } from '@/lib/countryAvailability';
 import { routeUrl } from '@/lib/routes';
@@ -23,6 +23,7 @@ export interface DealCardProps {
   referenceNow: Date;
   country?: string;
   onOpen?: (slug: string) => void;
+  searchQuery?: string;
   // الخصائص التالية أبقيتها للتوافق مع الاستدعاءات الحالية، وهي غير مستخدمة داخل البطاقة.
   index?: number;
   isSaved?: boolean;
@@ -39,6 +40,7 @@ export default function DealCard({
   referenceNow,
   country,
   onOpen,
+  searchQuery,
   isComparisonSelected = false,
   comparisonDisabled = false,
   onToggleComparison,
@@ -46,6 +48,9 @@ export default function DealCard({
   const { lang, dir } = useLanguage();
   const isAr = lang === 'ar';
   const displayName = getDealDisplayName(deal);
+  const matchReason = searchQuery
+    ? searchMatchReason(deal, searchQuery, lang)
+    : null;
   const value = primaryBenefit(deal, lang);
   const unknown = isAr ? 'غير معلوم' : 'Unknown';
   const description =
@@ -85,8 +90,14 @@ export default function DealCard({
           <h3 className="line-clamp-2 text-base font-bold leading-relaxed text-ink">
             <bdi>{displayName}</bdi>
           </h3>
-          <div className="mt-1">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <CategoryBadge value={deal.category.value} lang={lang} />
+            {matchReason && (
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                <Search className="h-3 w-3 shrink-0 text-emerald-400" aria-hidden="true" />
+                <bdi className="truncate">{matchReason}</bdi>
+              </span>
+            )}
           </div>
         </div>
       </div>
