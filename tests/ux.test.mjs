@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 const load = (name) =>
   import(pathToFileURL(join(process.env.AMN_TEST_BUILD_DIR, `src/lib/${name}.js`)));
-const { categoryKey, categoryOptions, matchesCategory } = await load('discovery');
+const { categoryKey, categoryLabel, categoryOptions, matchesCategory } = await load('discovery');
 const { recordedPrice, registrationDeadline, extraBenefitsLabel } = await load('cardFacts');
 const { buildDealLink, copyLink } = await load('share');
 const pricing = (changes = {}) => ({
@@ -47,6 +47,13 @@ test('UX category labels change only for unknown, not inferred translations', ()
   );
   assert.equal(options[0].label, 'Vendor New Category');
   assert.equal(options[1].label, 'Uncategorized');
+
+  // English translation of known standard categories
+  assert.equal(categoryLabel('برمجة وتطوير', 'en'), 'Coding & Development');
+  assert.equal(categoryLabel('برمجة وتطوير', 'ar'), 'برمجة وتطوير');
+  assert.equal(categoryLabel('بحث وتطوير', 'en'), 'Research & Development');
+  assert.equal(categoryLabel('صوت وذكاء اصطناعي', 'en'), 'Voice & AI');
+  assert.equal(categoryLabel('Vendor New Category', 'en'), 'Vendor New Category');
 });
 test('UX recorded zero price includes period but never claims universal free/savings', () => {
   const label = recordedPrice(pricing(), 'en');

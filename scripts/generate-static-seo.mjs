@@ -150,7 +150,7 @@ export async function loadPublicDealStates({
     publicKey,
     fetchImpl,
     pageSize,
-    select: 'slug,status,ends_at',
+    select: 'slug,status,ends_at,review',
   });
 }
 
@@ -876,7 +876,7 @@ export async function runStaticSeoGeneration({
     ? seoDeals.flatMap((deal) => {
         const liveState = liveStateBySlug.get(deal.slug);
         return liveState
-          ? [{ ...deal, status: liveState.status, ends_at: liveState.ends_at }]
+          ? [{ ...deal, status: liveState.status, ends_at: liveState.ends_at, review: liveState.review ?? deal.review }]
           : [];
       })
     : seoDeals;
@@ -892,7 +892,14 @@ export async function runStaticSeoGeneration({
   // sitemap. Live status and ends_at override the catalog when the DB was read.
   const sitemapCandidates = seoDeals.map((deal) => {
     const liveState = liveStateBySlug?.get(deal.slug);
-    return liveState ? { ...deal, status: liveState.status, ends_at: liveState.ends_at } : deal;
+    return liveState
+      ? {
+          ...deal,
+          status: liveState.status,
+          ends_at: liveState.ends_at,
+          review: liveState.review ?? deal.review,
+        }
+      : deal;
   });
   const sitemapEndedSlugs = sitemapCandidates
     .filter((deal) => isOfferEndedAt(deal, referenceNow))

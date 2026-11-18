@@ -41,7 +41,7 @@ const translations = {
     langButton: 'EN',
   },
   en: {
-    brand: 'نبض',
+    brand: 'AMNABD Deals',
     offers: 'Offers',
     favorites: 'Favorites',
     guide: 'Guide',

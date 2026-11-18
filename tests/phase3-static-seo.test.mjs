@@ -151,6 +151,15 @@ test('generateSitemapXml builds valid XML with clean URLs and lastmod', () => {
   assert.ok(sitemap.includes('<loc>https://deals.example.com/deal/bolt-builders-week</loc>'));
   assert.ok(sitemap.includes('<lastmod>2026-10-18</lastmod>'));
   assert.ok(sitemap.includes('<priority>0.8</priority>'));
+
+  const dealWithUpdatedAt = {
+    slug: 'updated-deal',
+    updated_at: '2026-10-25T12:00:00Z',
+    status: 'active',
+  };
+  const sitemap2 = generateSitemapXml([dealWithUpdatedAt], 'https://deals.example.com');
+  assert.ok(sitemap2.includes('<loc>https://deals.example.com/deal/updated-deal</loc>'));
+  assert.ok(sitemap2.includes('<lastmod>2026-10-25</lastmod>'));
 });
 
 test('generateRobotsTxt outputs valid robots.txt referencing sitemap', () => {

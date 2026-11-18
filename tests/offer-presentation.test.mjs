@@ -10,6 +10,7 @@ const {
   categoryDecoration,
   primaryBenefit,
   eligibilitySummary,
+  searchMatchReason,
 } = await import(
   pathToFileURL(
     join(process.env.AMN_TEST_BUILD_DIR, 'src/lib/offerPresentation.js'),
@@ -191,4 +192,53 @@ test('CSP keeps external sources scoped and audited surfaces avoid remote assets
     read('src/components/OfferFacts.tsx'),
     /registrationDeadline\(deal.registration.deadline, lang\)/,
   );
+});
+
+test('searchMatchReason explains matches on hidden fields and stays quiet on visible fields', () => {
+  const dummyDeal = {
+    id: 'itera',
+    slug: 'qwen38-27b-itera',
+    name: 'IteraCompute',
+    name_en: 'IteraCompute Qwen3.8-27B — up to 30M tokens/month',
+    name_ar: 'IteraCompute Qwen3.8-27B',
+    category: { value: 'برمجة وتطوير' },
+    headline_value: '30 مليون توكن شهريًا مجانًا',
+    key_condition: 'بدون بطاقة ائتمان',
+    benefits: [
+      {
+        type: 'credits',
+        amount: { value: 30000000, unit: 'tokens', currency: null },
+        description: { ar: 'توكنات شهرية مجانية', en: 'Free monthly tokens' },
+      },
+      {
+        type: 'features',
+        description: { ar: 'دعم نموذج DeepSeek', en: 'DeepSeek model support' },
+      },
+    ],
+    description_ar: 'واجهة برمجة تطبيقات مجانية لنموذج Qwen',
+    description_en: 'Free API access for Qwen model',
+    use_cases: ['برمجة'],
+    review: { verification_status: 'verified', reviewed_on: '2026-10-20' },
+  };
+
+  // 1. Matches visible title "IteraCompute" -> null (no redundant badge)
+  assert.equal(searchMatchReason(dummyDeal, 'IteraCompute', 'ar'), null);
+  assert.equal(searchMatchReason(dummyDeal, 'IteraCompute', 'en'), null);
+
+  // 2. Matches visible condition "بطاقة" -> null
+  assert.equal(searchMatchReason(dummyDeal, 'بطاقة', 'ar'), null);
+
+  // 3. Matches hidden model name "Qwen" -> explains match truthfully
+  const arReason = searchMatchReason(dummyDeal, 'Qwen', 'ar');
+  assert.ok(arReason && arReason.includes('Qwen3.8-27B'), `Arabic reason: ${arReason}`);
+  const enReason = searchMatchReason(dummyDeal, 'Qwen', 'en');
+  assert.ok(enReason && enReason.includes('Qwen3.8-27B'), `English reason: ${enReason}`);
+
+  // 4. Matches hidden second benefit "DeepSeek" -> explains benefit match
+  const benefitReason = searchMatchReason(dummyDeal, 'DeepSeek', 'ar');
+  assert.ok(benefitReason && benefitReason.includes('DeepSeek'), `Benefit reason: ${benefitReason}`);
+
+  // 5. Empty query -> null
+  assert.equal(searchMatchReason(dummyDeal, '', 'ar'), null);
+  assert.equal(searchMatchReason(dummyDeal, '   ', 'en'), null);
 });

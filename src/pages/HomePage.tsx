@@ -14,6 +14,7 @@ import {
   CreditCard,
   ArrowUpLeft,
   ArrowUpRight,
+  ArrowDown,
 } from 'lucide-react';
 import type { Deal, FilterState, SiteConfig, SortOption } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
@@ -225,6 +226,18 @@ export default function HomePage({
     lang === 'ar'
       ? `${deals.length.toLocaleString('ar-EG')} عرضًا في الدليل`
       : `${deals.length.toLocaleString('en-US')} offers in the directory`;
+
+  const ctaButtonLabel = useMemo(() => {
+    const count = deals.length;
+    if (count === 0) {
+      return lang === 'ar' ? 'تصفّح العروض' : 'Browse deals';
+    }
+    if (lang === 'ar') {
+      const noun = count >= 3 && count <= 10 ? 'عروض' : 'عرضًا';
+      return `تصفّح ${count.toLocaleString('ar-EG')} ${noun}`;
+    }
+    return `Browse ${count.toLocaleString('en-US')} ${count === 1 ? 'deal' : 'deals'}`;
+  }, [deals.length, lang]);
 
   // Safe calculation of days since last review
   const daysSinceLastReview = useMemo(() => {
@@ -884,6 +897,23 @@ export default function HomePage({
               )}
             </div>
 
+            <div className="mt-5">
+              <a
+                href="#deals-list"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const target = document.getElementById('deals-list');
+                  if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-base font-bold text-slate-950 transition hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-brand/40 shadow-sm"
+              >
+                <span>{ctaButtonLabel}</span>
+                <ArrowDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+              </a>
+            </div>
+
             {/* Interactive "What do you want to build?" Use-Case Prompt */}
             {useCaseOptions.length > 0 && (
               <div className="mt-5 border-t border-line pt-4">
@@ -1443,6 +1473,7 @@ export default function HomePage({
                 referenceNow={referenceNow}
                 country={filterState.country}
                 onOpen={onOpenDeal}
+                searchQuery={filterState.q}
                 isComparisonSelected={comparisonSelection.includes(deal.slug)}
                 comparisonDisabled={
                   comparisonSelection.length >= 2 &&
@@ -1489,7 +1520,7 @@ export default function HomePage({
       )}
 
       {/* 4. Main Results Section */}
-      <section className="mt-6">
+      <section id="deals-list" className="mt-6 scroll-mt-20">
         {filterState.sort === 'deadline' && (
           <p className="mb-3 text-sm text-slate-300">
             {lang === 'ar'
@@ -1636,6 +1667,7 @@ export default function HomePage({
                           referenceNow={referenceNow}
                           country={filterState.country}
                           onOpen={onOpenDeal}
+                          searchQuery={filterState.q}
                           isComparisonSelected={comparisonSelection.includes(
                             deal.slug,
                           )}
@@ -1655,6 +1687,7 @@ export default function HomePage({
                         referenceNow={referenceNow}
                         country={filterState.country}
                         onOpen={onOpenDeal}
+                        searchQuery={filterState.q}
                         isComparisonSelected={comparisonSelection.includes(
                           deal.slug,
                         )}

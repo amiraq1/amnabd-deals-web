@@ -10,12 +10,48 @@ export function categoryKey(value: unknown): string {
   return ['', 'unknown', 'غير معلوم'].includes(key) ? '' : key;
 }
 
+const CATEGORY_TRANSLATIONS: Record<string, { ar: string; en: string }> = Object.assign(
+  Object.create(null),
+  {
+    'بحث وتطوير': { ar: 'بحث وتطوير', en: 'Research & Development' },
+    'صوت وذكاء اصطناعي': { ar: 'صوت وذكاء اصطناعي', en: 'Voice & AI' },
+    'استضافة وبوابات ai': { ar: 'استضافة وبوابات AI', en: 'Hosting & AI Gateways' },
+    'استضافة وبوابات AI': { ar: 'استضافة وبوابات AI', en: 'Hosting & AI Gateways' },
+    'استضافة وسحابيات': { ar: 'استضافة وسحابيات', en: 'Hosting & Cloud' },
+    'برمجة وتطوير': { ar: 'برمجة وتطوير', en: 'Coding & Development' },
+    'تصميم وواجهات': { ar: 'تصميم وواجهات', en: 'Design & UI' },
+    'فيديو وصور': { ar: 'فيديو وصور', en: 'Video & Images' },
+    'سحابيات': { ar: 'سحابيات', en: 'Cloud' },
+    'تطوير': { ar: 'تطوير', en: 'Development' },
+    'تصميم': { ar: 'تصميم', en: 'Design' },
+    'تعليم': { ar: 'تعليم', en: 'Education' },
+    'نماذج ذكاء اصطناعي': { ar: 'نماذج ذكاء اصطناعي', en: 'AI Models' },
+    cloud: { ar: 'سحابيات', en: 'Cloud' },
+    development: { ar: 'تطوير', en: 'Development' },
+    design: { ar: 'تصميم', en: 'Design' },
+    education: { ar: 'تعليم', en: 'Education' },
+    'ai models': { ar: 'نماذج ذكاء اصطناعي', en: 'AI Models' },
+  },
+);
+
 export function categoryLabel(value: string, lang: Lang): string {
-  return categoryKey(value)
-    ? value.normalize('NFC').trim().replace(/\s+/gu, ' ')
-    : lang === 'ar'
-      ? 'غير مصنّف'
-      : 'Uncategorized';
+  const key = categoryKey(value);
+  if (!key) {
+    return lang === 'ar' ? 'غير مصنّف' : 'Uncategorized';
+  }
+  const translated =
+    Object.prototype.hasOwnProperty.call(CATEGORY_TRANSLATIONS, key)
+      ? CATEGORY_TRANSLATIONS[key]
+      : Object.prototype.hasOwnProperty.call(
+            CATEGORY_TRANSLATIONS,
+            value.normalize('NFC').trim(),
+          )
+        ? CATEGORY_TRANSLATIONS[value.normalize('NFC').trim()]
+        : undefined;
+  if (translated && translated[lang]) {
+    return translated[lang];
+  }
+  return value.normalize('NFC').trim().replace(/\s+/gu, ' ');
 }
 
 export function categoryOptions(deals: Pick<Deal, 'category'>[], lang: Lang) {
