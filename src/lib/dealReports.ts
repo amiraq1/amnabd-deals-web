@@ -1,3 +1,5 @@
+import { publicSupabaseConfig } from './environment.js';
+
 export type ReportReason =
   | 'expired'
   | 'card_changed'
@@ -27,6 +29,7 @@ export interface SubmitReportResult {
 const REPORT_STORAGE_KEY = 'amnabd_reported_slugs_v1';
 const LEGACY_REPORT_STORAGE_KEY = 'ai_deals_reported_slugs_v1';
 const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours per deal
+const MAX_REPORTED_MAP_ENTRIES = 500;
 
 export const REPORT_REASON_OPTIONS: { value: ReportReason; label: string; labelEn: string }[] = [
   { value: 'expired', label: 'انتهى العرض', labelEn: 'Offer expired' },
@@ -36,34 +39,38 @@ export const REPORT_REASON_OPTIONS: { value: ReportReason; label: string; labelE
 ];
 
 export function parseReportedMap(raw: unknown, now = Date.now()): Record<string, number> {
-  if (!raw || typeof raw !== 'string' || !raw.trim()) return {};
+  if (!raw || typeof raw !== 'string' || !raw.trim()) return Object.create(null) as Record<string, number>;
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return {};
+      return Object.create(null) as Record<string, number>;
     }
 
-    const safeMap: Record<string, number> = {};
+    const safeMap = Object.create(null) as Record<string, number>;
+    let entryCount = 0;
 
     for (const [slug, timestamp] of Object.entries(parsed as Record<string, unknown>)) {
+      if (entryCount >= MAX_REPORTED_MAP_ENTRIES) break;
+      const cleanSlug = slug.trim();
       if (
-        typeof slug === 'string' &&
-        slug.trim().length > 0 &&
+        cleanSlug.length > 0 &&
         typeof timestamp === 'number' &&
         Number.isFinite(timestamp) &&
         timestamp > 0 &&
+        timestamp > now - COOLDOWN_MS &&
         timestamp <= now + 60_000
       ) {
-        safeMap[slug.trim()] = timestamp;
+        if (!Object.prototype.hasOwnProperty.call(safeMap, cleanSlug)) entryCount += 1;
+        safeMap[cleanSlug] = timestamp;
       }
     }
     return safeMap;
   } catch {
-    return {};
+    return Object.create(null) as Record<string, number>;
   }
 }
 
-function getReportedMap(storageOverride?: Storage | null): Record<string, number> {
+function getReportedMap(storageOverride?: Storage | null, now = Date.now()): Record<string, number> {
   if (typeof window === 'undefined' && !storageOverride) return {};
   try {
     const storage = storageOverride !== undefined ? storageOverride : window.localStorage;
@@ -76,7 +83,7 @@ function getReportedMap(storageOverride?: Storage | null): Record<string, number
       storage.removeItem(LEGACY_REPORT_STORAGE_KEY);
     }
     const raw = storage.getItem(REPORT_STORAGE_KEY);
-    return parseReportedMap(raw);
+    return parseReportedMap(raw, now);
   } catch {
     return {};
   }
@@ -84,7 +91,7 @@ function getReportedMap(storageOverride?: Storage | null): Record<string, number
 
 export function hasRecentlyReported(dealSlug: string, now = Date.now(), storageOverride?: Storage | null): boolean {
   if (typeof dealSlug !== 'string' || !dealSlug.trim()) return false;
-  const map = getReportedMap(storageOverride);
+  const map = getReportedMap(storageOverride, now);
   const timestamp = map[dealSlug.trim()];
   if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return false;
   return now - timestamp < COOLDOWN_MS;
@@ -96,7 +103,7 @@ export function markDealAsReported(dealSlug: string, now = Date.now(), storageOv
   try {
     const storage = storageOverride !== undefined ? storageOverride : window.localStorage;
     if (!storage) return;
-    const map = getReportedMap(storage);
+    const map = getReportedMap(storage, now);
     map[dealSlug.trim()] = now;
     storage.setItem(REPORT_STORAGE_KEY, JSON.stringify(map));
   } catch {
@@ -131,10 +138,13 @@ export async function submitDealReport(
     typeof globalThis !== 'undefined' && 'process' in globalThis
       ? (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
       : undefined;
-  const supabaseUrl = metaEnv?.VITE_SUPABASE_URL || nodeEnv?.VITE_SUPABASE_URL;
-  const supabaseKey = metaEnv?.VITE_SUPABASE_ANON_KEY || nodeEnv?.VITE_SUPABASE_ANON_KEY;
+  const config = publicSupabaseConfig(
+    metaEnv?.VITE_SUPABASE_URL || nodeEnv?.VITE_SUPABASE_URL,
+    metaEnv?.VITE_SUPABASE_ANON_KEY || nodeEnv?.VITE_SUPABASE_ANON_KEY
+  );
 
-  if (supabaseUrl && supabaseKey) {
+  if (config.ok) {
+    const { url: supabaseUrl, key: supabaseKey } = config;
     const endpoint = `${supabaseUrl.replace(/\/+$/, '')}/rest/v1/deal_reports`;
     try {
       // F-01: mirror supabase.ts — omit Authorization for publishable keys.

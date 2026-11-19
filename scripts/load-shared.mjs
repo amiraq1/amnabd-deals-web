@@ -19,6 +19,8 @@ const SHARED_MODULES = [
   'src/lib/dealTiming.ts',
   'src/lib/instants.ts',
   'src/content/smsSuppliersDirectory.ts',
+  'src/lib/trustedDomains.ts',
+  'src/lib/safeUrl.ts',
   'src/lib/smsSuppliers.ts',
 ];
 

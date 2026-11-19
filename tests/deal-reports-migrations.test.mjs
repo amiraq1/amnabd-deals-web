@@ -16,6 +16,10 @@ const createdAtHardening = readFileSync(
   join(migrations, '20261103120000_deal_reports_created_at_hardening.sql'),
   'utf8'
 );
+const claimSearchPathHardening = readFileSync(
+  join(migrations, '20261119190000_harden_deal_claim_function_search_path.sql'),
+  'utf8'
+);
 
 test('deal_reports FK migration reuses any single-column UNIQUE constraint on deals.slug', () => {
   assert.match(slugFk, /and\s+c\.contype\s*=\s*'u'/i);
@@ -37,6 +41,19 @@ test('deal_reports throttle keeps pg_catalog search_path and does not grant dire
     hardening,
     /\bgrant\s+(?:execute|all)\s+on\s+function\s+public\.deal_reports_throttle\(\)/i
   );
+});
+
+test('claim helper migration hardens only search_path and preserves anon execution grants', () => {
+  assert.match(
+    claimSearchPathHardening,
+    /alter function public\.claim_evidence_status\(uuid\)\s+set search_path\s*=\s*pg_catalog/i
+  );
+  assert.match(
+    claimSearchPathHardening,
+    /alter function public\.claim_is_publishable\(uuid\)\s+set search_path\s*=\s*pg_catalog/i
+  );
+  assert.doesNotMatch(claimSearchPathHardening, /\brevoke\b/i);
+  assert.doesNotMatch(claimSearchPathHardening, /create\s+or\s+replace\s+view[\s\S]*?\bwhere\b/i);
 });
 
 test('deal_reports hardening enforces server time, serializes the existing limits, and restricts client inserts', () => {

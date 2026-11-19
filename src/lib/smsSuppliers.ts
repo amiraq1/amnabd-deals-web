@@ -5,6 +5,7 @@ import type {
   SmsSupplierSourceClassification,
   SmsSupplierVerificationStatus,
 } from '../content/smsSuppliersDirectory.js';
+import { isSafeUrl } from './safeUrl.js';
 
 export type { SmsSupplierSourceClassification, SmsSupplierVerificationStatus };
 
@@ -39,8 +40,6 @@ export const LINK_REASON_MESSAGES: Record<
     en: 'The listed link is invalid or incomplete',
   },
 };
-
-const BLOCKED_HOSTS = ['studentoffers.co', 'www.studentoffers.co'];
 
 export function isListedAsOfficial(supplier: Pick<SmsSupplier, 'sourceClassification'>): boolean {
   return supplier.sourceClassification === 'official';
@@ -115,8 +114,12 @@ export function getListedSourceUrl(
     return { ok: false, reason: 'notHttps' };
   }
 
+  if (!isSafeUrl(supplier.url)) {
+    return { ok: false, reason: 'invalidUrl' };
+  }
+
   const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
-  if (!hostname || BLOCKED_HOSTS.includes(hostname)) {
+  if (!hostname) {
     return { ok: false, reason: 'domainMismatch' };
   }
 

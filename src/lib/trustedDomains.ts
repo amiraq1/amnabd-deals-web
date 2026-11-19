@@ -209,15 +209,19 @@ const TRUSTED_DOMAINS = new Set([
 /**
  * True when the hostname is a reviewed provider domain or one of its
  * subdomains. Parent labels are walked so a subdomain like
- * `docs.github.com` is accepted only because `github.com` is listed.
+ * `docs.github.com` is accepted only because `github.com` is listed. Exact
+ * hosts are matched only against the complete hostname.
  */
 export function isTrustedExternalHost(hostname: string): boolean {
-  let host = hostname.toLowerCase().replace(/\.$/, '');
-  while (host) {
-    if (TRUSTED_EXACT_HOSTS.has(host) || TRUSTED_DOMAINS.has(host)) return true;
-    const separator = host.indexOf('.');
+  const host = hostname.toLowerCase().replace(/\.$/, '');
+  if (TRUSTED_EXACT_HOSTS.has(host)) return true;
+
+  let parent = host;
+  while (parent) {
+    if (TRUSTED_DOMAINS.has(parent)) return true;
+    const separator = parent.indexOf('.');
     if (separator === -1) return false;
-    host = host.slice(separator + 1);
+    parent = parent.slice(separator + 1);
   }
   return false;
 }

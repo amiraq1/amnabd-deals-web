@@ -1,7 +1,7 @@
 import { CalendarDays, ExternalLink } from 'lucide-react';
 import type { GuideSectionKey, SiteConfig, UsageGuide } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { safeUrl } from '@/lib/safeUrl';
+import { safeDealUrl } from '@/lib/safeUrl';
 import { reviewDateLabel } from '@/lib/format';
 import { OFFICIAL_TOOL_NAMES } from '@/lib/dealMetadata';
 
@@ -102,7 +102,7 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
                 {Array.from(
                   new Set(
                     Object.values(guide.sections)
-                      .flatMap((s) => s.sources.map((u) => safeUrl(u)).filter((u): u is string => !!u))
+                      .flatMap((s) => s.sources.map((u) => safeDealUrl(u)).filter((u): u is string => !!u))
                   )
                 ).map((url) => (
                   <a

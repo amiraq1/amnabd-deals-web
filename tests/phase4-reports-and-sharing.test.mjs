@@ -44,7 +44,7 @@ const originalFetch = globalThis.fetch;
 
 function withBackend(response) {
   process.env.VITE_SUPABASE_URL = 'https://report-fixture.supabase.co';
-  process.env.VITE_SUPABASE_ANON_KEY = 'sb_publishable_REPORT_FIXTURE';
+  process.env.VITE_SUPABASE_ANON_KEY = 'sb_publishable_REPORT_FIXTURE_0123456789';
   globalThis.fetch = async () => {
     if (response instanceof Error) throw response;
     return response;
@@ -113,6 +113,24 @@ test('submitDealReport reports failure when no backend is configured', async () 
   assert.equal(hasRecentlyReported(slug), false);
 });
 
+test('submitDealReport refuses secret or service-role keys without sending a request', async () => {
+  const serviceRoleKey = `eyJhbGciOiJub25lIn0.${Buffer.from(
+    JSON.stringify({ role: 'service_role' })
+  ).toString('base64url')}.signature`;
+  for (const key of ['sb_secret_test_fixture', serviceRoleKey]) {
+    process.env.VITE_SUPABASE_URL = 'https://report-fixture.supabase.co';
+    process.env.VITE_SUPABASE_ANON_KEY = key;
+    let fetchCalled = false;
+    globalThis.fetch = async () => {
+      fetchCalled = true;
+      return { ok: true, status: 201 };
+    };
+    const result = await submitDealReport({ dealSlug: `private-key-${key.length}`, reason: 'expired' });
+    assert.deepEqual(result, { ok: false, mode: 'unconfigured' });
+    assert.equal(fetchCalled, false);
+  }
+});
+
 test('submitDealReport reports failure when the server rejects the write', async () => {
   withBackend({ ok: false, status: 500 });
   const slug = 'rejected-deal';
@@ -173,6 +191,14 @@ test('parseSharedListParam extracts and cleans slugs from search string or hash'
 
   // Empty when param absent
   assert.deepEqual(parseSharedListParam('?sort=ending_soon'), []);
+});
+
+test('parseSharedListParam removes duplicates and caps the list at 200 entries', () => {
+  assert.deepEqual(parseSharedListParam('?list=deal1,deal1,deal2'), ['deal1', 'deal2']);
+  const oversized = Array.from({ length: 250 }, (_, index) => `deal-${index}`).join(',');
+  const parsed = parseSharedListParam(`?list=${oversized}`);
+  assert.equal(parsed.length, 200);
+  assert.equal(parsed.at(-1), 'deal-199');
 });
 
 test('formatFavoritesAsText builds formatted markdown for Telegram / X', () => {

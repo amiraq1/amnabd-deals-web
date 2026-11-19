@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const testBuildDir = process.env.AMN_TEST_BUILD_DIR;
+const emptyReportedMap = () => Object.create(null);
 const {
   parseReportedMap,
   hasRecentlyReported,
@@ -22,20 +23,20 @@ const {
 describe('Local State and Favorites Hardening', () => {
   describe('dealReports storage hardening', () => {
     it('returns empty map for null, undefined, empty, or whitespace raw values', () => {
-      assert.deepEqual(parseReportedMap(null), {});
-      assert.deepEqual(parseReportedMap(undefined), {});
-      assert.deepEqual(parseReportedMap(''), {});
-      assert.deepEqual(parseReportedMap('   '), {});
+      assert.deepEqual(parseReportedMap(null), emptyReportedMap());
+      assert.deepEqual(parseReportedMap(undefined), emptyReportedMap());
+      assert.deepEqual(parseReportedMap(''), emptyReportedMap());
+      assert.deepEqual(parseReportedMap('   '), emptyReportedMap());
     });
 
     it('returns empty map for malformed JSON or invalid types (null, arrays, primitives)', () => {
-      assert.deepEqual(parseReportedMap('{broken-json'), {});
-      assert.deepEqual(parseReportedMap('null'), {});
-      assert.deepEqual(parseReportedMap('[]'), {});
-      assert.deepEqual(parseReportedMap('[1, 2, 3]'), {});
-      assert.deepEqual(parseReportedMap('12345'), {});
-      assert.deepEqual(parseReportedMap('"plain string"'), {});
-      assert.deepEqual(parseReportedMap('true'), {});
+      assert.deepEqual(parseReportedMap('{broken-json'), emptyReportedMap());
+      assert.deepEqual(parseReportedMap('null'), emptyReportedMap());
+      assert.deepEqual(parseReportedMap('[]'), emptyReportedMap());
+      assert.deepEqual(parseReportedMap('[1, 2, 3]'), emptyReportedMap());
+      assert.deepEqual(parseReportedMap('12345'), emptyReportedMap());
+      assert.deepEqual(parseReportedMap('"plain string"'), emptyReportedMap());
+      assert.deepEqual(parseReportedMap('true'), emptyReportedMap());
     });
 
     it('filters out invalid or non-numeric timestamps', () => {
@@ -51,9 +52,9 @@ describe('Local State and Favorites Hardening', () => {
       });
 
       const parsed = parseReportedMap(raw, 1700000050000);
-      assert.deepEqual(parsed, {
-        'deal-valid': 1700000000000,
-      });
+      const expected = emptyReportedMap();
+      expected['deal-valid'] = 1700000000000;
+      assert.deepEqual(parsed, expected);
     });
 
     it('rejects corrupted future timestamps beyond the 60s skew allowance', () => {
@@ -68,6 +69,29 @@ describe('Local State and Favorites Hardening', () => {
       assert.equal(parsed['deal-normal'], now - 5000);
       assert.equal(parsed['deal-future-acceptable'], now + 30000);
       assert.equal(parsed['deal-future-corrupt'], undefined);
+    });
+    it('drops expired entries and returns a null-prototype map safe for special keys', () => {
+      const now = 1700000000000;
+      const parsed = parseReportedMap(
+        `{"__proto__":${now - 1000},"fresh":${now - 1000},"expired":${now - 24 * 60 * 60 * 1000}}`,
+        now
+      );
+      assert.equal(Object.getPrototypeOf(parsed), null);
+      assert.equal(parsed['__proto__'], now - 1000);
+      assert.equal(parsed.fresh, now - 1000);
+      assert.equal(parsed.expired, undefined);
+      assert.equal(Object.prototype.polluted, undefined);
+    });
+    it('caps the reported-deal map at 500 live records', () => {
+      const now = 1700000000000;
+      const entries = Object.fromEntries(
+        Array.from({ length: 502 }, (_, index) => [`deal-${index}`, now - 1000])
+      );
+      const parsed = parseReportedMap(JSON.stringify(entries), now);
+      assert.equal(Object.keys(parsed).length, 500);
+      assert.equal(parsed['deal-0'], now - 1000);
+      assert.equal(parsed['deal-499'], now - 1000);
+      assert.equal(parsed['deal-500'], undefined);
     });
 
     it('hasRecentlyReported handles corrupted storage without throwing', () => {
