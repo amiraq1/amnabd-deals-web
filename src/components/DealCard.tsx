@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import IsolatedText from '@/components/IsolatedText';
 import type { MouseEvent } from 'react';
 import { ArrowLeft, ArrowRight, ExternalLink, Search } from 'lucide-react';
@@ -35,7 +36,7 @@ export interface DealCardProps {
   onToggleComparison?: (slug: string) => void;
 }
 
-export default function DealCard({
+function DealCard({
   deal,
   referenceNow,
   country,
@@ -219,3 +220,6 @@ export default function DealCard({
     </article>
   );
 }
+
+export default memo(DealCard);
+

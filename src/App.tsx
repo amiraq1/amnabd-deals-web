@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, startTransition, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { loadConfig, loadDeals, loadGuides } from '@/lib/loadResources';
 import {
@@ -139,7 +139,9 @@ function AppInner() {
     if (next.name === 'home') {
       const parsed = parseFilterState(window.location.search);
       filtersRef.current = parsed;
-      setRawFilters(parsed);
+      startTransition(() => {
+        setRawFilters(parsed);
+      });
       lastDiscoveryUrl.current = currentUrl();
     }
   }, []);
@@ -294,7 +296,9 @@ function AppInner() {
           .slice(0, 120)
           .join('');
       filtersRef.current = parsed;
-      setRawFilters(parsed);
+      startTransition(() => {
+        setRawFilters(parsed);
+      });
       if (method === 'replace')
         timer.current = window.setTimeout(() => {
           timer.current = null;

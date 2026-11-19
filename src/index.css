@@ -31,6 +31,8 @@
       'Segoe UI',
       Arial,
       sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
     line-height: 1.7;
   }
 
