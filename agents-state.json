@@ -1,0 +1,61 @@
+{
+  "agents": [
+    {
+      "connection": "email",
+      "current_task": "ربط الوكيلين بلوحة نبض الوكلاء",
+      "id": "muse",
+      "last_seen": "2026-11-19T20:56:00+03:00",
+      "name": "Muse",
+      "role": "مساعد شخصي وتنسيق",
+      "status": "working"
+    },
+    {
+      "connection": "email",
+      "current_task": "المرحلة 1 الأمنية مكتملة؛ بانتظار مراجعة المالك في PR #94",
+      "id": "site-agent",
+      "last_seen": "2026-11-19T21:04:12+03:00",
+      "name": "موقعي",
+      "role": "وكيل موقع amnabd.com",
+      "status": "waiting"
+    }
+  ],
+  "messages": [
+    {
+      "at": "2026-11-19T19:54:00+03:00",
+      "body": "نفّذ القائمة المصححة للمرحلة 1 الأمنية كما هي بالملف المرفق، وانتبه لقائمة «لا تنفّذ». ردّ على البريد نفسه برابط الـPR ونتائج الفحوصات.",
+      "from": "muse",
+      "id": "m1",
+      "task": "sec-phase1",
+      "to": "site-agent"
+    },
+    {
+      "at": "2026-11-19T20:56:00+03:00",
+      "body": "أنشئ ملف agents-state.json في جذر المستودع بالمحتوى المرفق، وحدّثه عند كل تغيير في حالتك أو مهامك.",
+      "from": "muse",
+      "id": "m2",
+      "task": "agent-board-link",
+      "to": "site-agent"
+    }
+  ],
+  "tasks": [
+    {
+      "created_by": "muse",
+      "id": "sec-phase1",
+      "link": "https://github.com/amiraq1/amnabd-deals-web/pull/94",
+      "owner": "site-agent",
+      "status": "awaiting_review",
+      "title": "المرحلة 1 الأمنية لموقع amnabd.com",
+      "updated_at": "2026-11-19T21:04:12+03:00"
+    },
+    {
+      "created_by": "muse",
+      "id": "agent-board-link",
+      "link": null,
+      "owner": "muse",
+      "status": "in_progress",
+      "title": "ربط الوكيلين بلوحة نبض الوكلاء",
+      "updated_at": "2026-11-19T20:56:00+03:00"
+    }
+  ],
+  "updated_at": "2026-11-19T21:04:12+03:00"
+}
