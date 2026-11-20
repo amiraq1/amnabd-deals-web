@@ -175,7 +175,17 @@ test('verify-dist recognizes live ending_soon status backing aggregation page', 
     `Backed collection page should not violate: ${backedResult.violations.join(', ')}`
   );
 
-  // 2. Without live deal backing it, collection page violates unproven claims.
+  // 2. With live deal having ends_at nearing expiry (7 days out), collection page is also backed.
+  const in7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const nearExpiryDeal = { slug, status: 'active', ends_at: in7Days };
+  const nearExpiryResult = verifyDist({ rootDir, distDir: backedDist, liveDeals: [nearExpiryDeal] });
+  assert.equal(
+    nearExpiryResult.violations.filter((v) => v.includes('ending-soon')).length,
+    0,
+    `Near-expiry backed collection page should not violate: ${nearExpiryResult.violations.join(', ')}`
+  );
+
+  // 3. Without live deal backing it, collection page violates unproven claims.
   const unbackedDist = fixtureDist({
     'ending-soon/index.html': collectionHtml,
     [`deal/${slug}/index.html`]: '<!doctype html><html><head><title>Deal</title></head><body></body></html>',
