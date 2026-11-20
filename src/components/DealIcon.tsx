@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Deal } from '@/types';
 import { getDealDisplayName } from '@/lib/dealMetadata';
 import { offerInitial, offerTone } from '@/lib/offerPresentation';
@@ -8,7 +9,7 @@ interface DealIconProps {
   className?: string;
 }
 
-export default function DealIcon({
+function DealIcon({
   deal,
   size = 'md',
   className = '',
@@ -28,3 +29,5 @@ export default function DealIcon({
     </span>
   );
 }
+
+export default memo(DealIcon);
