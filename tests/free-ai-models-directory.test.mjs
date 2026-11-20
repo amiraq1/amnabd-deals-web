@@ -104,7 +104,11 @@ test('AI models directory first-phase UX has expandable cards, quick-use choices
   }
   assert.match(page, /if \(noPhoneOnly && entry\.phonePolicy !== 'not_required'\) return false;/);
   assert.match(page, /if \(noCardOnly && entry\.cardPolicy !== 'not_required'\) return false;/);
-  assert.match(page, /href=\{entry\.officialUrl\}/);
+  assert.match(page, /const officialUrl = safeDealUrl\(entry\.officialUrl\)/);
+  assert.match(page, /const safeHref = safeDealUrl\(url\)/);
+  assert.match(page, /href=\{officialUrl\}/);
+  assert.doesNotMatch(page, /href=\{entry\.officialUrl\}/);
+  assert.doesNotMatch(page, /href=\{url\}/);
   assert.match(page, /setUsageFilter\('coding'\)/);
   assert.match(page, /setUsageFilter\('vision'\)/);
   assert.match(page, /setCategoryFilter\('long-context'\)/);

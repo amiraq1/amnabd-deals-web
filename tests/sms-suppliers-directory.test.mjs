@@ -155,6 +155,21 @@ test('Task 2: getListedSourceUrl directly validates protocol, domain match, and 
   }
 });
 
+test('getListedSourceUrl rejects literal IP addresses through the shared safety check', () => {
+  const unsafeUrls = [
+    'https://[::ffff:127.0.0.1]/',
+    'https://[::ffff:169.254.169.254]/',
+    'https://2130706433/',
+  ];
+  for (const url of unsafeUrls) {
+    const domain = new URL(url).hostname;
+    assert.deepEqual(
+      getListedSourceUrl({ sourceClassification: 'official', url, domain }),
+      { ok: false, reason: 'invalidUrl' }
+    );
+  }
+});
+
 test('Task 2: dataset source link policy strictly preserves the exact 38 enabled suppliers', () => {
   const EXPECTED_ENABLED_IDS = [
     'hero-sms',

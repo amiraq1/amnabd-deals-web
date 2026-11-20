@@ -23,6 +23,7 @@ import {
 } from '@/content/freeAiModelsDirectory';
 import { useLanguage } from '@/context/LanguageContext';
 import { matchesQuery } from '@/lib/normalize';
+import { safeDealUrl } from '@/lib/safeUrl';
 import { parseModelFilters, serializeModelFilters, type ModelFilters, type ModelCategoryFilter, type ModelSortOrder } from '@/lib/modelFilterState';
 
 const MILLION_TOKENS = 1_000_000;
@@ -65,9 +66,12 @@ function matchesCategory(entry: FreeAiModelEntry, category: CategoryFilter): boo
 }
 
 function sourceLink(url: string, label: string) {
+  const safeHref = safeDealUrl(url);
+  if (!safeHref) return null;
+
   return (
     <a
-      href={url}
+      href={safeHref}
       target="_blank"
       rel="noopener noreferrer"
       className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-emerald-300 underline decoration-emerald-500/40 underline-offset-4 hover:text-emerald-200"
@@ -113,6 +117,7 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
     : entry.evidenceStatus === 'partial'
       ? 'border-amber-400/35 bg-amber-400/10 text-amber-100'
       : 'border-slate-600 bg-slate-800 text-slate-300';
+  const officialUrl = safeDealUrl(entry.officialUrl);
 
   return (
     <article className="rounded-2xl border border-slate-700/80 bg-slate-900/70 p-4 shadow-lg shadow-black/10 sm:p-5">
@@ -148,15 +153,17 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
           ))}
         </div>
 
-        <a
-          href={entry.officialUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-100 hover:border-emerald-300 hover:bg-emerald-400/15 sm:w-fit"
-        >
-          <span>{copy.accessMethod}: {providerName}</span>
-          <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
-        </a>
+        {officialUrl && (
+          <a
+            href={officialUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-100 hover:border-emerald-300 hover:bg-emerald-400/15 sm:w-fit"
+          >
+            <span>{copy.accessMethod}: {providerName}</span>
+            <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
+          </a>
+        )}
 
         <details className="group border-t border-slate-800 pt-3">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-2 text-sm font-semibold text-slate-200 hover:bg-slate-800/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 [&::-webkit-details-marker]:hidden">

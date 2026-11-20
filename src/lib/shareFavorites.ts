@@ -1,6 +1,8 @@
 import type { Deal } from '@/types';
 import { getDealDisplayName } from './dealMetadata.js';
 
+const MAX_SHARED_LIST_ITEMS = 200;
+
 const DEFAULT_ORIGIN =
   typeof window !== 'undefined' && window.location?.origin
     ? window.location.origin
@@ -25,10 +27,13 @@ export function parseSharedListParam(search: string): string[] {
   const params = new URLSearchParams(cleanSearch);
   const raw = params.get('list');
   if (!raw) return [];
-  return raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter((s) => /^[a-zA-Z0-9_\-\u0600-\u06FF]+$/i.test(s));
+  const uniqueSlugs = new Set(
+    raw
+      .split(',', MAX_SHARED_LIST_ITEMS)
+      .map((s) => s.trim())
+      .filter((s) => /^[a-zA-Z0-9_\-\u0600-\u06FF]+$/i.test(s))
+  );
+  return Array.from(uniqueSlugs);
 }
 
 export function formatFavoritesAsText(
