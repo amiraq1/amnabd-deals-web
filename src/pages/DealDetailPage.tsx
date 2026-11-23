@@ -5,7 +5,7 @@ import EvidenceBadge from '@/components/EvidenceBadge';
 import { offerTimingLabel } from '@/lib/evidence';
 import { getTimingState } from '@/lib/dealTiming';
 import {
-  Sparkles,
+  BookOpen,
   ExternalLink,
   FileText,
   ShieldCheck,
@@ -135,8 +135,9 @@ export default function DealDetailPage({
     <>
       <main className="deal-detail-content mx-auto max-w-4xl px-4 pb-8 pt-8 sm:px-6 [overflow-wrap:anywhere]">
         <button
+          type="button"
           onClick={onBack}
-          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-white"
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink active:scale-[0.98]"
         >
           {dir === 'rtl' ? <ArrowRTL /> : <ArrowLTR />}
           {lang === 'ar' ? 'كل العروض' : 'All deals'}
@@ -147,13 +148,13 @@ export default function DealDetailPage({
             <div className="flex w-full min-w-0 flex-1 items-start gap-3.5">
               <DealIcon deal={deal} size="lg" className="shrink-0" />
               <div className="min-w-0 flex-1">
-                <h1 className="font-heading text-2xl font-bold leading-relaxed text-white [overflow-wrap:anywhere]">
+                <h1 className="font-heading text-2xl font-bold leading-relaxed text-ink [overflow-wrap:anywhere]">
                   <bdi>{displayName}</bdi>
                 </h1>
                 {lang === 'ar' &&
                   deal.name_ar &&
                   deal.name_ar !== displayName && (
-                    <p className="mt-0.5 text-sm font-medium text-slate-400 [overflow-wrap:anywhere]">
+                    <p className="mt-0.5 text-sm font-medium text-ink-muted [overflow-wrap:anywhere]">
                       {deal.name_ar}
                     </p>
                   )}
@@ -175,7 +176,7 @@ export default function DealDetailPage({
           </p>
 
           {getTimingState(deal, referenceNow).offer.state === 'expired' && (
-            <p role="status" className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200">
+            <p role="status" className="mt-4 rounded-card border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200 tabular-nums">
               {offerTimingLabel(getTimingState(deal, referenceNow).offer, deal.review.offer_status, lang)}
             </p>
           )}
@@ -185,20 +186,20 @@ export default function DealDetailPage({
                 href={offerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-control bg-brand px-4 py-2.5 text-sm font-semibold text-slate-950  transition-all hover:bg-emerald-400"
+                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-control bg-brand px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 active:scale-[0.98]"
               >
                 <bdi>
                   {lang === 'ar'
-                    ? 'الانتقال إلى صفحة العرض الرسمية'
-                    : 'Visit the official offer page'}
+                    ? 'فتح العرض الرسمي'
+                    : 'Official Source'}
                 </bdi>
-                <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <ExternalLink className="h-4 w-4 shrink-0 rtl:-scale-x-100" aria-hidden="true" />
               </a>
             )}
             {!offerUrl && (
               <span
                 aria-disabled="true"
-                className="inline-flex min-h-11 items-center rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-400"
+                className="inline-flex min-h-11 items-center rounded-control border border-line px-4 py-2 text-sm text-ink-muted"
               >
                 {lang === 'ar'
                   ? 'رابط المصدر غير متاح'
@@ -217,7 +218,7 @@ export default function DealDetailPage({
               aria-pressed={comparisonSelected}
               disabled={comparisonDisabled}
               onClick={() => onToggleComparison(deal.slug)}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-emerald-500/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-2 rounded-control border border-line bg-surface-overlay px-4 py-2 text-sm font-medium text-ink-muted transition hover:border-line-subtle hover:text-ink disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
             >
               {comparisonSelected
                 ? lang === 'ar'
@@ -233,16 +234,16 @@ export default function DealDetailPage({
             {activationGuide && (
               <a
                 href="#how-to-activate"
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:border-emerald-500/50 hover:bg-emerald-500/20 active:scale-95"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-control border border-line bg-surface-overlay px-4 py-2 text-sm font-medium text-ink-muted transition hover:border-line-subtle hover:text-ink active:scale-[0.98]"
               >
-                <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <BookOpen className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                 <bdi>
                   {lang === 'ar' ? 'طريقة التفعيل' : 'Activation guide'}
                 </bdi>
               </a>
             )}
           </div>
-          <p className="mt-3 text-sm text-slate-400">
+          <p className="mt-3 text-xs text-ink-muted">
             {lang === 'ar'
               ? 'الحفظ محلي في هذا المتصفح فقط.'
               : 'Saves stay in this browser only.'}
@@ -255,7 +256,7 @@ export default function DealDetailPage({
         >
           <h2
             id="quick-summary-heading"
-            className="text-xl font-bold text-white"
+            className="text-xl font-bold text-ink"
           >
             {lang === 'ar' ? 'ملخص سريع' : 'At a glance'}
           </h2>
@@ -267,7 +268,7 @@ export default function DealDetailPage({
               />
             </dl>
             <div className="min-w-0 border-b border-line-subtle pb-3">
-              <p className="font-medium text-slate-100 [overflow-wrap:anywhere]">
+              <p className="font-medium text-ink [overflow-wrap:anywhere] tabular-nums">
                 <bdi>
                   <IsolatedText text={recordedPrice(deal.pricing, lang)} />
                 </bdi>
@@ -286,7 +287,7 @@ export default function DealDetailPage({
               />
             </dl>
             <div className="min-w-0 border-b border-line-subtle pb-3">
-              <p className="font-medium text-slate-100 [overflow-wrap:anywhere]">
+              <p className="font-medium text-ink [overflow-wrap:anywhere] tabular-nums">
                 <bdi>
                   <IsolatedText
                     text={registrationDeadline(deal.registration.deadline, lang)}
@@ -321,7 +322,7 @@ export default function DealDetailPage({
           <div className="mb-5">
             <h2
               id="deal-truth-heading"
-              className="font-heading text-xl font-bold text-white sm:text-2xl"
+              className="font-heading text-xl font-bold text-ink sm:text-2xl"
             >
               {lang === 'ar'
                 ? 'ماذا نعرف وماذا لا نعرف؟'
@@ -334,8 +335,8 @@ export default function DealDetailPage({
             </p>
           </div>
           <section className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2">
-            <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-              <h3 className="font-heading text-sm font-semibold  text-slate-400">
+            <div className="min-w-0 rounded-card border border-line bg-surface-overlay p-5">
+              <h3 className="font-heading text-sm font-semibold text-ink-muted">
                 {lang === 'ar' ? 'شروط الأهلية' : 'Eligibility facts'}
               </h3>
               <dl className="mt-4 space-y-2.5 text-sm">
@@ -356,32 +357,32 @@ export default function DealDetailPage({
                   value={requirementLabel(e.phone_required, lang)}
                 />
               </dl>
-              <p className="mt-4 text-sm leading-relaxed text-slate-400">
+              <p className="mt-4 text-sm leading-relaxed text-ink-muted">
                 {e.conditions[lang]}
               </p>
             </div>
 
-            <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-              <h3 className="font-heading text-sm font-semibold  text-slate-400">
+            <div className="min-w-0 rounded-card border border-line bg-surface-overlay p-5">
+              <h3 className="font-heading text-sm font-semibold text-ink-muted">
                 {lang === 'ar' ? 'المنافع' : 'Benefits'}
               </h3>
               <ul className="mt-4 space-y-4">
                 {deal.benefits.map((b, i) => (
                   <li key={i} className="text-sm">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-sm font-medium text-emerald-300">
+                      <span className="rounded-control bg-brand/15 px-2 py-0.5 text-xs font-medium text-brand">
                         <bdi>{benefitTypeLabel(b.type, lang)}</bdi>
                       </span>
-                      <span className="font-semibold text-white">
+                      <span className="font-semibold text-ink tabular-nums">
                         <bdi>
                           <IsolatedText text={benefitAmount(b.amount, lang)} />
                         </bdi>
                       </span>
-                      <span className="text-sm text-slate-400">
+                      <span className="text-sm text-ink-muted tabular-nums">
                         <bdi>{durationLabel(b.duration, lang)}</bdi>
                       </span>
                       {frequencyLabel(b.frequency, lang) && (
-                        <span className="rounded-md bg-gold/10 px-2 py-0.5 text-sm text-gold">
+                        <span className="rounded-control bg-gold/10 px-2 py-0.5 text-xs text-gold">
                           <bdi>{frequencyLabel(b.frequency, lang)}</bdi>
                         </span>
                       )}
@@ -409,15 +410,15 @@ export default function DealDetailPage({
             </section>
           )}
 
-          <p className="mt-6 text-sm text-slate-400">
+          <p className="mt-6 text-xs text-ink-muted tabular-nums">
             {lang === 'ar'
               ? `حقول مسجلة غير مثبتة: ${unknownCount.toLocaleString('ar-EG')}. عددها لا يثبت اكتمال المعلومات، ودعم المصدر لا يضمن استمرار العرض أو الأهلية.`
               : `Recorded unestablished fields: ${unknownCount}. This count does not prove completeness; source support does not guarantee availability or eligibility.`}
           </p>
 
-          <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-            <h3 className="font-heading flex items-center gap-2 text-sm font-semibold  text-slate-400">
-              <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <section className="mt-8 rounded-card border border-line bg-surface-overlay p-5">
+            <h3 className="font-heading flex items-center gap-2 text-sm font-semibold text-ink-muted">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
               {lang === 'ar' ? 'المصادر والأدلة' : 'Sources and evidence'}
             </h3>
             <div className="mt-4 space-y-5">
@@ -427,13 +428,13 @@ export default function DealDetailPage({
                     <a href={safeDealUrl(src.url)!} target="_blank" rel="noopener noreferrer"
                       className="inline-flex min-h-11 max-w-full items-center gap-1.5 text-sm font-medium text-emerald-400 hover:text-emerald-300">
                       <bdi className="min-w-0 [overflow-wrap:anywhere]">{src.title}</bdi>
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0 rtl:-scale-x-100" aria-hidden="true" />
                     </a>
                   ) : (
-                    <p className="text-sm text-slate-400"><bdi>{src.title}</bdi> — {lang === 'ar' ? 'الرابط غير متاح لأنه غير صالح أو غير آمن.' : 'Link unavailable because it is invalid or unsafe.'}</p>
+                    <p className="text-sm text-ink-muted"><bdi>{src.title}</bdi> — {lang === 'ar' ? 'الرابط غير متاح لأنه غير صالح أو غير آمن.' : 'Link unavailable because it is invalid or unsafe.'}</p>
                   )}
                   {src.context && (
-                    <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                    <p className="mt-1 text-sm leading-relaxed text-ink-muted">
                       {src.context}
                     </p>
                   )}
@@ -453,9 +454,9 @@ export default function DealDetailPage({
                 </div>
               ))}
             </div>
-            <p className="mt-5 border-t border-slate-800 pt-4 text-sm text-slate-400">
+            <p className="mt-5 border-t border-line-subtle pt-4 text-xs text-ink-muted">
               {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed on'}:{' '}
-              <bdi>{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
+              <bdi className="tabular-nums">{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
               {' · '}
               {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
               <span className="text-slate-300">
@@ -468,8 +469,8 @@ export default function DealDetailPage({
             </p>
           </section>
 
-          <section className="mt-8 min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-            <h3 className="font-heading text-sm font-semibold  text-slate-400">
+          <section className="mt-8 min-w-0 rounded-card border border-line bg-surface-overlay p-5">
+            <h3 className="font-heading text-sm font-semibold text-ink-muted">
               {lang === 'ar' ? 'ملاحظات المراجعة' : 'Review notes'}
             </h3>
             <p className="mt-3 text-sm leading-relaxed text-slate-300">
@@ -480,7 +481,7 @@ export default function DealDetailPage({
 
         {guide && (
           <section className="mt-10">
-            <h2 className="font-heading text-xl font-bold text-white">
+            <h2 className="font-heading text-xl font-bold text-ink">
               {sectionLabels.eligibility ??
                 (lang === 'ar' ? 'الأهلية' : 'Eligibility')}
             </h2>
@@ -488,7 +489,7 @@ export default function DealDetailPage({
               {guide.sections.eligibility[lang]}
             </p>
 
-            <h2 className="font-heading mt-8 text-xl font-bold text-white">
+            <h2 className="font-heading mt-8 text-xl font-bold text-ink">
               {sectionLabels.registration ??
                 (lang === 'ar'
                   ? 'التسجيل والموعد النهائي'
@@ -498,7 +499,7 @@ export default function DealDetailPage({
               {guide.sections.registration[lang]}
             </p>
 
-            <h2 className="font-heading mt-8 text-xl font-bold text-white">
+            <h2 className="font-heading mt-8 text-xl font-bold text-ink">
               {sectionLabels.limitations ??
                 (lang === 'ar' ? 'القيود والرسوم' : 'Limits and fees')}
             </h2>
@@ -506,7 +507,7 @@ export default function DealDetailPage({
               {guide.sections.limitations[lang]}
             </p>
 
-            <h2 className="font-heading mt-8 text-xl font-bold text-white">
+            <h2 className="font-heading mt-8 text-xl font-bold text-ink">
               {sectionLabels.after_expiry ??
                 (lang === 'ar'
                   ? 'بعد انتهاء المنفعة'
@@ -531,10 +532,10 @@ export default function DealDetailPage({
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-emerald-300 transition-colors hover:bg-slate-700"
+                  className="inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-control border border-line bg-surface-overlay px-3 py-1.5 text-xs text-ink-muted transition hover:border-line-subtle hover:text-ink"
                 >
                   <bdi className="truncate">{url}</bdi>
-                  <ExternalLink className="h-3 w-3 shrink-0" />
+                  <ExternalLink className="h-3 w-3 shrink-0 rtl:-scale-x-100" aria-hidden="true" />
                 </a>
               ))}
             </div>
@@ -554,22 +555,22 @@ export default function DealDetailPage({
         aria-label={
           lang === 'ar' ? 'إجراءات العرض السريعة' : 'Quick deal actions'
         }
-        className="sm:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md"
+        className="sm:hidden fixed inset-x-0 bottom-0 z-40 border-t border-line bg-canvas/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 basis-28 flex-1">
-            <h2 className="truncate text-sm font-bold text-white">
+            <h2 className="truncate text-sm font-bold text-ink">
               {displayName}
             </h2>
-            <div className="flex items-center gap-2 text-sm text-slate-400">
+            <div className="flex items-center gap-2 text-xs text-ink-muted">
               {firstBenefit ? (
-                <span className="truncate text-slate-300 font-medium">
+                <span className="truncate text-slate-300 font-medium tabular-nums">
                   <bdi>
                     <IsolatedText text={primaryBenefit(deal, lang)} />
                   </bdi>
                 </span>
               ) : (
-                <span className="truncate text-slate-400">
+                <span className="truncate text-ink-muted">
                   {lang === 'ar' ? 'البطاقة: ' : 'Card: '}
                   {requirementLabel(e.card_required, lang)}
                 </span>
@@ -581,7 +582,7 @@ export default function DealDetailPage({
             <FavoriteButton
               slug={deal.slug}
               dealName={displayName}
-              className="rounded-xl border border-slate-800 bg-slate-900"
+              className="rounded-control border border-line bg-surface-overlay"
             />
 
             {offerUrl ? (
@@ -589,22 +590,22 @@ export default function DealDetailPage({
                 href={offerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-control bg-brand px-3 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-emerald-400 active:scale-95"
+                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-control bg-brand px-3.5 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-emerald-400 active:scale-[0.98]"
               >
                 <bdi>
                   {lang === 'ar'
-                    ? 'الانتقال إلى صفحة العرض الرسمية'
-                    : 'Visit the official offer page'}
+                    ? 'فتح العرض الرسمي'
+                    : 'Official Source'}
                 </bdi>
                 <ExternalLink
-                  className="h-3.5 w-3.5 shrink-0"
+                  className="h-3.5 w-3.5 shrink-0 rtl:-scale-x-100"
                   aria-hidden="true"
                 />
               </a>
             ) : (
               <span
                 aria-disabled="true"
-                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-400"
+                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-1 rounded-control border border-line bg-surface-overlay px-3 py-2 text-xs text-ink-muted"
               >
                 <CircleAlert aria-hidden="true" className="h-4 w-4 shrink-0" />
                 {lang === 'ar'
@@ -624,12 +625,12 @@ export default function DealDetailPage({
 function FactRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 border-b border-line-subtle pb-3">
-      <dt className="text-slate-400">{label}</dt>
+      <dt className="text-xs text-ink-muted uppercase tracking-wider">{label}</dt>
       <dd
         className={`mt-1 font-medium [overflow-wrap:anywhere] ${
           value === 'Unknown' || value === 'غير معلوم'
-            ? 'text-slate-400'
-            : 'text-slate-100'
+            ? 'text-ink-faint'
+            : 'text-ink'
         }`}
       >
         <bdi>
@@ -644,6 +645,7 @@ function ArrowRTL() {
   return (
     <svg
       className="h-4 w-4"
+      aria-hidden="true"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -662,6 +664,7 @@ function ArrowLTR() {
   return (
     <svg
       className="h-4 w-4"
+      aria-hidden="true"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

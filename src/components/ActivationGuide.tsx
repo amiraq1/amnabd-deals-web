@@ -1,4 +1,4 @@
-import { Sparkles, Info, ArrowUpRight, CalendarDays, ExternalLink } from 'lucide-react';
+import { BookOpen, Info, ArrowUpRight, CalendarDays, ExternalLink } from 'lucide-react';
 import type { ReviewedActivationGuide } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { reviewDateLabel } from '@/lib/format';
@@ -29,10 +29,10 @@ function SourceLinks({ sources, lang }: { sources: string[]; lang: 'ar' | 'en' }
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-slate-800 px-2.5 py-1.5 text-xs text-emerald-300 transition-colors hover:bg-slate-700"
+            className="inline-flex max-w-full items-center gap-1.5 rounded-control border border-line bg-surface-overlay px-2.5 py-1 text-xs text-ink-muted transition hover:border-line-subtle hover:text-ink"
           >
             <bdi className="truncate">{label}</bdi>
-            <ExternalLink className="h-3 w-3 shrink-0" />
+            <ExternalLink className="h-3 w-3 shrink-0 rtl:-scale-x-100" aria-hidden="true" />
           </a>
         );
       })}
@@ -48,11 +48,11 @@ export function ActivationGuide({ guide, officialUrl }: ActivationGuideProps) {
     <section
       id="how-to-activate"
       aria-labelledby="activation-guide-title"
-      className="mt-8 scroll-mt-24 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/25 via-slate-900/50 to-slate-900/30 p-6 shadow-lg sm:p-7"
+      className="mt-8 scroll-mt-24 rounded-card border border-line bg-surface-raised p-5 sm:p-7"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-          <Sparkles className="h-3.5 w-3.5" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-overlay px-3 py-1 text-xs font-medium text-ink-muted">
+          <BookOpen className="h-3.5 w-3.5 text-slate-400" />
           <span>{lang === 'ar' ? 'دليل تفعيل مُراجَع' : 'Reviewed Activation Guide'}</span>
         </div>
         {officialUrl && (
@@ -63,13 +63,13 @@ export function ActivationGuide({ guide, officialUrl }: ActivationGuideProps) {
             className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 transition hover:text-emerald-300"
           >
             <span>{lang === 'ar' ? 'صفحة العرض الرسمية' : 'Official offer page'}</span>
-            <ArrowUpRight className="h-3.5 w-3.5" />
+            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 rtl:-scale-x-100" aria-hidden="true" />
           </a>
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-800/80 px-2.5 py-1">
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-overlay px-2.5 py-1">
           {lang === 'ar' ? 'حالة المراجعة' : 'Review status'}:{' '}
           {reviewedWithUnknowns
             ? lang === 'ar'
@@ -80,14 +80,14 @@ export function ActivationGuide({ guide, officialUrl }: ActivationGuideProps) {
               : 'Reviewed against official sources'}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <CalendarDays className="h-3.5 w-3.5" />
-          {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed'}: <bdi>{reviewDateLabel(guide.reviewed_on, lang)}</bdi>
+          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+          {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed'}: <bdi className="tabular-nums">{reviewDateLabel(guide.reviewed_on, lang)}</bdi>
         </span>
       </div>
 
       <h2
         id="activation-guide-title"
-        className="font-heading mt-3 text-lg font-bold text-white sm:text-xl"
+        className="font-heading mt-4 text-lg font-bold text-ink sm:text-xl"
       >
         {lang === 'ar' ? 'كيف تحصل على هذا العرض وتفعّله؟' : 'How to Claim & Activate This Deal?'}
       </h2>
@@ -99,20 +99,20 @@ export function ActivationGuide({ guide, officialUrl }: ActivationGuideProps) {
         {guide.steps.map((step, idx) => (
           <div
             key={`${idx}-${step.sources[0]}`}
-            className="flex items-start gap-3 rounded-xl border border-slate-800/80 bg-slate-900/60 p-3.5 transition hover:border-slate-700/80 sm:gap-4"
+            className="flex items-start gap-3 rounded-card border border-line bg-surface-overlay p-3.5 sm:p-4 sm:gap-4 transition hover:border-line-subtle"
           >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-xs font-bold text-emerald-300">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-control bg-brand/15 text-xs font-bold font-mono tabular-nums text-brand">
               {idx + 1}
             </span>
-            <div className="min-w-0">
-              <p className="pt-0.5 text-xs leading-relaxed text-slate-200 sm:text-sm">{step[lang]}</p>
+            <div className="min-w-0 flex-1">
+              <p className="pt-0.5 text-xs sm:text-sm leading-relaxed text-ink">{step[lang]}</p>
               <SourceLinks sources={step.sources} lang={lang} />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-950/20 p-3.5 text-xs leading-relaxed text-amber-200/90">
+      <div className="mt-5 flex items-start gap-2.5 rounded-card border border-amber-500/30 bg-amber-500/10 p-3.5 sm:p-4 text-xs leading-relaxed text-amber-200/90">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
         <div>
           <strong className="font-semibold text-amber-300">

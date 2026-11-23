@@ -3,10 +3,14 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      borderRadius: { card: '1rem', control: '0.75rem' },
-      spacing: { section: '2rem', card: '1.25rem' },
+      borderRadius: { card: '0.75rem', control: '0.5rem' },
+      spacing: { section: '2.5rem', card: '1.25rem' },
       colors: {
-        ink: { DEFAULT: '#f8fafc', secondary: '#cbd5e1', muted: '#94a3b8' },
+        ink: {
+          DEFAULT: '#f5f5f4', // Warm white (Stone-100)
+          secondary: '#a8a29e', // Stone-400
+          muted: '#94a3b8', // AA compliant against raised surface (7.18:1)
+        },
         identity: {
           0: { ink: '#a7f3d0', surface: '#064e3b', line: '#047857' },
           1: { ink: '#bae6fd', surface: '#0c4a6e', line: '#0369a1' },
@@ -15,28 +19,46 @@ export default {
           4: { ink: '#fecdd3', surface: '#881337', line: '#9f1239' },
           5: { ink: '#cbd5e1', surface: '#1e293b', line: '#475569' },
         },
-        line: { DEFAULT: '#334155', subtle: '#1e293b', control: '#64748b' },
+        line: {
+          DEFAULT: '#242422', // Subtle warm charcoal border
+          subtle: '#1a1a18',
+          control: '#64748b', // AA non-text contrast >= 3:1 against bg & raised
+        },
         surface: {
-          DEFAULT: '#020617',
-          raised: '#0f172a',
-          overlay: '#1e293b',
+          DEFAULT: '#0b0b0a', // Editorial warm charcoal canvas
+          raised: '#141413', // Elevated editorial surface
+          overlay: '#1e1e1d', // Top overlays / menus
         },
         brand: {
-          DEFAULT: '#10b981',
+          DEFAULT: '#10b981', // Emerald-500 reserved for verified badges & affirmative actions
           soft: '#34d399',
           dim: '#059669',
         },
         gold: {
-          DEFAULT: '#f59e0b',
-          soft: '#fbbf24',
-          dim: '#d97706',
+          DEFAULT: '#d97706', // Reserved for alerts & deadlines
+          soft: '#f59e0b',
+          dim: '#b45309',
         },
       },
       fontFamily: {
         sans: [
+          'IBM Plex Sans Arabic',
+          'Readex Pro',
           'system-ui',
           '-apple-system',
           'BlinkMacSystemFont',
+          'Segoe UI Arabic',
+          'Segoe UI',
+          'Arial',
+          'sans-serif',
+        ],
+        heading: [
+          'IBM Plex Sans Arabic',
+          'Readex Pro',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI Arabic',
           'Segoe UI',
           'Arial',
           'sans-serif',
