@@ -8,7 +8,7 @@ import {
   MessageSquare,
   Tag,
   X,
-  Sparkles,
+  Layers,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -32,7 +32,7 @@ const translations = {
     guide: 'الدليل',
     aiModels: 'نماذج AI',
     sms: 'أرقام SMS',
-    changelog: 'المراجعات',
+    changelog: 'سجل المراجعات',
     savedDeals: 'عروض محفوظة',
     switchLang: 'EN — التبديل إلى الإنجليزية',
     openMenu: 'فتح القائمة',
@@ -82,7 +82,7 @@ const navItems: readonly NavItem[] = [
   },
   {
     key: 'aiModels',
-    icon: Sparkles,
+    icon: Layers,
     routeTarget: { name: 'aiModelsDirectory' },
     path: '/free-ai-models-directory',
   },
@@ -101,15 +101,15 @@ const navItems: readonly NavItem[] = [
 ] as const;
 
 const focusRing =
-  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400';
-const baseLink = `flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${focusRing}`;
-const idleLink = 'text-slate-300 hover:bg-slate-800 hover:text-slate-100';
-const activeLink = 'bg-slate-800 text-slate-100 font-semibold';
+  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500';
+const baseLink = `flex min-h-11 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${focusRing}`;
+const idleLink = 'text-stone-300 hover:bg-[#181816] hover:text-stone-100';
+const activeLink = 'bg-[#181816] text-white border border-[#2E2E2A] font-semibold';
 
 function CountBadge({ count, label }: { count: number; label: string }) {
   if (count <= 0) return null;
   return (
-    <span className="ms-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-emerald-500/20 px-1.5 text-sm font-bold text-emerald-300">
+    <span className="ms-1.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-1.5 text-xs font-semibold tabular-nums text-emerald-400">
       {count}
       <span className="sr-only"> {label}</span>
     </span>
@@ -178,18 +178,18 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
-      <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-x-2 gap-y-1 px-4 py-2 sm:px-6">
-        {/* الشعار */}
+    <header className="sticky top-0 z-40 border-b border-[#242422] bg-[#0B0B0A]/90 backdrop-blur-md">
+      <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 sm:px-6">
+        {/* الشعار التحريري النقي */}
         <a
           href={localizedPath('/')}
           onClick={(e) => go(e, { name: 'home' })}
-          className={`flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg ${focusRing}`}
+          className={`group flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg ${focusRing}`}
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-700">
-            <Sparkles className="h-4 w-4 text-white" aria-hidden="true" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#2E2E2A] bg-[#141413] text-xs font-bold text-stone-100 transition-colors group-hover:border-emerald-500/50 group-hover:text-emerald-400">
+            {lang === 'ar' ? 'ن' : 'N'}
           </span>
-          <span className="truncate font-heading text-xl font-bold tracking-tight text-slate-100">
+          <span className="truncate font-heading text-lg font-bold tracking-tight text-stone-100">
             {t.brand}
           </span>
         </a>
@@ -210,7 +210,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
                 className={`${baseLink} ${active ? activeLink : idleLink}`}
               >
                 {key !== 'offers' && (
-                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <Icon className="h-4 w-4 shrink-0 text-stone-400" aria-hidden="true" />
                 )}
                 <span>{t[key]}</span>
                 {key === 'favorites' && (
@@ -221,15 +221,15 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
           })}
         </nav>
 
-        {/* الإجراءات */}
+        {/* الإجراءات الجانبية */}
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={onLangToggle}
-            className={`flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg border border-slate-700 bg-slate-800/60 px-2.5 py-1.5 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:text-slate-100 ${focusRing}`}
+            className={`flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg border border-[#2E2E2A] bg-[#141413] px-2.5 py-1.5 text-sm font-medium text-stone-300 transition-colors hover:border-[#3E3E38] hover:text-stone-100 ${focusRing}`}
             aria-label={t.switchLang}
           >
-            <Globe className="h-3.5 w-3.5" aria-hidden="true" />
+            <Globe className="h-3.5 w-3.5 text-stone-400" aria-hidden="true" />
             <span>{t.langButton}</span>
           </button>
 
@@ -238,7 +238,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
             type="button"
             ref={menuButtonRef}
             onClick={() => setMenuOpen((open) => !open)}
-            className={`relative flex h-11 w-11 items-center justify-center rounded-lg p-2 text-slate-300 transition hover:bg-slate-800 hover:text-slate-100 sm:hidden ${focusRing}`}
+            className={`relative flex h-11 w-11 items-center justify-center rounded-lg border border-[#2E2E2A] bg-[#141413] p-2 text-stone-300 transition-colors hover:bg-[#1E1E1D] hover:text-stone-100 sm:hidden ${focusRing}`}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
             aria-label={menuOpen ? t.closeMenu : t.openMenu}
@@ -250,7 +250,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
             )}
             {!menuOpen && count > 0 && (
               <span
-                className="absolute -top-0.5 -end-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500"
+                className="absolute end-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-400"
                 aria-hidden="true"
               />
             )}
@@ -263,7 +263,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
         <nav
           id="mobile-menu"
           aria-label={t.mainNav}
-          className="border-t border-slate-800 bg-slate-950/95 px-4 py-3 sm:hidden"
+          className="border-t border-[#242422] bg-[#0E0E0D]/95 px-4 py-3 backdrop-blur-md sm:hidden"
         >
           <ul className="flex flex-col gap-1">
             {navItems.map(({ routeTarget, key, icon: Icon, path }) => {
@@ -278,7 +278,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
                       active ? activeLink : idleLink
                     }`}
                   >
-                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    <Icon className="h-4 w-4 shrink-0 text-stone-400" aria-hidden="true" />
                     <span>{t[key]}</span>
                     {key === 'favorites' && (
                       <CountBadge count={count} label={t.savedDeals} />

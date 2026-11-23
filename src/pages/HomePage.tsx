@@ -8,7 +8,7 @@ import {
   Share2,
   Check,
   Bookmark,
-  Sparkles,
+  Layers,
   Clock,
   GraduationCap,
   CreditCard,
@@ -703,11 +703,11 @@ export default function HomePage({
   }
 
   const categoryButtonBase =
-    'inline-flex items-center gap-1.5 min-h-11 shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors';
+    'inline-flex items-center gap-1.5 min-h-11 shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors tabular-nums';
   const categoryIdle =
-    'border border-slate-800 bg-surface-raised text-slate-400 hover:border-slate-700 hover:text-slate-200';
+    'border border-[#242422] bg-[#141413] text-stone-300 hover:border-[#383835] hover:text-white';
   const categoryActive =
-    'border border-brand bg-brand text-slate-950 font-semibold';
+    'border border-[#2E2E2A] bg-[#1E1E1D] text-stone-100 font-semibold';
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-8 pt-6 sm:px-6">
@@ -855,7 +855,7 @@ export default function HomePage({
 
       {/* 1. Hero Section with Interactive Prompts & Stats */}
       <section className="animate-fade-up">
-        <div className="discovery-hero relative grid gap-6 overflow-hidden rounded-card border border-emerald-500/20 bg-surface-raised p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-10">
+        <div className="discovery-hero relative grid gap-6 overflow-hidden rounded-card border border-[#242422] bg-surface-raised p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-10">
           <div className="relative min-w-0">
             <h1 className="font-heading text-2xl font-extrabold leading-tight text-white sm:text-3xl">
               {pick({
@@ -879,13 +879,13 @@ export default function HomePage({
             </p>
 
             <div className="mt-3.5 flex flex-wrap items-center gap-3 text-sm text-slate-300">
-              <span className="flex items-center gap-1.5 font-medium text-emerald-400">
+              <span className="flex items-center gap-1.5 font-medium tabular-nums text-emerald-400">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 {activeCountLabel}
               </span>
               {daysSinceLastReview !== null && (
-                <span className="hidden items-center gap-1 rounded-lg border border-slate-800 bg-surface-raised px-2.5 py-1 text-slate-400 sm:inline-flex">
-                  <Clock className="h-3 w-3 text-slate-400" />
+                <span className="hidden items-center gap-1 rounded-lg border border-[#242422] bg-[#141413] px-2.5 py-1 text-xs tabular-nums text-stone-400 sm:inline-flex">
+                  <Clock className="h-3 w-3 text-stone-400" />
                   {lang === 'ar'
                     ? daysSinceLastReview === 0
                       ? 'آخر تدقيق وتحديث اليوم'
@@ -907,19 +907,19 @@ export default function HomePage({
                     target.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-base font-bold text-slate-950 transition hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-brand/40 shadow-sm"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-[#2E2E2A] bg-[#1E1E1D] px-5 py-2.5 text-sm font-semibold text-stone-100 transition-colors hover:border-[#383835] hover:bg-[#282824] hover:text-white"
               >
-                <span>{ctaButtonLabel}</span>
-                <ArrowDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="tabular-nums">{ctaButtonLabel}</span>
+                <ArrowDown className="h-4 w-4 shrink-0 text-stone-400" aria-hidden="true" />
               </a>
             </div>
 
-            {/* Interactive "What do you want to build?" Use-Case Prompt */}
+            {/* Interactive Use-Case Prompt */}
             {useCaseOptions.length > 0 && (
-              <div className="mt-5 border-t border-line pt-4">
+              <div className="mt-5 border-t border-[#242422] pt-4">
                 <div className="mb-2.5 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-300 flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-stone-300">
+                    <Layers className="h-3.5 w-3.5 text-stone-400" />
                     {lang === 'ar'
                       ? 'ماذا تريد أن تبني؟'
                       : 'What are you building?'}
@@ -928,7 +928,7 @@ export default function HomePage({
                     <button
                       type="button"
                       onClick={() => onFilterChange({ useCases: [] }, 'push')}
-                      className="min-h-11 text-sm text-slate-400 transition hover:text-emerald-400"
+                      className="min-h-11 text-xs text-stone-400 transition-colors hover:text-stone-200"
                     >
                       {lang === 'ar'
                         ? `مسح الاختيار (${selectedUseCases.length})`
@@ -945,10 +945,10 @@ export default function HomePage({
                         type="button"
                         aria-pressed={isSelected}
                         onClick={() => toggleUseCase(uc.value)}
-                        className={`min-h-11 rounded-full border px-3 py-1.5 text-sm font-medium transition-[colors,transform] duration-150 active:scale-[0.95] ${
+                        className={`min-h-11 rounded-full border px-3 py-1.5 text-xs sm:text-sm font-medium transition-[colors,transform] duration-150 active:scale-[0.95] tabular-nums ${
                           isSelected
-                            ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300 font-semibold  '
-                            : 'border-slate-800 bg-surface-raised text-slate-300 hover:border-slate-700 hover:text-white'
+                            ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 font-semibold'
+                            : 'border-[#242422] bg-[#141413] text-stone-300 hover:border-[#383835] hover:text-white'
                         }`}
                       >
                         <span>{uc.label}</span>
@@ -960,11 +960,11 @@ export default function HomePage({
               </div>
             )}
           </div>
-          <div className="relative min-w-0 rounded-2xl border border-slate-700/50 bg-surface p-3 sm:p-4">
+          <div className="relative min-w-0 rounded-xl border border-[#242422] bg-[#0E0E0D] p-3 sm:p-4">
             <h2 className="px-1 text-sm font-semibold text-white">
               {lang === 'ar' ? 'ابدأ بما يناسبك' : 'Find your starting point'}
             </h2>
-            <p className="mb-3 mt-1 hidden px-1 text-sm leading-relaxed text-slate-400 sm:block">
+            <p className="mb-3 mt-1 hidden px-1 text-xs leading-relaxed text-stone-400 sm:block">
               {lang === 'ar'
                 ? 'اختصارات لتصفية العروض حسب احتياجك'
                 : 'Quick paths to offers that fit your needs'}
@@ -991,19 +991,19 @@ export default function HomePage({
                     aria-pressed={qf.isActive}
                     disabled={qf.count === 0 && !qf.isActive}
                     onClick={qf.onToggle}
-                    className={`discovery-path relative flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-start transition-[colors,transform] duration-150 active:scale-[0.98] lg:gap-3 lg:p-3 ${
+                    className={`discovery-path relative flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-start transition-[colors,transform] duration-150 active:scale-[0.98] lg:gap-3 lg:p-3 ${
                       qf.isActive
-                        ? 'border-emerald-400/60 bg-emerald-500/10 text-emerald-200'
-                        : 'border-slate-800 bg-surface-raised text-slate-200 hover:border-emerald-500/40 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40'
+                        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 font-medium'
+                        : 'border-[#242422] bg-[#141413] text-stone-200 hover:border-[#383835] hover:bg-[#1A1A18] disabled:cursor-not-allowed disabled:opacity-40'
                     }`}
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-emerald-300 lg:h-9 lg:w-9 lg:border lg:border-emerald-400/10 lg:bg-emerald-400/5">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[#242422] bg-[#1E1E1D] text-stone-300 lg:h-8 lg:w-8">
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="min-w-0 flex-1 text-sm font-semibold">
+                    <span className="min-w-0 flex-1 text-xs sm:text-sm font-semibold">
                       {qf.label}
                     </span>
-                    <span className="rounded-md bg-slate-950/60 px-2 py-1 text-sm tabular-nums text-slate-300">
+                    <span className="rounded border border-[#242422] bg-[#0B0B0A] px-2 py-0.5 text-xs tabular-nums text-stone-300">
                       {qf.count}
                     </span>
                     {qf.isActive ? (
@@ -1013,7 +1013,7 @@ export default function HomePage({
                       />
                     ) : (
                       <Arrow
-                        className="hidden h-3.5 w-3.5 shrink-0 text-slate-500 lg:block"
+                        className="hidden h-3.5 w-3.5 shrink-0 text-stone-500 lg:block"
                         aria-hidden="true"
                       />
                     )}
@@ -1050,10 +1050,10 @@ export default function HomePage({
       )}
 
       {/* 2. شريط لاصق بصف واحد: البحث والمشاركة والفلاتر */}
-      <section className="relative -mx-4 mt-6 border-b border-line bg-slate-950/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
+      <section className="relative -mx-4 mt-6 border-b border-[#242422] bg-[#0B0B0A]/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 start-3.5" />
+            <Search className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500 start-3.5" />
             <input
               type="search"
               value={qDraft}
@@ -1069,7 +1069,7 @@ export default function HomePage({
                   ? 'ابحث بالاسم، الوصف، المنافع أو الفئات...'
                   : 'Search by name, description, benefits or categories...'
               }
-              className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-3 pe-10 ps-11 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-control border border-[#242422] bg-[#141413] py-2.5 pe-10 ps-10 text-sm text-stone-100 placeholder-stone-500 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               aria-label={lang === 'ar' ? 'بحث في العروض' : 'Search deals'}
             />
             {qDraft && (
@@ -1080,7 +1080,7 @@ export default function HomePage({
                   setQDraft('');
                   onFilterChange({ q: '' }, 'replace');
                 }}
-                className="absolute top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full text-slate-400 transition-colors hover:text-slate-300 end-3"
+                className="absolute top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full text-stone-400 transition-colors hover:text-stone-200 end-2"
                 aria-label={lang === 'ar' ? 'مسح البحث' : 'Clear search'}
               >
                 <X className="h-4 w-4" />
@@ -1092,7 +1092,7 @@ export default function HomePage({
             type="button"
             onClick={handleCopySearchLink}
             disabled={copyStatus === 'copying'}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-3 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-500/50 hover:text-emerald-300 sm:px-4"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-control border border-[#242422] bg-[#141413] px-3 py-2.5 text-sm font-medium text-stone-300 transition-colors hover:border-[#383835] hover:text-white sm:px-4"
             title={
               lang === 'ar'
                 ? 'نسخ رابط البحث المفلتر'
@@ -1103,7 +1103,7 @@ export default function HomePage({
             {copyStatus === 'success' ? (
               <Check className="h-4 w-4 text-emerald-400 transition-opacity duration-150" />
             ) : (
-              <Share2 className="h-4 w-4 transition-opacity duration-150" />
+              <Share2 className="h-4 w-4 text-stone-400 transition-opacity duration-150" />
             )}
             <span className="hidden sm:inline">
               {copyStatus === 'success'
@@ -1122,13 +1122,13 @@ export default function HomePage({
             aria-expanded={showFilters}
             aria-controls="home-filter-panel"
             aria-label={lang === 'ar' ? 'تصفية وترتيب' : 'Filters & Sort'}
-            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-medium transition-colors sm:px-4 ${
+            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-control border px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 ${
               hasAnyActiveFilter
                 ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
-                : 'border-slate-700 bg-slate-900/80 text-slate-300 hover:border-slate-600'
+                : 'border-[#242422] bg-[#141413] text-stone-300 hover:border-[#383835]'
             }`}
           >
-            <SlidersHorizontal className="h-4 w-4" />
+            <SlidersHorizontal className="h-4 w-4 text-stone-400" />
             <span className="hidden sm:inline">
               {lang === 'ar' ? 'تصفية وترتيب' : 'Filters & Sort'}
             </span>
@@ -1138,12 +1138,12 @@ export default function HomePage({
         {showFilters && (
           <div
             id="home-filter-panel"
-            className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-slate-800 bg-surface-raised p-4"
+            className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-[#242422] bg-[#141413] p-4"
           >
             <div className="flex items-center gap-2">
               <label
                 htmlFor="applicant-select"
-                className="text-sm text-slate-400"
+                className="text-xs font-medium uppercase tracking-wider text-stone-400"
               >
                 {lang === 'ar' ? 'فئة المتقدم:' : 'Applicant:'}
               </label>
@@ -1158,7 +1158,7 @@ export default function HomePage({
                     'push',
                   )
                 }
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="rounded-lg border border-[#2E2E2A] bg-[#1E1E1D] px-3 py-1.5 text-sm font-medium text-stone-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               >
                 <option value="all">{lang === 'ar' ? 'الكل' : 'All'}</option>
                 <option value="student">
@@ -1173,7 +1173,7 @@ export default function HomePage({
             </div>
 
             <div className="flex items-center gap-2">
-              <label htmlFor="card-select" className="text-sm text-slate-400">
+              <label htmlFor="card-select" className="text-xs font-medium uppercase tracking-wider text-stone-400">
                 {lang === 'ar' ? 'البطاقة:' : 'Card:'}
               </label>
               <select
@@ -1187,7 +1187,7 @@ export default function HomePage({
                     'push',
                   )
                 }
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="rounded-lg border border-[#2E2E2A] bg-[#1E1E1D] px-3 py-1.5 text-sm font-medium text-stone-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               >
                 <option value="all">{lang === 'ar' ? 'الكل' : 'All'}</option>
                 <option value="not_required">
@@ -1197,7 +1197,7 @@ export default function HomePage({
             </div>
 
             <div className="flex min-w-[13rem] flex-1 flex-wrap items-center gap-2">
-              <label htmlFor="country-input" className="text-sm text-slate-400">
+              <label htmlFor="country-input" className="text-xs font-medium uppercase tracking-wider text-stone-400">
                 {lang === 'ar'
                   ? 'البلد (اختيار يدوي):'
                   : 'Country (choose manually):'}
@@ -1215,7 +1215,7 @@ export default function HomePage({
                 }
                 placeholder={lang === 'ar' ? 'مثال: العراق' : 'Example: Iraq'}
                 aria-describedby="country-evidence-note"
-                className="min-w-36 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="min-w-36 flex-1 rounded-lg border border-[#2E2E2A] bg-[#1E1E1D] px-3 py-1.5 text-sm text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               />
               <datalist id="recorded-country-options">
                 {countryOptions.map((country) => (
@@ -1238,7 +1238,7 @@ export default function HomePage({
                 aria-label={
                   lang === 'ar' ? 'حالة توفر البلد' : 'Country evidence status'
                 }
-                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-[#2E2E2A] bg-[#1E1E1D] px-3 py-1.5 text-sm font-medium text-stone-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="all">
                   {lang === 'ar' ? 'كل الحالات' : 'All states'}
@@ -1257,7 +1257,7 @@ export default function HomePage({
               </select>
               <p
                 id="country-evidence-note"
-                className="basis-full text-sm leading-relaxed text-slate-400"
+                className="basis-full text-xs leading-relaxed text-stone-400"
               >
                 {lang === 'ar'
                   ? 'يعتمد التصنيف على حقل بلد ومصدر رسمي مُراجع فقط. غياب قيود البلدان لا يعني أن العرض متاح عالميًا؛ وما لا يثبته المصدر يبقى غير معلوم.'
@@ -1269,7 +1269,7 @@ export default function HomePage({
               <button
                 type="button"
                 onClick={handleResetAll}
-                className="ms-auto text-sm font-medium text-slate-400 underline-offset-4 transition-colors hover:text-white hover:underline"
+                className="ms-auto text-xs font-semibold text-stone-400 underline-offset-4 transition-colors hover:text-white hover:underline"
               >
                 {lang === 'ar' ? 'مسح كل الفلاتر' : 'Clear all filters'}
               </button>
@@ -1454,8 +1454,8 @@ export default function HomePage({
         <section className="mt-section">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-emerald-400" />
-              <h2 className="text-sm font-bold text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
+              <h2 className="text-sm font-bold text-stone-100">
                 {lang === 'ar' ? 'أحدث العروض المضافة' : 'Newest additions'}
               </h2>
             </div>
@@ -1550,11 +1550,11 @@ export default function HomePage({
         </div>
 
         {sorted.length === 0 ? (
-          <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 py-14 px-4 text-center">
-            <Inbox className="h-10 w-10 text-slate-600" />
+          <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-[#242422] bg-[#141413] py-14 px-4 text-center">
+            <Inbox className="h-10 w-10 text-stone-600" />
             {savedOnly && validSavedCount === 0 ? (
               <>
-                <p className="max-w-md text-sm text-slate-300">
+                <p className="max-w-md text-sm text-stone-300">
                   {lang === 'ar'
                     ? 'لم تقم بحفظ أي عروض بعد. اضغط على أيقونة الإشارة المرجعية في بطاقة أي عرض لحفظه هنا والرجوع إليه بسرعة.'
                     : 'No saved deals yet. Click the bookmark icon on any deal card to save it here for quick access.'}
@@ -1562,14 +1562,14 @@ export default function HomePage({
                 <button
                   type="button"
                   onClick={handleResetAll}
-                  className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
+                  className="mt-3 rounded-control border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/20"
                 >
                   {lang === 'ar' ? 'استكشاف كل العروض' : 'Explore all deals'}
                 </button>
               </>
             ) : (
               <>
-                <p className="text-base font-medium text-slate-200">
+                <p className="text-base font-medium text-stone-200">
                   {deals.length === 0
                     ? lang === 'ar'
                       ? 'لا توجد عروض لعرضها حالياً'
@@ -1578,7 +1578,7 @@ export default function HomePage({
                       ? 'لا توجد عروض تطابق الفلاتر المحددة حالياً'
                       : 'No deals match your current filters.'}
                 </p>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-stone-400">
                   {deals.length === 0
                     ? lang === 'ar'
                       ? 'سيظهر هنا ما يُضاف إلى الدليل من عروض ومصادر.'
@@ -1592,7 +1592,7 @@ export default function HomePage({
                     <button
                       type="button"
                       onClick={mostRestrictiveFilter.clear}
-                      className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/25  "
+                      className="rounded-control border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-xs sm:text-sm font-semibold tabular-nums text-emerald-300 transition-colors hover:bg-emerald-500/25"
                     >
                       {lang === 'ar'
                         ? `إزالة فلتر «${mostRestrictiveFilter.label}» (سيُظهر ${mostRestrictiveFilter.count} عروض)`
@@ -1603,7 +1603,7 @@ export default function HomePage({
                     <button
                       type="button"
                       onClick={handleResetAll}
-                      className="rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-500"
+                      className="rounded-control border border-[#2E2E2A] bg-[#1E1E1D] px-4 py-2 text-xs sm:text-sm font-medium text-stone-300 transition-colors hover:border-[#383835] hover:text-white"
                     >
                       {lang === 'ar'
                         ? 'إزالة جميع الفلاتر'

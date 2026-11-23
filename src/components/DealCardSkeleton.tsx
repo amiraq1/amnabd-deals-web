@@ -4,34 +4,43 @@ export default function DealCardSkeleton() {
       aria-hidden="true"
       className="flex h-full min-w-0 flex-col rounded-card border border-line bg-surface-raised p-5"
     >
-      <div className="flex gap-3">
-        <div className="skeleton h-12 w-12 shrink-0" />
+      {/* Header: Monogram + Title */}
+      <div className="flex items-start gap-3">
+        <div className="skeleton h-11 w-11 shrink-0 rounded-lg" />
         <div className="flex-1 space-y-2">
-          <div className="skeleton h-6" />
-          <div className="skeleton h-5 w-2/3" />
+          <div className="skeleton h-5 w-3/4 rounded-md" />
+          <div className="skeleton h-4 w-1/3 rounded-md" />
         </div>
       </div>
-      <div className="mt-4 space-y-3 border-t border-line-subtle pt-4">
-        <div className="skeleton h-5 w-1/2" />
-        <div className="skeleton h-[4.5rem]" />
-        <div className="skeleton h-[4.5rem]" />
-        <div className="skeleton h-6 w-2/3" />
+
+      {/* Core Benefit & Description */}
+      <div className="my-4 space-y-2">
+        <div className="skeleton h-3 w-1/4 rounded" />
+        <div className="skeleton h-6 w-4/5 rounded-md" />
+        <div className="skeleton h-4 w-full rounded" />
       </div>
-      <div className="mt-4 space-y-3 border-t border-line-subtle pt-4">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="skeleton h-7" />
-        ))}
+
+      {/* Structured Facts Grid */}
+      <div className="border-t border-line-subtle pt-3.5">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="skeleton h-7 rounded-md" />
+          <div className="skeleton h-7 rounded-md" />
+          <div className="skeleton h-7 rounded-md" />
+          <div className="skeleton h-7 rounded-md" />
+        </div>
       </div>
-      <div className="mt-auto pt-5">
-        <div className="skeleton h-20" />
+
+      {/* Evidence Badge */}
+      <div className="mt-auto pt-3">
+        <div className="skeleton h-12 w-full rounded-lg" />
       </div>
-      <div className="mt-4 flex gap-2 border-t border-line-subtle pt-4">
-        <div className="skeleton h-11 flex-1" />
-        <div className="skeleton h-11 w-11" />
-      </div>
-      <div className="mt-2 flex justify-between gap-2">
-        <div className="skeleton h-11 w-1/2" />
-        <div className="skeleton h-11 w-1/3" />
+
+      {/* Action Footer */}
+      <div className="mt-3 border-t border-line-subtle pt-3">
+        <div className="flex gap-2">
+          <div className="skeleton h-11 flex-1 rounded-control" />
+          <div className="skeleton h-11 w-11 rounded-control" />
+        </div>
       </div>
     </div>
   );
