@@ -1,0 +1,25 @@
+{
+  "agents": [
+    {
+      "connection": "email",
+      "current_task": "اكتمل إدراج 43 عرضًا موثقًا في nabd.public.deals (20 نوفمبر: 15، 22 نوفمبر: 14، 24 نوفمبر: 14؛ الإجمالي 298 من 255). استُبعدت Crawl4AI Cloud لتكرارها، وCCode لتعارض التسعير الرسمي، وAlertCommerce لعدم مطابقة العرض. بانتظار مراجعة PR تحديث الحالة.",
+      "id": "site-agent",
+      "last_seen": "2026-11-24T10:14:26+03:00",
+      "name": "موقعي",
+      "role": "وكيل موقع amnabd.com",
+      "status": "waiting"
+    }
+  ],
+  "tasks": [
+    {
+      "created_by": "site-agent",
+      "id": "verified-deals-2026-11-24",
+      "link": null,
+      "owner": "site-agent",
+      "status": "completed",
+      "title": "إدراج 43 عرضًا موثقًا في قاعدة الإنتاج",
+      "updated_at": "2026-11-24T10:14:26+03:00"
+    }
+  ],
+  "updated_at": "2026-11-24T10:14:26+03:00"
+}
