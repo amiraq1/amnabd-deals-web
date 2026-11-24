@@ -4,6 +4,10 @@ export default {
   theme: {
     extend: {
       borderRadius: { card: '0.75rem', control: '0.5rem' },
+      boxShadow: {
+        card: 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
+      },
       spacing: { section: '2.5rem', card: '1.25rem' },
       colors: {
         ink: {
@@ -21,12 +25,16 @@ export default {
         },
         line: {
           DEFAULT: '#242422', // Subtle warm charcoal border
+          card: 'var(--border, rgba(148, 163, 184, 0.23))', // Card border
+          'card-hover': 'var(--border-hover, rgba(148, 163, 184, 0.35))',
           subtle: '#1a1a18',
           hover: '#383835', // Interactive hover border
           control: '#64748b', // AA non-text contrast >= 3:1 against bg & raised
         },
         surface: {
           DEFAULT: '#0b0b0a', // Editorial warm charcoal canvas
+          card: 'var(--surface-1, #12242a)', // Elevated card surface (1.23:1 vs #0b0b0a)
+          'card-inner': 'var(--surface-2, rgba(255, 255, 255, 0.04))', // Inner section/facts
           raised: '#141413', // Elevated editorial surface
           overlay: '#1e1e1d', // Top overlays / menus / buttons
         },

@@ -2,7 +2,7 @@ export default function DealCardSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="flex h-full min-w-0 flex-col rounded-card border border-line bg-surface-raised p-5"
+      className="flex h-full min-w-0 flex-col rounded-card border border-line-card bg-surface-card shadow-card p-5"
     >
       {/* Header: Monogram + Title */}
       <div className="flex items-start gap-3">
