@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import {
   SMS_SUPPLIERS,
@@ -51,16 +52,16 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
   const sourceResult = getListedSourceUrl(supplier);
 
   return (
-    <article className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5">
+    <article className="rounded-card border border-line bg-surface-raised p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="break-words font-heading text-lg font-bold text-white">{supplier.name}</h3>
-          <p className="mt-1 break-all text-sm text-slate-400"><bdi dir="ltr">{supplier.domain}</bdi></p>
+          <h3 className="break-words font-heading text-lg font-bold text-stone-100">{supplier.name}</h3>
+          <p className="mt-1 break-all font-mono text-sm text-stone-400"><bdi dir="ltr">{supplier.domain}</bdi></p>
         </div>
-        <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+        <span className={`rounded-md border px-2.5 py-0.5 text-xs font-medium ${
           isOfficial
-            ? 'border-slate-700 bg-slate-800 text-slate-200'
-            : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+            ? 'border-line bg-surface text-stone-300'
+            : 'border-amber-500/30 bg-surface text-amber-200'
         }`}>
           {statusText}
         </span>
@@ -68,7 +69,7 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
 
       <div className="mt-4 flex flex-wrap gap-2" aria-label={lang === 'ar' ? 'تصنيف الخدمة' : 'Service categories'}>
         {supplier.serviceTypes.map((type) => (
-          <span key={type} className="rounded-full border border-slate-700/80 px-2.5 py-1 text-xs text-slate-300">
+          <span key={type} className="rounded-md border border-line bg-surface px-2.5 py-0.5 text-xs font-medium text-stone-300">
             {serviceLabels[type][lang]}
           </span>
         ))}
@@ -76,12 +77,12 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
 
       <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
         <div>
-          <dt className="font-semibold text-slate-400">{lang === 'ar' ? 'الخصوصية كما وردت' : 'Privacy as supplied'}</dt>
-          <dd className="mt-1 text-slate-200">{privacyLabels[supplier.privacy][lang]}</dd>
+          <dt className="font-semibold text-stone-400">{lang === 'ar' ? 'الخصوصية كما وردت' : 'Privacy as supplied'}</dt>
+          <dd className="mt-1 text-stone-200">{privacyLabels[supplier.privacy][lang]}</dd>
         </div>
         <div>
-          <dt className="font-semibold text-slate-400">{lang === 'ar' ? 'دعم API كما ورد' : 'API support as supplied'}</dt>
-          <dd className="mt-1 text-slate-200">
+          <dt className="font-semibold text-stone-400">{lang === 'ar' ? 'دعم API كما ورد' : 'API support as supplied'}</dt>
+          <dd className="mt-1 text-stone-200">
             {supplier.apiSupport === 'yes'
               ? lang === 'ar' ? 'مذكور في الملف' : 'Listed in the file'
               : lang === 'ar' ? 'غير معلوم في الملف' : 'Not stated in the file'}
@@ -89,20 +90,21 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
         </div>
       </dl>
 
-      <p className="mt-3 text-xs text-slate-400">{lang === 'ar' ? 'آخر تحقق مستقل مسجّل: ' : 'Last recorded independent check: '}{supplier.lastCheckedAt ?? (lang === 'ar' ? 'غير معلوم' : 'Unknown')}</p>
-      {supplier.serviceTypes.includes('messaging') && <p className="mt-2 text-xs font-medium text-blue-200">{lang === 'ar' ? 'خدمة إرسال تجارية؛ ليست بالضرورة صندوق استقبال عامًا.' : 'Commercial messaging service; not necessarily a public inbox.'}</p>}
+      <p className="mt-3 text-xs tabular-nums text-stone-400">{lang === 'ar' ? 'آخر تحقق مستقل مسجّل: ' : 'Last recorded independent check: '}{supplier.lastCheckedAt ?? (lang === 'ar' ? 'غير معلوم' : 'Unknown')}</p>
+      {supplier.serviceTypes.includes('messaging') && <p className="mt-2 text-xs font-medium text-sky-300/90">{lang === 'ar' ? 'خدمة إرسال تجارية؛ ليست بالضرورة صندوق استقبال عامًا.' : 'Commercial messaging service; not necessarily a public inbox.'}</p>}
       {sourceResult.ok ? (
         <a
           href={sourceResult.url}
           target="_blank"
           rel="noopener noreferrer nofollow"
-          className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 text-sm font-semibold text-emerald-200 underline-offset-4 hover:border-emerald-400/50 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+          className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-stone-200 underline-offset-4 transition-colors hover:border-line-hover hover:text-stone-100 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          {lang === 'ar' ? 'فتح الرابط المدرج' : 'Open listed link'}
+          <span>{lang === 'ar' ? 'فتح الرابط المدرج' : 'Open listed link'}</span>
           <span className="sr-only"> — {supplier.name}</span>
+          <ExternalLink aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rtl:-scale-x-100" />
         </a>
       ) : (
-        <p className="mt-4 text-xs leading-relaxed text-slate-500">
+        <p className="mt-4 text-xs leading-relaxed text-stone-500">
           {LINK_REASON_MESSAGES[sourceResult.reason][lang]}
         </p>
       )}
@@ -216,12 +218,12 @@ export default function SmsSuppliersDirectoryPage() {
   };
 
   return (
-    <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto w-full max-w-5xl px-4 pb-10 pt-8 sm:px-6 sm:pt-10">
+    <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto w-full max-w-5xl px-4 pb-12 pt-8 sm:px-6 sm:pt-10">
       <header>
-        <p className="text-sm font-semibold text-emerald-300">{summary.badge[lang]}</p>
-        <h1 className="mt-2 font-heading text-3xl font-extrabold leading-tight text-white">{copy.title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">{copy.intro}</p>
-        <aside className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm leading-relaxed text-amber-100" aria-label={ar ? 'تنبيه الخصوصية' : 'Privacy notice'}>
+        <p className="text-xs font-semibold uppercase tracking-wider text-stone-400">{summary.badge[lang]}</p>
+        <h1 className="mt-2 font-heading text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl">{copy.title}</h1>
+        <p className="mt-3 max-w-3xl text-base leading-relaxed text-stone-300">{copy.intro}</p>
+        <aside className="mt-5 rounded-card border border-amber-500/30 bg-surface-raised p-4 text-sm leading-relaxed text-amber-100" aria-label={ar ? 'تنبيه الخصوصية' : 'Privacy notice'}>
           {copy.caution}
         </aside>
       </header>
@@ -232,17 +234,17 @@ export default function SmsSuppliersDirectoryPage() {
           { label: copy.markedOfficial, value: summary.officialCount },
           { label: copy.needsReview, value: summary.reviewCount },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3">
-            <p className="text-sm text-slate-400">{stat.label}</p>
-            <p className="mt-1 font-heading text-2xl font-extrabold text-white" dir="ltr">{stat.value}</p>
+          <div key={stat.label} className="rounded-card border border-line bg-surface-raised px-4 py-3">
+            <p className="text-sm text-stone-400">{stat.label}</p>
+            <p className="mt-1 font-heading text-2xl font-bold tabular-nums text-stone-100" dir="ltr">{stat.value}</p>
           </div>
         ))}
       </section>
 
-      <section className="mt-8 rounded-xl border border-slate-800 bg-slate-900/40 p-4 sm:p-5" aria-label={ar ? 'بحث وفلاتر الدليل' : 'Directory search and filters'}>
+      <section className="mt-8 rounded-card border border-line bg-surface-raised p-4 sm:p-5" aria-label={ar ? 'بحث وفلاتر الدليل' : 'Directory search and filters'}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label htmlFor="sms-supplier-search" className="mb-1.5 block text-sm font-semibold text-slate-200">{copy.search}</label>
+            <label htmlFor="sms-supplier-search" className="mb-1.5 block text-sm font-semibold text-stone-200">{copy.search}</label>
             <input
               id="sms-supplier-search"
               type="search"
@@ -253,12 +255,12 @@ export default function SmsSuppliersDirectoryPage() {
               }}
               placeholder={copy.searchPlaceholder}
               autoComplete="off"
-              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+              className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-stone-100 placeholder:text-stone-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
               dir="auto"
             />
           </div>
           <div>
-            <label htmlFor="sms-supplier-type" className="mb-1.5 block text-sm font-semibold text-slate-200">{copy.type}</label>
+            <label htmlFor="sms-supplier-type" className="mb-1.5 block text-sm font-semibold text-stone-200">{copy.type}</label>
             <select
               id="sms-supplier-type"
               value={serviceType}
@@ -266,14 +268,14 @@ export default function SmsSuppliersDirectoryPage() {
                 setServiceType(event.target.value as 'all' | SmsSupplierServiceType);
                 setPage(1);
               }}
-              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+              className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
             >
               <option value="all">{copy.allTypes}</option>
               {SERVICE_TYPES.map((type) => <option key={type} value={type}>{serviceLabels[type][lang]}</option>)}
             </select>
           </div>
           <div>
-            <label htmlFor="sms-supplier-privacy" className="mb-1.5 block text-sm font-semibold text-slate-200">{copy.privacy}</label>
+            <label htmlFor="sms-supplier-privacy" className="mb-1.5 block text-sm font-semibold text-stone-200">{copy.privacy}</label>
             <select
               id="sms-supplier-privacy"
               value={privacy}
@@ -281,14 +283,14 @@ export default function SmsSuppliersDirectoryPage() {
                 setPrivacy(event.target.value as 'all' | SmsSupplierPrivacy);
                 setPage(1);
               }}
-              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+              className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
             >
               <option value="all">{copy.allPrivacy}</option>
               {PRIVACY_TYPES.map((value) => <option key={value} value={value}>{privacyLabels[value][lang]}</option>)}
             </select>
           </div>
           <div>
-            <label htmlFor="sms-supplier-status" className="mb-1.5 block text-sm font-semibold text-slate-200">{copy.status}</label>
+            <label htmlFor="sms-supplier-status" className="mb-1.5 block text-sm font-semibold text-stone-200">{copy.status}</label>
             <select
               id="sms-supplier-status"
               value={status}
@@ -296,7 +298,7 @@ export default function SmsSuppliersDirectoryPage() {
                 setStatus(event.target.value as 'all' | SmsSupplierSourceClassification);
                 setPage(1);
               }}
-              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+              className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
             >
               <option value="all">{copy.allStatus}</option>
               {STATUS_TYPES.map((value) => (
@@ -307,14 +309,14 @@ export default function SmsSuppliersDirectoryPage() {
             </select>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 pt-2">
-            <p className="text-sm text-slate-300" aria-live="polite">
+            <p className="text-sm tabular-nums text-stone-300" aria-live="polite">
               <span dir="ltr">{filtered.length}</span> {copy.resultCount}
             </p>
             {hasActiveFilters && (
               <button
                 type="button"
                 onClick={resetFilters}
-                className="inline-flex min-h-9 items-center rounded-lg border border-slate-700 bg-slate-800/80 px-3 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+                className="inline-flex min-h-9 items-center rounded-lg border border-line bg-surface px-3 text-xs font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
               >
                 {copy.reset}
               </button>
@@ -323,7 +325,7 @@ export default function SmsSuppliersDirectoryPage() {
         </div>
       </section>
 
-      <p className="mt-4 text-xs leading-relaxed text-slate-500">{copy.dataNote}</p>
+      <p className="mt-4 text-xs leading-relaxed text-stone-400">{copy.dataNote}</p>
 
       <div ref={resultsRef} tabIndex={-1} className="focus:outline-none">
         {pageRows.length ? (
@@ -331,9 +333,9 @@ export default function SmsSuppliersDirectoryPage() {
             {pageRows.map((supplier) => <SupplierCard key={supplier.id} supplier={supplier} lang={lang} />)}
           </div>
         ) : (
-          <section className="mt-6 rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center" aria-live="polite">
-            <p className="text-slate-300">{copy.empty}</p>
-            <button type="button" onClick={resetFilters} className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-emerald-500/40 px-4 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+          <section className="mt-6 rounded-card border border-line bg-surface-raised p-6 text-center" aria-live="polite">
+            <p className="text-stone-300">{copy.empty}</p>
+            <button type="button" onClick={resetFilters} className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
               {copy.reset}
             </button>
           </section>
@@ -342,13 +344,13 @@ export default function SmsSuppliersDirectoryPage() {
 
       {filtered.length > 0 && (
         <nav className="mt-6 flex flex-wrap items-center justify-center gap-3" aria-label={ar ? 'صفحات النتائج' : 'Result pages'}>
-          <button type="button" disabled={safePage <= 1} onClick={() => handlePageChange(Math.max(1, safePage - 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+          <button type="button" disabled={safePage <= 1} onClick={() => handlePageChange(Math.max(1, safePage - 1))} className="min-h-11 rounded-lg border border-line bg-surface px-4 text-sm font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
             {copy.previous}
           </button>
-          <span className="text-sm text-slate-400" aria-live="polite">
+          <span className="text-sm tabular-nums text-stone-400" aria-live="polite">
             {copy.page} <bdi dir="ltr">{safePage} / {pageCount}</bdi>
           </span>
-          <button type="button" disabled={safePage >= pageCount} onClick={() => handlePageChange(Math.min(pageCount, safePage + 1))} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+          <button type="button" disabled={safePage >= pageCount} onClick={() => handlePageChange(Math.min(pageCount, safePage + 1))} className="min-h-11 rounded-lg border border-line bg-surface px-4 text-sm font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
             {copy.next}
           </button>
         </nav>

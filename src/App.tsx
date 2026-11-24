@@ -499,7 +499,7 @@ function AppInner() {
     <div className="flex min-h-screen flex-col">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-50 focus:rounded-md focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-slate-950 focus:font-semibold focus:shadow-lg focus:outline-none"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-stone-100 focus:font-semibold focus:shadow-lg focus:outline-none"
       >
         {lang === 'ar' ? 'تخطي إلى المحتوى الرئيسي' : 'Skip to main content'}
       </a>
@@ -511,16 +511,16 @@ function AppInner() {
       <Navbar route={route} navigate={navigate} savedCount={isOnline ? validSavedCount : 0} />
       {isOnline && comparisonSelection.length === 1 && route.name !== 'home' && route.name !== 'compare' && (
         <section className="mx-auto mt-4 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6" role="status">
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-stone-300">
             {lang === 'ar'
               ? `تم اختيار «${deals.find((item) => item.slug === comparisonSelection[0])?.name_ar ?? comparisonSelection[0]}»؛ اختر عرضًا ثانيًا.`
               : `“${deals.find((item) => item.slug === comparisonSelection[0])?.name_en ?? comparisonSelection[0]}” is selected; choose one more offer.`}
           </p>
           <div className="flex gap-2">
-            <button type="button" onClick={() => navigate({ name: 'home' })} className="min-h-11 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/20">
+            <button type="button" onClick={() => navigate({ name: 'home' })} className="min-h-11 rounded-lg border border-line bg-surface-raised px-3 py-2 text-xs font-semibold text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
               {lang === 'ar' ? 'اختيار العرض الثاني' : 'Choose the second offer'}
             </button>
-            <button type="button" onClick={onClearComparison} className="min-h-11 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-300 hover:border-slate-500">
+            <button type="button" onClick={onClearComparison} className="min-h-11 rounded-lg border border-line bg-surface px-3 py-2 text-xs text-stone-300 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
               {lang === 'ar' ? 'إلغاء' : 'Clear'}
             </button>
           </div>

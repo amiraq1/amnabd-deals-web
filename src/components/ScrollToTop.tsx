@@ -52,11 +52,11 @@ export default function ScrollToTop({ threshold = 400, hasBottomBar = false }: S
       type="button"
       onClick={scrollToTop}
       aria-label={lang === 'ar' ? 'العودة إلى أعلى الصفحة' : 'Scroll to top'}
-      className={`fixed end-4 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 bg-slate-900/90 text-slate-300 shadow-xl backdrop-blur-sm transition-all duration-200 hover:border-emerald-500/50 hover:bg-emerald-500 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 sm:end-6 ${
+      className={`fixed end-4 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface-raised/90 text-stone-300 shadow-lg backdrop-blur-sm transition-colors hover:border-line-hover hover:bg-surface-overlay hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:end-6 ${
         hasBottomBar ? 'bottom-mobile-actions sm:!bottom-6' : 'bottom-6'
       }`}
     >
-      <ArrowUp className="h-5 w-5" />
+      <ArrowUp className="h-5 w-5" aria-hidden="true" />
     </button>
   );
 }

@@ -113,7 +113,7 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
       {!isOpen ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-ink-muted">
-            <Flag className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            <Flag className="h-3.5 w-3.5 text-stone-400 shrink-0" />
             <span>
               {lang === 'ar'
                 ? 'هل واجهت مشكلة في تفعيل هذا العرض أو لاحظت تغيّر شروطه؟'

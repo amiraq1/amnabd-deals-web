@@ -83,19 +83,19 @@ export default function PrivacyPolicyPage() {
     <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
       <article className="space-y-8">
         <header className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
+          <p className="text-xs font-semibold uppercase tracking-wider text-stone-400">
             {lang === 'ar' ? 'الخصوصية والبيانات' : 'Privacy & data'}
           </p>
-          <h1 className="font-heading text-3xl font-bold text-slate-50 sm:text-4xl">
+          <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl">
             {copy.title}
           </h1>
-          <p className="max-w-3xl text-base leading-8 text-slate-300">{copy.intro}</p>
+          <p className="max-w-3xl text-base leading-relaxed text-stone-300">{copy.intro}</p>
         </header>
 
         {copy.sections.map((section) => (
-          <section key={section.title} className="space-y-3 border-t border-slate-800 pt-6">
-            <h2 className="font-heading text-xl font-semibold text-slate-100">{section.title}</h2>
-            <div className="space-y-3 text-sm leading-7 text-slate-300 sm:text-base">
+          <section key={section.title} className="space-y-3 border-t border-line-subtle pt-6">
+            <h2 className="font-heading text-lg font-bold text-stone-100 sm:text-xl">{section.title}</h2>
+            <div className="space-y-3 text-sm leading-relaxed text-stone-300 sm:text-base">
               {section.paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}

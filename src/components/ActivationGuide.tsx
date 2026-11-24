@@ -52,7 +52,7 @@ export function ActivationGuide({ guide, officialUrl }: ActivationGuideProps) {
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-overlay px-3 py-1 text-xs font-medium text-ink-muted">
-          <BookOpen className="h-3.5 w-3.5 text-slate-400" />
+          <BookOpen className="h-3.5 w-3.5 text-stone-400" />
           <span>{lang === 'ar' ? 'دليل تفعيل مُراجَع' : 'Reviewed Activation Guide'}</span>
         </div>
         {officialUrl && (
@@ -80,7 +80,7 @@ export function ActivationGuide({ guide, officialUrl }: ActivationGuideProps) {
               : 'Reviewed against official sources'}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+          <CalendarDays className="h-3.5 w-3.5 text-stone-400" />
           {lang === 'ar' ? 'تاريخ المراجعة' : 'Reviewed'}: <bdi className="tabular-nums">{reviewDateLabel(guide.reviewed_on, lang)}</bdi>
         </span>
       </div>
@@ -92,7 +92,7 @@ export function ActivationGuide({ guide, officialUrl }: ActivationGuideProps) {
         {lang === 'ar' ? 'كيف تحصل على هذا العرض وتفعّله؟' : 'How to Claim & Activate This Deal?'}
       </h2>
 
-      <p className="mt-2 text-sm leading-relaxed text-slate-300">{guide.summary[lang]}</p>
+      <p className="mt-2 text-sm leading-relaxed text-stone-300">{guide.summary[lang]}</p>
       <SourceLinks sources={guide.summary_sources} lang={lang} />
 
       <div className="mt-6 space-y-3">

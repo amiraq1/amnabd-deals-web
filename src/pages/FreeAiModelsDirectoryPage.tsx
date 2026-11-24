@@ -74,9 +74,9 @@ function sourceLink(url: string, label: string) {
       href={safeHref}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-emerald-300 underline decoration-emerald-500/40 underline-offset-4 hover:text-emerald-200"
+      className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-stone-200 underline decoration-stone-500 underline-offset-4 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
     >
-      {label}<ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+      {label}<ExternalLink aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rtl:-scale-x-100" />
     </a>
   );
 }
@@ -113,19 +113,19 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
   const providerName = lang === 'ar' ? entry.providerNameAr : entry.providerName;
   const evidenceLabel = entry.evidenceStatus === 'verified' ? copy.verified : entry.evidenceStatus === 'partial' ? copy.partial : copy.unknown;
   const evidenceClass = entry.evidenceStatus === 'verified'
-    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+    ? 'border-brand/40 bg-surface text-stone-200'
     : entry.evidenceStatus === 'partial'
-      ? 'border-amber-400/35 bg-amber-400/10 text-amber-100'
-      : 'border-slate-600 bg-slate-800 text-slate-300';
+      ? 'border-amber-400/35 bg-surface text-amber-200'
+      : 'border-line bg-surface text-stone-300';
   const officialUrl = safeDealUrl(entry.officialUrl);
 
   return (
-    <article className="rounded-2xl border border-slate-700/80 bg-slate-900/70 p-4 shadow-lg shadow-black/10 sm:p-5">
+    <article className="rounded-card border border-line bg-surface-raised p-4 sm:p-5">
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-slate-400">{providerName} · {accessLabel(entry.accessType, lang)}</p>
-            <h3 className="mt-1 break-words font-heading text-xl font-extrabold text-white">{entry.name}</h3>
+            <p className="text-xs font-medium text-stone-400">{providerName} · {accessLabel(entry.accessType, lang)}</p>
+            <h3 className="mt-1 break-words font-heading text-xl font-bold tracking-tight text-stone-100">{entry.name}</h3>
           </div>
           <span className={`inline-flex max-w-full items-start gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium leading-5 ${evidenceClass}`}>
             <ShieldCheck aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />{evidenceLabel}
@@ -133,23 +133,23 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
         </div>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <div className="rounded-lg bg-slate-950/70 px-3 py-2">
-            <div className="text-xs text-slate-400">{copy.context}</div>
-            <div className="mt-1 font-mono text-sm font-semibold text-slate-100" dir="ltr">{shortContextLabel(entry.contextTokens)}</div>
+          <div className="rounded-lg border border-line-subtle bg-surface px-3 py-2">
+            <div className="text-xs text-stone-400">{copy.context}</div>
+            <div className="mt-1 font-mono text-sm font-semibold tabular-nums text-stone-100" dir="ltr">{shortContextLabel(entry.contextTokens)}</div>
           </div>
-          <div className="rounded-lg bg-slate-950/70 px-3 py-2">
-            <div className="text-xs text-slate-400">{copy.inputs}</div>
-            <div className="mt-1 text-sm font-semibold text-slate-100">{entry.modalities.map((item) => modalityName[item]).join(' · ') || '—'}</div>
+          <div className="rounded-lg border border-line-subtle bg-surface px-3 py-2">
+            <div className="text-xs text-stone-400">{copy.inputs}</div>
+            <div className="mt-1 text-sm font-semibold text-stone-100">{entry.modalities.map((item) => modalityName[item]).join(' · ') || '—'}</div>
           </div>
-          <div className="col-span-2 rounded-lg bg-slate-950/70 px-3 py-2 sm:col-span-1">
-            <div className="text-xs text-slate-400">{lang === 'ar' ? 'الخطة / الحالة' : 'Tier / status'}</div>
-            <div className="mt-1 text-sm font-semibold leading-5 text-amber-100">{entry.tierLabel[lang]}</div>
+          <div className="col-span-2 rounded-lg border border-line-subtle bg-surface px-3 py-2 sm:col-span-1">
+            <div className="text-xs text-stone-400">{lang === 'ar' ? 'الخطة / الحالة' : 'Tier / status'}</div>
+            <div className="mt-1 text-sm font-semibold leading-5 text-amber-200">{entry.tierLabel[lang]}</div>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5" aria-label={copy.capabilities}>
           {entry.capabilities.map((capability) => (
-            <span key={capability} className="rounded-full border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-200">{capabilityName[capability]}</span>
+            <span key={capability} className="rounded-md border border-line bg-surface px-2.5 py-1 text-xs font-medium text-stone-300">{capabilityName[capability]}</span>
           ))}
         </div>
 
@@ -158,65 +158,65 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
             href={officialUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-400/50 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-100 hover:border-emerald-300 hover:bg-emerald-400/15 sm:w-fit"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand sm:w-fit"
           >
             <span>{copy.accessMethod}: {providerName}</span>
-            <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0 rtl:-scale-x-100" />
           </a>
         )}
 
-        <details className="group border-t border-slate-800 pt-3">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-2 text-sm font-semibold text-slate-200 hover:bg-slate-800/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 [&::-webkit-details-marker]:hidden">
+        <details className="group border-t border-line-subtle pt-3">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-2 text-sm font-medium text-stone-200 hover:bg-surface hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand [&::-webkit-details-marker]:hidden">
             <span>{copy.details}</span>
             <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
           </summary>
           <div className="pt-3">
-            <p className="max-w-3xl text-sm leading-7 text-slate-300">{entry.description[lang]}</p>
-            <p className="mt-2 text-xs leading-5 text-slate-400">{copy.unknownDetail}</p>
-            <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 border-t border-slate-800 pt-4 text-sm sm:grid-cols-2">
+            <p className="max-w-3xl text-sm leading-relaxed text-stone-300">{entry.description[lang]}</p>
+            <p className="mt-2 text-xs leading-relaxed text-stone-400">{copy.unknownDetail}</p>
+            <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 border-t border-line-subtle pt-4 text-sm sm:grid-cols-2">
               <div>
-                <dt className="font-semibold text-slate-400">{copy.developer}</dt>
-                <dd className="mt-1 text-slate-200">{entry.developer}</dd>
+                <dt className="font-semibold text-stone-400">{copy.developer}</dt>
+                <dd className="mt-1 text-stone-200">{entry.developer}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-400">{copy.provider}</dt>
-                <dd className="mt-1 text-slate-200">{providerName} · {accessLabel(entry.accessType, lang)}</dd>
+                <dt className="font-semibold text-stone-400">{copy.provider}</dt>
+                <dd className="mt-1 text-stone-200">{providerName} · {accessLabel(entry.accessType, lang)}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-400">{copy.context}</dt>
-                <dd className="mt-1 font-mono text-slate-100" dir="ltr">{contextLabel(entry.contextTokens)}</dd>
+                <dt className="font-semibold text-stone-400">{copy.context}</dt>
+                <dd className="mt-1 font-mono tabular-nums text-stone-100" dir="ltr">{contextLabel(entry.contextTokens)}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-400">{copy.id}</dt>
-                <dd className="mt-1 break-all font-mono text-slate-200" dir="ltr"><bdi>{entry.modelId}</bdi></dd>
+                <dt className="font-semibold text-stone-400">{copy.id}</dt>
+                <dd className="mt-1 break-all font-mono text-stone-200" dir="ltr"><bdi>{entry.modelId}</bdi></dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-400">{copy.inputs}</dt>
-                <dd className="mt-1 text-slate-200">{entry.modalities.map((item) => modalityName[item]).join(' · ') || '—'}</dd>
+                <dt className="font-semibold text-stone-400">{copy.inputs}</dt>
+                <dd className="mt-1 text-stone-200">{entry.modalities.map((item) => modalityName[item]).join(' · ') || '—'}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-400">{copy.outputs}</dt>
-                <dd className="mt-1 text-slate-200">{entry.outputModalities.map((item) => modalityName[item]).join(' · ') || '—'}</dd>
+                <dt className="font-semibold text-stone-400">{copy.outputs}</dt>
+                <dd className="mt-1 text-stone-200">{entry.outputModalities.map((item) => modalityName[item]).join(' · ') || '—'}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-400">{copy.capabilities}</dt>
+                <dt className="font-semibold text-stone-400">{copy.capabilities}</dt>
                 <dd className="mt-1 flex flex-wrap gap-1.5">
                   {entry.capabilities.map((capability) => (
-                    <span key={capability} className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-200">{capabilityName[capability]}</span>
+                    <span key={capability} className="rounded-md border border-line bg-surface px-2 py-1 text-xs text-stone-300">{capabilityName[capability]}</span>
                   ))}
                 </dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-400">{copy.card} / {copy.phone}</dt>
-                <dd className="mt-1 text-slate-200">{policyLabel(entry.cardPolicy, lang)} · {policyLabel(entry.phonePolicy, lang)}</dd>
+                <dt className="font-semibold text-stone-400">{copy.card} / {copy.phone}</dt>
+                <dd className="mt-1 text-stone-200">{policyLabel(entry.cardPolicy, lang)} · {policyLabel(entry.phonePolicy, lang)}</dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="font-semibold text-slate-400">{copy.limits}</dt>
-                <dd className="mt-1 leading-7 text-slate-200">{entry.trialLimits[lang]}</dd>
+                <dt className="font-semibold text-stone-400">{copy.limits}</dt>
+                <dd className="mt-1 leading-relaxed text-stone-200">{entry.trialLimits[lang]}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-slate-400">{copy.checked}</dt>
-                <dd className="mt-1 text-slate-200"><time dateTime={entry.verifiedDate} dir="ltr">{entry.verifiedDate}</time></dd>
+                <dt className="font-semibold text-stone-400">{copy.checked}</dt>
+                <dd className="mt-1 text-stone-200"><time dateTime={entry.verifiedDate} dir="ltr" className="font-mono tabular-nums">{entry.verifiedDate}</time></dd>
               </div>
               <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
                 {sourceLink(entry.officialUrl, copy.source)}
@@ -375,41 +375,41 @@ export default function FreeAiModelsDirectoryPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-12 pt-8 sm:px-6 lg:pt-10">
       <header className="max-w-4xl">
-        <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-300">{ar ? 'دليل موثّق بالمصادر الرسمية' : 'Official-source directory'}</p>
-        <h1 className="font-heading text-3xl font-extrabold leading-tight text-white sm:text-4xl">{text.title}</h1>
-        <p className="mt-3 text-base leading-7 text-slate-300">{text.intro}</p>
-        <p className="mt-3 rounded-xl border border-slate-700 bg-slate-900/50 p-4 text-sm leading-6 text-slate-400">{text.scope}</p>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-400">{ar ? 'دليل موثّق بالمصادر الرسمية' : 'Official-source directory'}</p>
+        <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl">{text.title}</h1>
+        <p className="mt-3 text-base leading-relaxed text-stone-300">{text.intro}</p>
+        <p className="mt-4 rounded-card border border-line bg-surface-raised p-4 text-sm leading-relaxed text-stone-300">{text.scope}</p>
       </header>
 
-      <section className="mt-6 rounded-2xl border border-emerald-500/25 bg-slate-900/70 p-4 sm:p-5" aria-labelledby="ai-model-search-title">
-        <h2 id="ai-model-search-title" className="font-heading text-lg font-bold text-white">{text.searchHeading}</h2>
+      <section className="mt-6 rounded-card border border-line bg-surface-raised p-4 sm:p-5" aria-labelledby="ai-model-search-title">
+        <h2 id="ai-model-search-title" className="font-heading text-base font-bold text-stone-100 sm:text-lg">{text.searchHeading}</h2>
         <label className="relative mt-3 block">
           <span className="sr-only">{text.search}</span>
-          <Search aria-hidden="true" className={`pointer-events-none absolute top-3.5 h-5 w-5 text-slate-500 ${ar ? 'right-3' : 'left-3'}`} />
+          <Search aria-hidden="true" className={`pointer-events-none absolute top-3.5 h-5 w-5 text-stone-500 ${ar ? 'right-3' : 'left-3'}`} />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={text.search}
-            className={`min-h-12 w-full rounded-xl border border-slate-700 bg-slate-950 py-3 text-base text-white outline-none placeholder:text-slate-500 focus:border-emerald-400 ${ar ? 'pr-11 pl-3' : 'pl-11 pr-3'}`}
+            className={`min-h-12 w-full rounded-lg border border-line bg-surface py-3 text-base text-stone-100 placeholder:text-stone-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand ${ar ? 'pr-11 pl-3' : 'pl-11 pr-3'}`}
           />
         </label>
-        <p className="mt-3 text-sm text-emerald-100">
-          <bdi dir="ltr">{modelCount.toLocaleString('en-US')}</bdi> {text.reviewed} · {text.lastUpdated}: <time dateTime={FREE_AI_MODELS_DIRECTORY_LAST_VERIFIED} dir="auto">{updatedAt}</time>
+        <p className="mt-3 text-xs text-stone-400">
+          <bdi dir="ltr">{modelCount.toLocaleString('en-US')}</bdi> {text.reviewed} · {text.lastUpdated}: <time dateTime={FREE_AI_MODELS_DIRECTORY_LAST_VERIFIED} dir="auto" className="tabular-nums">{updatedAt}</time>
         </p>
         <div className="mt-5">
-          <h3 className="mb-2 text-sm font-semibold text-slate-200">{text.quickTitle}</h3>
+          <h3 className="mb-2 text-sm font-semibold text-stone-200">{text.quickTitle}</h3>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <button type="button" onClick={() => applyQuickChoice('coding')} className="inline-flex min-h-16 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-start text-sm font-semibold leading-5 text-slate-100 hover:border-emerald-400/60 hover:bg-slate-800">
-              <Code2 aria-hidden="true" className="h-4 w-4 shrink-0 text-emerald-300" /><span>{text.quickCoding}</span>
+            <button type="button" onClick={() => applyQuickChoice('coding')} className="inline-flex min-h-16 items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-start text-sm font-medium leading-snug text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+              <Code2 aria-hidden="true" className="h-4 w-4 shrink-0 text-stone-400" /><span>{text.quickCoding}</span>
             </button>
-            <button type="button" onClick={() => applyQuickChoice('vision')} className="inline-flex min-h-16 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-start text-sm font-semibold leading-5 text-slate-100 hover:border-emerald-400/60 hover:bg-slate-800">
-              <Image aria-hidden="true" className="h-4 w-4 shrink-0 text-emerald-300" /><span>{text.quickVision}</span>
+            <button type="button" onClick={() => applyQuickChoice('vision')} className="inline-flex min-h-16 items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-start text-sm font-medium leading-snug text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+              <Image aria-hidden="true" className="h-4 w-4 shrink-0 text-stone-400" /><span>{text.quickVision}</span>
             </button>
-            <button type="button" onClick={() => applyQuickChoice('long-context')} className="inline-flex min-h-16 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-start text-sm font-semibold leading-5 text-slate-100 hover:border-emerald-400/60 hover:bg-slate-800">
-              <Maximize2 aria-hidden="true" className="h-4 w-4 shrink-0 text-emerald-300" /><span>{text.quickContext}</span>
+            <button type="button" onClick={() => applyQuickChoice('long-context')} className="inline-flex min-h-16 items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-start text-sm font-medium leading-snug text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+              <Maximize2 aria-hidden="true" className="h-4 w-4 shrink-0 text-stone-400" /><span>{text.quickContext}</span>
             </button>
-            <button type="button" onClick={() => applyQuickChoice('no-card')} className="inline-flex min-h-16 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-start text-sm font-semibold leading-5 text-slate-100 hover:border-emerald-400/60 hover:bg-slate-800">
-              <CreditCard aria-hidden="true" className="h-4 w-4 shrink-0 text-emerald-300" /><span>{text.quickNoCard}</span>
+            <button type="button" onClick={() => applyQuickChoice('no-card')} className="inline-flex min-h-16 items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-start text-sm font-medium leading-snug text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+              <CreditCard aria-hidden="true" className="h-4 w-4 shrink-0 text-stone-400" /><span>{text.quickNoCard}</span>
             </button>
           </div>
         </div>
@@ -421,56 +421,56 @@ export default function FreeAiModelsDirectoryPage() {
             { label: text.models, value: modelCount }, { label: text.providers, value: providerCount },
             { label: text.noCard, value: confirmedNoCardCount }, { label: text.longContext, value: longContextCount },
           ].map((stat) => (
-            <div key={stat.label} className="min-w-36 snap-start rounded-xl border border-slate-800 bg-slate-900/70 p-3.5 sm:min-w-0 sm:p-4">
-              <div className="font-heading text-2xl font-extrabold text-white" dir="ltr">{stat.value}</div>
-              <div className="mt-1 text-xs leading-5 text-slate-400 sm:text-sm">{stat.label}</div>
+            <div key={stat.label} className="min-w-36 snap-start rounded-card border border-line bg-surface-raised p-3.5 sm:min-w-0 sm:p-4">
+              <div className="font-heading text-2xl font-bold tabular-nums text-stone-100" dir="ltr">{stat.value}</div>
+              <div className="mt-1 text-xs leading-5 text-stone-400 sm:text-sm">{stat.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <details className="group mt-5 rounded-2xl border border-slate-800 bg-slate-950/70">
-        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-base font-bold text-white hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 [&::-webkit-details-marker]:hidden">
-          <span className="flex items-center gap-2"><Filter aria-hidden="true" className="h-4 w-4 text-emerald-300" />{text.advancedFilters}</span>
-          <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+      <details className="group mt-5 rounded-card border border-line bg-surface-raised">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-base font-bold text-stone-100 hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2"><Filter aria-hidden="true" className="h-4 w-4 text-stone-400" />{text.advancedFilters}</span>
+          <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-stone-400 transition-transform group-open:rotate-180" />
         </summary>
-        <div className="border-t border-slate-800 p-4 sm:p-5">
+        <div className="border-t border-line-subtle p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-end gap-3">
-            <button type="button" onClick={resetFilters} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white"><RotateCcw aria-hidden="true" className="h-4 w-4" />{text.reset}</button>
+            <button type="button" onClick={resetFilters} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium text-stone-300 hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"><RotateCcw aria-hidden="true" className="h-4 w-4" />{text.reset}</button>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label>
               <span className="sr-only">{text.provider}</span>
-              <select value={providerFilter} onChange={(event) => setProviderFilter(event.target.value)} className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200 focus:border-emerald-400">
+              <select value={providerFilter} onChange={(event) => setProviderFilter(event.target.value)} className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
                 <option value="all">{text.provider}</option>{FREE_AI_MODEL_PROVIDERS.map((provider) => <option key={provider.id} value={provider.id}>{ar ? provider.nameAr : provider.name}</option>)}
               </select>
             </label>
             <label>
               <span className="sr-only">{text.access}</span>
-              <select value={accessFilter} onChange={(event) => setAccessFilter(event.target.value as 'all' | AiModelAccessType)} className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200 focus:border-emerald-400">
+              <select value={accessFilter} onChange={(event) => setAccessFilter(event.target.value as 'all' | AiModelAccessType)} className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
                 <option value="all">{text.access}</option><option value="direct">{text.direct}</option><option value="gateway">{text.gateway}</option>
               </select>
             </label>
             <label>
               <span className="sr-only">{text.usage}</span>
-              <select value={usageFilter} onChange={(event) => setUsageFilter(event.target.value as 'all' | AiModelCapability)} className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200 focus:border-emerald-400">
+              <select value={usageFilter} onChange={(event) => setUsageFilter(event.target.value as 'all' | AiModelCapability)} className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
                 <option value="all">{text.usage}</option><option value="chat">{text.chat}</option><option value="coding">{text.coding}</option><option value="reasoning">{text.reasoning}</option><option value="vision">{text.vision}</option><option value="tool-calling">{ar ? 'استدعاء الأدوات' : 'Tool calling'}</option>
               </select>
             </label>
             <label>
               <span className="sr-only">{text.modality}</span>
-              <select value={modalityFilter} onChange={(event) => setModalityFilter(event.target.value as 'all' | AiModelModality)} className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200 focus:border-emerald-400">
+              <select value={modalityFilter} onChange={(event) => setModalityFilter(event.target.value as 'all' | AiModelModality)} className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
                 <option value="all">{text.modality}</option><option value="text">{text.text}</option><option value="image">{text.image}</option><option value="video">{text.video}</option><option value="audio">{text.audio}</option><option value="pdf">PDF</option>
               </select>
             </label>
             <label>
               <span className="sr-only">{text.sort}</span>
-              <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as SortOrder)} className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200 focus:border-emerald-400">
+              <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as SortOrder)} className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm text-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
                 <option value="recent">{text.recent}</option><option value="context">{text.contextSort}</option>
               </select>
             </label>
           </div>
-          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-300">
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-stone-300">
             {[
               { checked: noCardOnly, change: setNoCardOnly, label: text.noCardFilter },
               { checked: noPhoneOnly, change: setNoPhoneOnly, label: text.noPhoneFilter },
@@ -478,17 +478,17 @@ export default function FreeAiModelsDirectoryPage() {
               { checked: verifiedOnly, change: setVerifiedOnly, label: text.verified },
             ].map((filter) => (
               <label key={filter.label} className="inline-flex min-h-11 cursor-pointer items-center gap-2 py-1">
-                <input type="checkbox" checked={filter.checked} onChange={(event) => filter.change(event.target.checked)} className="h-4 w-4 accent-emerald-400" />{filter.label}
+                <input type="checkbox" checked={filter.checked} onChange={(event) => filter.change(event.target.checked)} className="h-4 w-4 accent-emerald-500" />{filter.label}
               </label>
             ))}
           </div>
-          <p className="mt-2 text-xs leading-5 text-slate-400">{text.unknownNote}</p>
-          <div className="mt-4 border-t border-slate-800 pt-4">
-            <h3 className="mb-2 text-sm font-semibold text-slate-300">{text.categories}</h3>
+          <p className="mt-2 text-xs leading-relaxed text-stone-400">{text.unknownNote}</p>
+          <div className="mt-4 border-t border-line-subtle pt-4">
+            <h3 className="mb-2 text-sm font-semibold text-stone-300">{text.categories}</h3>
             <div className="flex flex-wrap gap-2">
-              <button type="button" aria-pressed={categoryFilter === 'all'} onClick={() => setCategoryFilter('all')} className={`min-h-10 rounded-full border px-3 text-xs font-semibold ${categoryFilter === 'all' ? 'border-emerald-400 bg-emerald-400/10 text-emerald-200' : 'border-slate-700 text-slate-300 hover:border-slate-500'}`}>{text.all} · {modelCount}</button>
+              <button type="button" aria-pressed={categoryFilter === 'all'} onClick={() => setCategoryFilter('all')} className={`min-h-10 rounded-lg border px-3 text-xs font-medium transition-colors ${categoryFilter === 'all' ? 'border-line-hover bg-surface-overlay text-white font-semibold' : 'border-line bg-surface text-stone-300 hover:border-line-hover hover:text-stone-100'} focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand`}>{text.all} · {modelCount}</button>
               {categoryButtons.map((category) => (
-                <button type="button" key={category.id} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)} className={`min-h-10 rounded-full border px-3 text-xs font-semibold ${categoryFilter === category.id ? 'border-emerald-400 bg-emerald-400/10 text-emerald-200' : 'border-slate-700 text-slate-300 hover:border-slate-500'}`}>
+                <button type="button" key={category.id} aria-pressed={categoryFilter === category.id} onClick={() => setCategoryFilter(category.id)} className={`min-h-10 rounded-lg border px-3 text-xs font-medium transition-colors ${categoryFilter === category.id ? 'border-line-hover bg-surface-overlay text-white font-semibold' : 'border-line bg-surface text-stone-300 hover:border-line-hover hover:text-stone-100'} focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand`}>
                   {category.label} · {category.count}
                 </button>
               ))}
@@ -497,36 +497,36 @@ export default function FreeAiModelsDirectoryPage() {
         </div>
       </details>
 
-      <section className="mt-7" aria-labelledby="ai-model-results">
+      <section className="mt-8" aria-labelledby="ai-model-results">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h2 id="ai-model-results" className="font-heading text-xl font-bold text-white">{ar ? 'النماذج' : 'Models'}</h2>
-          <p className="text-sm text-slate-400"><span dir="ltr">{filteredEntries.length}</span> {text.results}</p>
+          <h2 id="ai-model-results" className="font-heading text-xl font-bold text-stone-100">{ar ? 'النماذج' : 'Models'}</h2>
+          <p className="text-sm tabular-nums text-stone-400"><span dir="ltr">{filteredEntries.length}</span> {text.results}</p>
         </div>
         {filteredEntries.length ? (
           <div className="space-y-4">{filteredEntries.map((entry) => <ModelCard key={entry.id} entry={entry} lang={lang} />)}</div>
         ) : (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-center">
-            <p className="text-sm leading-6 text-slate-300">{emptyMessage}</p>
-            <button type="button" onClick={resetFilters} className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-600 px-4 text-sm font-semibold text-slate-100 hover:bg-slate-800">{text.reset}</button>
+          <div className="rounded-card border border-line bg-surface-raised p-6 text-center">
+            <p className="text-sm leading-relaxed text-stone-300">{emptyMessage}</p>
+            <button type="button" onClick={resetFilters} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">{text.reset}</button>
           </div>
         )}
       </section>
 
       <section className="mt-10" aria-labelledby="ai-model-providers">
-        <h2 id="ai-model-providers" className="font-heading text-xl font-bold text-white">{text.providersTitle}</h2>
-        <p className="mt-1 text-sm leading-6 text-slate-400">{text.providerDesc}</p>
+        <h2 id="ai-model-providers" className="font-heading text-xl font-bold text-stone-100">{text.providersTitle}</h2>
+        <p className="mt-1 text-sm leading-relaxed text-stone-400">{text.providerDesc}</p>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
           {FREE_AI_MODEL_PROVIDERS.map((provider) => {
             const models = FREE_AI_MODEL_ENTRIES.filter((entry) => entry.providerId === provider.id);
             return (
-              <article key={provider.id} className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+              <article key={provider.id} className="rounded-card border border-line bg-surface-raised p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="font-heading text-lg font-bold text-white">{ar ? provider.nameAr : provider.name}</h3>
-                  <span className="rounded-full border border-slate-700 px-2.5 py-1 text-xs text-slate-300">{accessLabel(provider.type, lang)}</span>
+                  <h3 className="font-heading text-lg font-bold text-stone-100">{ar ? provider.nameAr : provider.name}</h3>
+                  <span className="rounded-md border border-line bg-surface px-2.5 py-0.5 text-xs font-medium text-stone-300">{accessLabel(provider.type, lang)}</span>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-300">{provider.summary[lang]}</p>
-                <p className="mt-3 text-sm text-slate-400">{text.listed}: <strong className="text-slate-100">{models.length}</strong></p>
-                <p className="mt-1 text-sm text-slate-400">{text.best}: <span className="text-slate-200">{models.map((entry) => entry.name).join(', ') || '—'}</span></p>
+                <p className="mt-3 text-sm leading-relaxed text-stone-300">{provider.summary[lang]}</p>
+                <p className="mt-3 text-sm text-stone-400">{text.listed}: <strong className="tabular-nums text-stone-100">{models.length}</strong></p>
+                <p className="mt-1 text-sm text-stone-400">{text.best}: <span className="text-stone-200">{models.map((entry) => entry.name).join(', ') || '—'}</span></p>
                 <div className="mt-3">{sourceLink(provider.officialUrl, text.providerSource)}</div>
               </article>
             );
@@ -534,14 +534,14 @@ export default function FreeAiModelsDirectoryPage() {
         </div>
       </section>
 
-      <aside className="mt-8 rounded-xl border border-amber-400/25 bg-amber-400/5 p-5" aria-labelledby="ai-model-disclaimer">
-        <h2 id="ai-model-disclaimer" className="font-heading text-base font-bold text-amber-100">{text.disclaimerTitle}</h2>
-        <p className="mt-2 text-sm leading-7 text-slate-300">{text.disclaimer}</p>
+      <aside className="mt-8 rounded-card border border-line bg-surface-raised p-5" aria-labelledby="ai-model-disclaimer">
+        <h2 id="ai-model-disclaimer" className="font-heading text-base font-bold text-amber-200">{text.disclaimerTitle}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-stone-300">{text.disclaimer}</p>
       </aside>
 
-      <div className="mt-6 flex flex-col gap-2 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col gap-2 text-sm text-stone-400 sm:flex-row sm:items-center sm:justify-between">
         <p>{text.sourceNote}</p>
-        <a href="/free-api-keys-directory" className="inline-flex min-h-11 items-center font-semibold text-emerald-300 underline underline-offset-4 hover:text-emerald-200">{text.apiLink}</a>
+        <a href="/free-api-keys-directory" className="inline-flex min-h-11 items-center font-semibold text-stone-200 underline underline-offset-4 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">{text.apiLink}</a>
       </div>
     </main>
   );
