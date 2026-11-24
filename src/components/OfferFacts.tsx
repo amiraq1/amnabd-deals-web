@@ -23,7 +23,7 @@ export default function OfferFacts({ deal, lang }: { deal: Deal; lang: Lang }) {
       {facts.map(({ text }, index) => (
         <li
           key={index}
-          className="flex min-w-0 items-center gap-1.5 rounded-md border border-[#1E1E1C] bg-[#0E0E0D]/60 px-2.5 py-1.5 tabular-nums"
+          className="flex min-w-0 items-center gap-1.5 rounded-md border border-line-subtle bg-surface/60 px-2.5 py-1.5 tabular-nums"
         >
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-stone-500" aria-hidden="true" />
           <bdi className="min-w-0 truncate [overflow-wrap:anywhere]">

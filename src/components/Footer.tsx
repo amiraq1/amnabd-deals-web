@@ -13,13 +13,13 @@ export default function Footer() {
     `${path}${languageQuery ? `?${languageQuery}` : ''}`;
 
   return (
-    <footer className="mt-20 border-t border-[#242422] bg-[#0E0E0D]">
+    <footer className="mt-20 border-t border-line bg-surface">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <div className="grid gap-10 md:grid-cols-12 md:gap-8">
           {/* العمود الأول: الهوية وإخلاء المسؤولية التحريري */}
           <div className="md:col-span-5 lg:col-span-6">
             <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md border border-[#2E2E2A] bg-[#141413] text-xs font-bold text-stone-200">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md border border-line bg-surface-raised text-xs font-bold text-stone-200">
                 {lang === 'ar' ? 'ن' : 'N'}
               </span>
               <p className="font-heading text-base font-bold text-stone-100">
@@ -32,7 +32,7 @@ export default function Footer() {
                 : 'A review-first directory — data from official sources'}
             </p>
 
-            <div className="mt-6 rounded-lg border border-[#242422] bg-[#141413] p-4">
+            <div className="mt-6 rounded-lg border border-line bg-surface-raised p-4">
               <h3 className="font-heading flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-stone-300">
                 <ShieldAlert className="h-3.5 w-3.5 text-stone-400" />
                 <span>{lang === 'ar' ? 'إخلاء مسؤولية' : 'Disclaimer'}</span>

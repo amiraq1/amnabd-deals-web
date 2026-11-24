@@ -101,10 +101,10 @@ const navItems: readonly NavItem[] = [
 ] as const;
 
 const focusRing =
-  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500';
+  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand';
 const baseLink = `flex min-h-11 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${focusRing}`;
-const idleLink = 'text-stone-300 hover:bg-[#181816] hover:text-stone-100';
-const activeLink = 'bg-[#181816] text-white border border-[#2E2E2A] font-semibold';
+const idleLink = 'text-stone-300 hover:bg-surface-raised hover:text-stone-100';
+const activeLink = 'bg-surface-raised text-white border border-line font-semibold';
 
 function CountBadge({ count, label }: { count: number; label: string }) {
   if (count <= 0) return null;
@@ -178,7 +178,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[#242422] bg-[#0B0B0A]/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur-md">
       <div className="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 sm:px-6">
         {/* الشعار التحريري النقي */}
         <a
@@ -186,7 +186,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
           onClick={(e) => go(e, { name: 'home' })}
           className={`group flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg ${focusRing}`}
         >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#2E2E2A] bg-[#141413] text-xs font-bold text-stone-100 transition-colors group-hover:border-emerald-500/50 group-hover:text-emerald-400">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-line bg-surface-raised text-xs font-bold text-stone-100 transition-colors group-hover:border-emerald-500/50 group-hover:text-emerald-400">
             {lang === 'ar' ? 'ن' : 'N'}
           </span>
           <span className="truncate font-heading text-lg font-bold tracking-tight text-stone-100">
@@ -226,7 +226,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
           <button
             type="button"
             onClick={onLangToggle}
-            className={`flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg border border-[#2E2E2A] bg-[#141413] px-2.5 py-1.5 text-sm font-medium text-stone-300 transition-colors hover:border-[#3E3E38] hover:text-stone-100 ${focusRing}`}
+            className={`flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface-raised px-2.5 py-1.5 text-sm font-medium text-stone-300 transition-colors hover:border-line-hover hover:text-stone-100 ${focusRing}`}
             aria-label={t.switchLang}
           >
             <Globe className="h-3.5 w-3.5 text-stone-400" aria-hidden="true" />
@@ -238,7 +238,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
             type="button"
             ref={menuButtonRef}
             onClick={() => setMenuOpen((open) => !open)}
-            className={`relative flex h-11 w-11 items-center justify-center rounded-lg border border-[#2E2E2A] bg-[#141413] p-2 text-stone-300 transition-colors hover:bg-[#1E1E1D] hover:text-stone-100 sm:hidden ${focusRing}`}
+            className={`relative flex h-11 w-11 items-center justify-center rounded-lg border border-line bg-surface-raised p-2 text-stone-300 transition-colors hover:bg-surface-overlay hover:text-stone-100 sm:hidden ${focusRing}`}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
             aria-label={menuOpen ? t.closeMenu : t.openMenu}
@@ -263,7 +263,7 @@ export function Navbar({ route, navigate, savedCount }: NavbarProps) {
         <nav
           id="mobile-menu"
           aria-label={t.mainNav}
-          className="border-t border-[#242422] bg-[#0E0E0D]/95 px-4 py-3 backdrop-blur-md sm:hidden"
+          className="border-t border-line bg-surface/95 px-4 py-3 backdrop-blur-md sm:hidden"
         >
           <ul className="flex flex-col gap-1">
             {navItems.map(({ routeTarget, key, icon: Icon, path }) => {
