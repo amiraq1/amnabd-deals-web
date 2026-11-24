@@ -23,10 +23,10 @@ export default function EvidenceBadge({
   };
   const Icon = icons[state];
   const tones = {
-    supported: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-200',
-    partial: 'border-amber-500/20 bg-amber-500/5 text-amber-200',
-    unsupported: 'border-slate-600 bg-slate-800/40 text-slate-200',
-    unknown: 'border-slate-700 bg-slate-800/40 text-ink-secondary',
+    supported: 'border-brand/40 bg-surface text-stone-200',
+    partial: 'border-amber-500/30 bg-surface text-amber-200',
+    unsupported: 'border-line bg-surface text-stone-300',
+    unknown: 'border-line-subtle bg-surface text-stone-400',
   };
   return (
     <span

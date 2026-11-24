@@ -737,7 +737,7 @@ export default function HomePage({
                         sharedListSlugs.length === 1 ? 'deal' : 'deals'
                       })`}
                 </h2>
-                <p className="mt-0.5 text-sm text-slate-300">
+                <p className="mt-0.5 text-sm text-stone-300">
                   {lang === 'ar'
                     ? 'يمكنك حفظ هذه العروض مباشرة في مفضلتك المحلية للرجوع إليها لاحقاً.'
                     : 'You can save these deals directly to your local favorites for future reference.'}
@@ -843,7 +843,7 @@ export default function HomePage({
               <button
                 type="button"
                 onClick={() => setSharedListDismissed(true)}
-                className="rounded-xl border border-slate-700 bg-slate-800/60 p-2 text-slate-400 transition hover:bg-slate-800 hover:text-slate-200"
+                className="rounded-xl border border-line bg-surface-raised p-2 text-stone-400 transition hover:border-line-hover hover:bg-surface-overlay hover:text-stone-200 focus-visible:outline-brand"
                 aria-label={lang === 'ar' ? 'إغلاق التنبيه' : 'Dismiss notice'}
               >
                 <X className="h-4 w-4" />
@@ -867,7 +867,7 @@ export default function HomePage({
                   'AI Tool Deals, Credits & Benefits with Source Links',
               })}
             </h1>
-            <p className="mt-2.5 hidden text-sm leading-relaxed text-slate-300 sm:block sm:text-base">
+            <p className="mt-2.5 hidden text-sm leading-relaxed text-stone-300 sm:block sm:text-base">
               {pick({
                 ar:
                   overview.subtitle ??
@@ -878,7 +878,7 @@ export default function HomePage({
               })}
             </p>
 
-            <div className="mt-3.5 flex flex-wrap items-center gap-3 text-sm text-slate-300">
+            <div className="mt-3.5 flex flex-wrap items-center gap-3 text-sm text-stone-300">
               <span className="flex items-center gap-1.5 font-medium tabular-nums text-emerald-400">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 {activeCountLabel}
@@ -1296,8 +1296,8 @@ export default function HomePage({
               : ''}
         </p>
         {copyStatus === 'manual' && (
-          <div className="mb-3 rounded-xl border border-slate-700 bg-surface-raised p-3">
-            <label className="block text-sm font-medium text-slate-300">
+          <div className="mb-3 rounded-xl border border-line bg-surface-raised p-3">
+            <label className="block text-sm font-medium text-stone-300">
               {lang === 'ar'
                 ? 'انسخ رابط البحث المفلتر من الحقل أدناه:'
                 : 'Copy the filtered search link from the field below:'}
@@ -1307,7 +1307,7 @@ export default function HomePage({
                 value={manualLink}
                 dir="ltr"
                 onFocus={(e) => e.currentTarget.select()}
-                className="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-950 p-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="mt-1.5 w-full rounded-lg border border-line bg-surface p-2 text-sm text-stone-200 focus-visible:outline-brand"
               />
             </label>
           </div>
@@ -1353,7 +1353,7 @@ export default function HomePage({
           >
             <Bookmark
               className={`h-3.5 w-3.5 ${
-                savedOnly ? 'fill-slate-950 text-slate-950' : 'text-slate-400'
+                savedOnly ? 'fill-stone-100 text-stone-100' : 'text-stone-400'
               }`}
             />
             <span>{lang === 'ar' ? 'المحفوظة' : 'Saved'}</span>
@@ -1407,7 +1407,7 @@ export default function HomePage({
         {/* Sort controls; quick paths live in the discovery hero above. */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line-subtle pt-3">
           <div className="flex items-center gap-2 ms-auto">
-            <label htmlFor="deal-sort" className="text-sm text-slate-400">
+            <label htmlFor="deal-sort" className="text-sm text-stone-400">
               {lang === 'ar' ? 'الترتيب:' : 'Sort:'}
             </label>
             <select
@@ -1416,7 +1416,7 @@ export default function HomePage({
               onChange={(e) =>
                 onFilterChange({ sort: e.target.value as SortOption }, 'push')
               }
-              className="rounded-lg border border-slate-700 bg-slate-900 min-h-11 px-2.5 py-1.5 text-sm font-medium text-slate-200 outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
+              className="rounded-lg border border-line bg-surface-raised min-h-11 px-2.5 py-1.5 text-sm font-medium text-stone-200 outline-none transition focus-visible:outline-brand"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -1427,7 +1427,7 @@ export default function HomePage({
           </div>
         </div>
 
-        <p className="mt-2.5 text-sm text-slate-400" id="saved-deals-scope">
+        <p className="mt-2.5 text-sm text-stone-400" id="saved-deals-scope">
           {lang === 'ar'
             ? 'المحفوظات تخص هذا المتصفح. يشارك الرابط تفعيل الفلتر فقط، لا قائمة المحفوظات؛ قد تختلف النتائج على جهاز آخر.'
             : 'Saved deals belong to this browser. The link shares the filter, not the saved list; results may differ on another device.'}
@@ -1459,7 +1459,7 @@ export default function HomePage({
                 {lang === 'ar' ? 'أحدث العروض المضافة' : 'Newest additions'}
               </h2>
             </div>
-            <span className="text-sm text-slate-400">
+            <span className="text-sm text-stone-400">
               {lang === 'ar'
                 ? 'الأحدث أولًا حسب تاريخ الإضافة'
                 : 'Newest first by date added'}
@@ -1490,10 +1490,10 @@ export default function HomePage({
 
       {comparisonSelection.length > 0 && (
         <section
-          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface-raised p-4"
           role="status"
         >
-          <p className="text-sm text-slate-200">
+          <p className="text-sm text-stone-200">
             {lang === 'ar'
               ? `تم اختيار ${comparisonSelection.length.toLocaleString('ar-EG')} من عرضين للمقارنة.`
               : `${comparisonSelection.length} of 2 offers selected for comparison.`}
@@ -1503,7 +1503,7 @@ export default function HomePage({
               <button
                 type="button"
                 onClick={onOpenComparison}
-                className="min-h-11 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+                className="min-h-11 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-semibold text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
               >
                 {lang === 'ar' ? 'عرض المقارنة' : 'View comparison'}
               </button>
@@ -1511,7 +1511,7 @@ export default function HomePage({
             <button
               type="button"
               onClick={onClearComparison}
-              className="min-h-11 rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-slate-500"
+              className="min-h-11 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-stone-300 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
             >
               {lang === 'ar' ? 'مسح الاختيار' : 'Clear selection'}
             </button>
@@ -1522,7 +1522,7 @@ export default function HomePage({
       {/* 4. Main Results Section */}
       <section id="deals-list" className="mt-6 scroll-mt-20">
         {filterState.sort === 'deadline' && (
-          <p className="mb-3 text-sm text-slate-300">
+          <p className="mb-3 text-sm text-stone-300">
             {lang === 'ar'
               ? 'مرجع المقارنة UTC. المواعيد الدقيقة القادمة أولاً، ثم الأيام التقويمية، ثم المواعيد السابقة، ثم المجهول.'
               : 'UTC reference. Upcoming exact times first, then calendar dates, past records, and unknowns.'}
@@ -1530,7 +1530,7 @@ export default function HomePage({
         )}
         <div className="flex items-center justify-between">
           <p
-            className="text-sm text-slate-400"
+            className="text-sm text-stone-400"
             role="status"
             aria-live="polite"
           >
@@ -1542,7 +1542,7 @@ export default function HomePage({
             <button
               type="button"
               onClick={handleResetAll}
-              className="min-h-11 text-sm text-slate-400 transition hover:text-emerald-400"
+              className="min-h-11 text-sm text-stone-400 transition-colors hover:text-stone-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
             >
               {lang === 'ar' ? 'إعادة ضبط الكل' : 'Reset all'}
             </button>
@@ -1617,7 +1617,7 @@ export default function HomePage({
         ) : listed.length > 0 ? (
           <>
             {newSlugs.size > 0 && (
-              <h2 className="mt-8 text-sm font-bold text-slate-200">
+              <h2 className="mt-8 text-sm font-bold text-stone-200">
                 {lang === 'ar' ? 'كل العروض' : 'All deals'}
               </h2>
             )}
@@ -1649,13 +1649,13 @@ export default function HomePage({
                 return (
                   <div key={deal.id} className="contents">
                     {filterState.sort === 'deadline' && firstInGroup && (
-                      <h2 className="col-span-full mt-4 text-base font-semibold text-slate-200">
+                      <h2 className="col-span-full mt-4 text-base font-semibold text-stone-200">
                         {headings[tier - 1]}
                       </h2>
                     )}
                     {filterState.sort === 'deadline' ? (
                       <div className="flex min-w-0 flex-col gap-2">
-                        <p className="text-sm text-slate-300">
+                        <p className="text-sm text-stone-300">
                           {deadlineTierLabel(
                             deal.registration.deadline,
                             lang,
@@ -1711,24 +1711,24 @@ export default function HomePage({
 
       {/* 5. Distinction & Methodology Section */}
       {config && overview.distinction_title && (
-        <section className="mt-14 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
+        <section className="mt-14 rounded-2xl border border-line bg-surface-raised p-6 sm:p-8">
           <h2 className="font-heading text-xl font-bold text-white">
             {pick({
               ar: overview.distinction_title ?? '',
               en: config.overview.en.distinction_title ?? '',
             })}
           </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-300">
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-stone-300">
             {overview.distinction ?? ''}
           </p>
-          <div className="mt-4 grid gap-3 text-sm text-slate-400 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 text-sm text-stone-400 sm:grid-cols-2">
             <p>
               {lang === 'ar' ? 'آخر مراجعة للمصادر' : 'Last reviewed'}:{' '}
               <bdi>{reviewDateLabel(config.last_reviewed, lang)}</bdi>
             </p>
             <p>
               {lang === 'ar' ? 'التصنيفات' : 'Labels'}:{' '}
-              <span className="text-slate-300">
+              <span className="text-stone-300">
                 {tristateLabel('unknown', lang)} ={' '}
                 {lang === 'ar'
                   ? 'غير مثبت بالأدلة'

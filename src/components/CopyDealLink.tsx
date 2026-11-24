@@ -45,7 +45,7 @@ export default function CopyDealLink({ slug }: { slug: string }) {
         type="button"
         onClick={copy}
         disabled={status === 'copying'}
-        className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:border-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-400 disabled:opacity-60"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-surface-raised px-4 py-2 text-sm font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
       >
         {status === 'success' ? (
           <Check aria-hidden="true" className="h-4 w-4" />
@@ -60,8 +60,8 @@ export default function CopyDealLink({ slug }: { slug: string }) {
         aria-atomic="true"
         className={
           status === 'success'
-            ? 'mt-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200'
-            : 'mt-2 text-sm text-slate-300'
+            ? 'mt-2 rounded-lg border border-brand/30 bg-surface-raised p-3 text-sm text-stone-200'
+            : 'mt-2 text-sm text-stone-300'
         }
       >
         {status === 'success'
@@ -75,7 +75,7 @@ export default function CopyDealLink({ slug }: { slug: string }) {
             : ''}
       </p>
       {status === 'manual' && (
-        <label className="mt-2 block text-sm text-slate-300">
+        <label className="mt-2 block text-sm text-stone-300">
           {lang === 'ar' ? 'رابط العرض للنسخ اليدوي' : 'Deal link for manual copying'}
           <input
             type="text"
@@ -83,7 +83,7 @@ export default function CopyDealLink({ slug }: { slug: string }) {
             value={link}
             dir="ltr"
             onFocus={(event) => event.currentTarget.select()}
-            className="mt-2 min-h-11 w-full rounded-lg border border-slate-600 bg-slate-950 p-3 text-start focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
+            className="mt-2 min-h-11 w-full rounded-lg border border-line bg-surface p-3 text-start text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
           />
         </label>
       )}

@@ -171,7 +171,7 @@ export default function DealDetailPage({
             />
           </div>
 
-          <p className="mt-4 text-base leading-relaxed text-slate-300">
+          <p className="mt-4 text-base leading-relaxed text-stone-300">
             {description}
           </p>
 
@@ -186,7 +186,7 @@ export default function DealDetailPage({
                 href={offerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-control bg-brand px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 active:scale-[0.98]"
+                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-control bg-brand px-4 py-2.5 text-sm font-semibold text-stone-950 transition hover:bg-emerald-400 active:scale-[0.98]"
               >
                 <bdi>
                   {lang === 'ar'
@@ -236,7 +236,7 @@ export default function DealDetailPage({
                 href="#how-to-activate"
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-control border border-line bg-surface-overlay px-4 py-2 text-sm font-medium text-ink-muted transition hover:border-line-subtle hover:text-ink active:scale-[0.98]"
               >
-                <BookOpen className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                <BookOpen className="h-4 w-4 shrink-0 text-stone-400" aria-hidden="true" />
                 <bdi>
                   {lang === 'ar' ? 'طريقة التفعيل' : 'Activation guide'}
                 </bdi>
@@ -303,12 +303,12 @@ export default function DealDetailPage({
             </dl>
           </div>
           {deal.headline_value && (
-            <p className="mt-4 text-sm text-slate-300">
+            <p className="mt-4 text-sm text-stone-300">
               <IsolatedText text={deal.headline_value} />
             </p>
           )}
           {deal.key_condition && (
-            <p className="mt-3 text-sm text-slate-300">
+            <p className="mt-3 text-sm text-stone-300">
               {lang === 'ar' ? 'الشرط المسجّل: ' : 'Recorded condition: '}
               <IsolatedText text={deal.key_condition} />
             </p>
@@ -328,7 +328,7 @@ export default function DealDetailPage({
                 ? 'ماذا نعرف وماذا لا نعرف؟'
                 : 'What We Know and What Remains Unknown'}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+            <p className="mt-2 text-sm leading-relaxed text-stone-300">
               {lang === 'ar'
                 ? 'ملخص شروط الأهلية وسجل المراجعة كما تثبتها الأدلة. راجع هذه المعلومات قبل اتباع أي دليل.'
                 : 'A summary of eligibility and review facts supported by evidence. Check it before following any guide.'}
@@ -387,7 +387,7 @@ export default function DealDetailPage({
                         </span>
                       )}
                     </div>
-                    <p className="mt-1.5 leading-relaxed text-slate-300">
+                    <p className="mt-1.5 leading-relaxed text-stone-300">
                       {b.description[lang]}
                     </p>
                   </li>
@@ -418,7 +418,7 @@ export default function DealDetailPage({
 
           <section className="mt-8 rounded-card border border-line bg-surface-overlay p-5">
             <h3 className="font-heading flex items-center gap-2 text-sm font-semibold text-ink-muted">
-              <ShieldCheck className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+              <ShieldCheck className="h-4 w-4 shrink-0 text-stone-400" aria-hidden="true" />
               {lang === 'ar' ? 'المصادر والأدلة' : 'Sources and evidence'}
             </h3>
             <div className="mt-4 space-y-5">
@@ -442,9 +442,9 @@ export default function DealDetailPage({
                     {src.claims.map((claim, j) => (
                       <li
                         key={j}
-                        className="flex items-start gap-2 text-sm leading-relaxed text-slate-400"
+                        className="flex items-start gap-2 text-sm leading-relaxed text-stone-400"
                       >
-                        <FileText className="mt-0.5 h-3 w-3 shrink-0 text-slate-600" />
+                        <FileText className="mt-0.5 h-3 w-3 shrink-0 text-stone-500" />
                         <span className="min-w-0 [overflow-wrap:anywhere]">
                           {claim.evidence}
                         </span>
@@ -459,7 +459,7 @@ export default function DealDetailPage({
               <bdi className="tabular-nums">{reviewDateLabel(deal.review.reviewed_on, lang)}</bdi>
               {' · '}
               {lang === 'ar' ? 'حالة العرض' : 'Offer status'}:{' '}
-              <span className="text-slate-300">
+              <span className="text-stone-300">
                 {offerTimingLabel(
                   getTimingState(deal, referenceNow).offer,
                   deal.review.offer_status,
@@ -473,7 +473,7 @@ export default function DealDetailPage({
             <h3 className="font-heading text-sm font-semibold text-ink-muted">
               {lang === 'ar' ? 'ملاحظات المراجعة' : 'Review notes'}
             </h3>
-            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            <p className="mt-3 text-sm leading-relaxed text-stone-300">
               {deal.review.notes[lang]}
             </p>
           </section>
@@ -485,7 +485,7 @@ export default function DealDetailPage({
               {sectionLabels.eligibility ??
                 (lang === 'ar' ? 'الأهلية' : 'Eligibility')}
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            <p className="mt-3 text-sm leading-relaxed text-stone-300">
               {guide.sections.eligibility[lang]}
             </p>
 
@@ -495,7 +495,7 @@ export default function DealDetailPage({
                   ? 'التسجيل والموعد النهائي'
                   : 'Registration and deadline')}
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            <p className="mt-3 text-sm leading-relaxed text-stone-300">
               {guide.sections.registration[lang]}
             </p>
 
@@ -503,7 +503,7 @@ export default function DealDetailPage({
               {sectionLabels.limitations ??
                 (lang === 'ar' ? 'القيود والرسوم' : 'Limits and fees')}
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            <p className="mt-3 text-sm leading-relaxed text-stone-300">
               {guide.sections.limitations[lang]}
             </p>
 
@@ -513,7 +513,7 @@ export default function DealDetailPage({
                   ? 'بعد انتهاء المنفعة'
                   : 'After the benefit ends')}
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            <p className="mt-3 text-sm leading-relaxed text-stone-300">
               {guide.sections.after_expiry[lang]}
             </p>
 
@@ -564,7 +564,7 @@ export default function DealDetailPage({
             </h2>
             <div className="flex items-center gap-2 text-xs text-ink-muted">
               {firstBenefit ? (
-                <span className="truncate text-slate-300 font-medium tabular-nums">
+                <span className="truncate text-stone-300 font-medium tabular-nums">
                   <bdi>
                     <IsolatedText text={primaryBenefit(deal, lang)} />
                   </bdi>
@@ -590,7 +590,7 @@ export default function DealDetailPage({
                 href={offerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-control bg-brand px-3.5 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-emerald-400 active:scale-[0.98]"
+                className="inline-flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-control bg-brand px-3.5 py-2.5 text-xs font-semibold text-stone-950 transition hover:bg-emerald-400 active:scale-[0.98]"
               >
                 <bdi>
                   {lang === 'ar'
