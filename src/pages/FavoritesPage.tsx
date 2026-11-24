@@ -234,7 +234,7 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       )}
 
       {missingSlugs.length > 0 && (
-        <section className="mt-6 rounded-card border border-line bg-surface-raised p-4 sm:p-5" aria-labelledby="missing-saved-title">
+        <section className="mt-6 rounded-card border border-line bg-surface-raised shadow-card p-4 sm:p-5" aria-labelledby="missing-saved-title">
           <h2 id="missing-saved-title" className="font-heading text-sm font-semibold text-amber-300">{isAr ? 'محفوظات غير موجودة في الكتالوج المحمّل' : 'Saved items missing from the loaded catalog'}</h2>
           <p className="mt-1 text-xs text-stone-400">{isAr ? 'قد يكون العرض أزيل أو غير متاح حاليًا؛ هذه الحالة تختلف عن انتهاء العرض.' : 'An item may have been removed or be temporarily unavailable; this is distinct from an expired offer.'}</p>
           <ul className="mt-3 space-y-2">{missingSlugs.map((slug) => <li key={slug} className="flex flex-wrap items-center gap-3 text-sm"><bdi className="font-mono text-xs text-stone-300">{slug}</bdi><button type="button" onClick={() => toggleFavorite(slug)} className={buttonClass}>{isAr ? 'إزالة من المفضلة' : 'Remove from favorites'}</button></li>)}</ul>
@@ -254,7 +254,7 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       </p>
 
       {soonEndingDeals.length > 0 && (
-        <section className="mt-8 rounded-card border border-line bg-surface-raised p-5 sm:p-6" aria-labelledby="saved-ending-soon-title">
+        <section className="mt-8 rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-6" aria-labelledby="saved-ending-soon-title">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 id="saved-ending-soon-title" className="font-heading flex items-center gap-2 text-base font-bold text-stone-100">
@@ -267,7 +267,7 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
                   : 'Only saved offers with a valid recorded end date appear here.'}
               </p>
             </div>
-            <span className="rounded-md border border-line bg-surface px-2.5 py-1 text-xs font-semibold tabular-nums text-amber-300">
+            <span className="rounded-md border border-line bg-surface-card-inner px-2.5 py-1 text-xs font-semibold tabular-nums text-amber-300">
               {countLabel(soonEndingDeals.length, lang)}
             </span>
           </div>
@@ -276,7 +276,7 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
               const name = isAr ? deal.name_ar : deal.name_en;
               const endsAt = deal.ends_at?.trim() ?? '';
               return (
-                <li key={deal.slug} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3">
+                <li key={deal.slug} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-line bg-surface-card-inner px-4 py-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-stone-100">{name}</p>
                     <p className="mt-1 text-xs text-stone-400">
@@ -301,8 +301,8 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       )}
 
       {favoriteDeals.length === 0 ? (
-        <div className="mt-10 flex flex-col items-center justify-center rounded-card border border-line bg-surface-raised px-6 py-16 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-surface text-stone-400">
+        <div className="mt-10 flex flex-col items-center justify-center rounded-card border border-line bg-surface-raised shadow-card px-6 py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-surface-card-inner text-stone-400">
             <Heart className="h-6 w-6 stroke-[1.5]" aria-hidden="true" />
           </div>
           <h2 className="mt-4 font-heading text-lg font-bold text-stone-100">

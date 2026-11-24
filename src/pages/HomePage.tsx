@@ -855,7 +855,7 @@ export default function HomePage({
 
       {/* 1. Hero Section with Interactive Prompts & Stats */}
       <section className="animate-fade-up">
-        <div className="discovery-hero relative grid gap-6 overflow-hidden rounded-card border border-line bg-surface-raised p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-10">
+        <div className="discovery-hero relative grid gap-6 overflow-hidden rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-10">
           <div className="relative min-w-0">
             <h1 className="font-heading text-2xl font-extrabold leading-tight text-white sm:text-3xl">
               {pick({
@@ -1138,7 +1138,7 @@ export default function HomePage({
         {showFilters && (
           <div
             id="home-filter-panel"
-            className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-line bg-surface-raised p-4"
+            className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-line bg-surface-raised shadow-card p-4"
           >
             <div className="flex items-center gap-2">
               <label
@@ -1490,7 +1490,7 @@ export default function HomePage({
 
       {comparisonSelection.length > 0 && (
         <section
-          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface-raised p-4"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface-raised shadow-card p-4"
           role="status"
         >
           <p className="text-sm text-stone-200">
@@ -1503,7 +1503,7 @@ export default function HomePage({
               <button
                 type="button"
                 onClick={onOpenComparison}
-                className="min-h-11 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-semibold text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+                className="min-h-11 rounded-lg border border-line bg-surface-card-inner px-3 py-2 text-sm font-semibold text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
               >
                 {lang === 'ar' ? 'عرض المقارنة' : 'View comparison'}
               </button>
@@ -1511,7 +1511,7 @@ export default function HomePage({
             <button
               type="button"
               onClick={onClearComparison}
-              className="min-h-11 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-stone-300 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+              className="min-h-11 rounded-lg border border-line bg-surface-card-inner px-3 py-2 text-sm text-stone-300 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
             >
               {lang === 'ar' ? 'مسح الاختيار' : 'Clear selection'}
             </button>
@@ -1550,7 +1550,7 @@ export default function HomePage({
         </div>
 
         {sorted.length === 0 ? (
-          <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-line bg-surface-raised py-14 px-4 text-center">
+          <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-line bg-surface-raised shadow-card py-14 px-4 text-center">
             <Inbox className="h-10 w-10 text-stone-600" />
             {savedOnly && validSavedCount === 0 ? (
               <>
@@ -1711,7 +1711,7 @@ export default function HomePage({
 
       {/* 5. Distinction & Methodology Section */}
       {config && overview.distinction_title && (
-        <section className="mt-14 rounded-2xl border border-line bg-surface-raised p-6 sm:p-8">
+        <section className="mt-14 rounded-2xl border border-line bg-surface-raised shadow-card p-6 sm:p-8">
           <h2 className="font-heading text-xl font-bold text-white">
             {pick({
               ar: overview.distinction_title ?? '',

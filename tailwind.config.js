@@ -24,19 +24,19 @@ export default {
           5: { ink: '#cbd5e1', surface: '#1e293b', line: '#475569' },
         },
         line: {
-          DEFAULT: '#242422', // Subtle warm charcoal border
+          DEFAULT: 'var(--border, rgba(148, 163, 184, 0.23))', // Unified crisp border
           card: 'var(--border, rgba(148, 163, 184, 0.23))', // Card border
           'card-hover': 'var(--border-hover, rgba(148, 163, 184, 0.35))',
-          subtle: '#1a1a18',
-          hover: '#383835', // Interactive hover border
+          subtle: '#142025',
+          hover: 'var(--border-hover, rgba(148, 163, 184, 0.35))', // Interactive hover border
           control: '#64748b', // AA non-text contrast >= 3:1 against bg & raised
         },
         surface: {
           DEFAULT: '#0b0b0a', // Editorial warm charcoal canvas
           card: 'var(--surface-1, #12242a)', // Elevated card surface (1.23:1 vs #0b0b0a)
           'card-inner': 'var(--surface-2, rgba(255, 255, 255, 0.04))', // Inner section/facts
-          raised: '#141413', // Elevated editorial surface
-          overlay: '#1e1e1d', // Top overlays / menus / buttons
+          raised: '#12242a', // Elevated editorial surface (Variant C emerald tint)
+          overlay: '#162e36', // Top overlays / menus / buttons / sub-panels
         },
         brand: {
           DEFAULT: '#10b981', // Emerald-500 reserved for verified badges & affirmative actions

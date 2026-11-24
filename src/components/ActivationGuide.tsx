@@ -48,7 +48,7 @@ export function ActivationGuide({ guide, officialUrl }: ActivationGuideProps) {
     <section
       id="how-to-activate"
       aria-labelledby="activation-guide-title"
-      className="mt-8 scroll-mt-24 rounded-card border border-line bg-surface-raised p-5 sm:p-7"
+      className="mt-8 scroll-mt-24 rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-7"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-overlay px-3 py-1 text-xs font-medium text-ink-muted">

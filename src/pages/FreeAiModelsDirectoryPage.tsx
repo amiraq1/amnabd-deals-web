@@ -120,7 +120,7 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
   const officialUrl = safeDealUrl(entry.officialUrl);
 
   return (
-    <article className="rounded-card border border-line bg-surface-raised p-4 sm:p-5">
+    <article className="rounded-card border border-line bg-surface-raised shadow-card p-4 sm:p-5">
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
@@ -133,15 +133,15 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
         </div>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <div className="rounded-lg border border-line-subtle bg-surface px-3 py-2">
+          <div className="rounded-lg border border-line-subtle bg-surface-card-inner px-3 py-2">
             <div className="text-xs text-stone-400">{copy.context}</div>
             <div className="mt-1 font-mono text-sm font-semibold tabular-nums text-stone-100" dir="ltr">{shortContextLabel(entry.contextTokens)}</div>
           </div>
-          <div className="rounded-lg border border-line-subtle bg-surface px-3 py-2">
+          <div className="rounded-lg border border-line-subtle bg-surface-card-inner px-3 py-2">
             <div className="text-xs text-stone-400">{copy.inputs}</div>
             <div className="mt-1 text-sm font-semibold text-stone-100">{entry.modalities.map((item) => modalityName[item]).join(' · ') || '—'}</div>
           </div>
-          <div className="col-span-2 rounded-lg border border-line-subtle bg-surface px-3 py-2 sm:col-span-1">
+          <div className="col-span-2 rounded-lg border border-line-subtle bg-surface-card-inner px-3 py-2 sm:col-span-1">
             <div className="text-xs text-stone-400">{lang === 'ar' ? 'الخطة / الحالة' : 'Tier / status'}</div>
             <div className="mt-1 text-sm font-semibold leading-5 text-amber-200">{entry.tierLabel[lang]}</div>
           </div>
@@ -149,7 +149,7 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
 
         <div className="flex flex-wrap gap-1.5" aria-label={copy.capabilities}>
           {entry.capabilities.map((capability) => (
-            <span key={capability} className="rounded-md border border-line bg-surface px-2.5 py-1 text-xs font-medium text-stone-300">{capabilityName[capability]}</span>
+            <span key={capability} className="rounded-md border border-line bg-surface-card-inner px-2.5 py-1 text-xs font-medium text-stone-300">{capabilityName[capability]}</span>
           ))}
         </div>
 
@@ -158,7 +158,7 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
             href={officialUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand sm:w-fit"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-surface-card-inner px-4 py-2 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand sm:w-fit"
           >
             <span>{copy.accessMethod}: {providerName}</span>
             <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0 rtl:-scale-x-100" />
@@ -166,7 +166,7 @@ function ModelCard({ entry, lang }: { entry: FreeAiModelEntry; lang: 'ar' | 'en'
         )}
 
         <details className="group border-t border-line-subtle pt-3">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-2 text-sm font-medium text-stone-200 hover:bg-surface hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-2 text-sm font-medium text-stone-200 hover:bg-surface-card-inner hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand [&::-webkit-details-marker]:hidden">
             <span>{copy.details}</span>
             <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
           </summary>
@@ -378,10 +378,10 @@ export default function FreeAiModelsDirectoryPage() {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-400">{ar ? 'دليل موثّق بالمصادر الرسمية' : 'Official-source directory'}</p>
         <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl">{text.title}</h1>
         <p className="mt-3 text-base leading-relaxed text-stone-300">{text.intro}</p>
-        <p className="mt-4 rounded-card border border-line bg-surface-raised p-4 text-sm leading-relaxed text-stone-300">{text.scope}</p>
+        <p className="mt-4 rounded-card border border-line bg-surface-raised shadow-card p-4 text-sm leading-relaxed text-stone-300">{text.scope}</p>
       </header>
 
-      <section className="mt-6 rounded-card border border-line bg-surface-raised p-4 sm:p-5" aria-labelledby="ai-model-search-title">
+      <section className="mt-6 rounded-card border border-line bg-surface-raised shadow-card p-4 sm:p-5" aria-labelledby="ai-model-search-title">
         <h2 id="ai-model-search-title" className="font-heading text-base font-bold text-stone-100 sm:text-lg">{text.searchHeading}</h2>
         <label className="relative mt-3 block">
           <span className="sr-only">{text.search}</span>
@@ -421,7 +421,7 @@ export default function FreeAiModelsDirectoryPage() {
             { label: text.models, value: modelCount }, { label: text.providers, value: providerCount },
             { label: text.noCard, value: confirmedNoCardCount }, { label: text.longContext, value: longContextCount },
           ].map((stat) => (
-            <div key={stat.label} className="min-w-36 snap-start rounded-card border border-line bg-surface-raised p-3.5 sm:min-w-0 sm:p-4">
+            <div key={stat.label} className="min-w-36 snap-start rounded-card border border-line bg-surface-raised shadow-card p-3.5 sm:min-w-0 sm:p-4">
               <div className="font-heading text-2xl font-bold tabular-nums text-stone-100" dir="ltr">{stat.value}</div>
               <div className="mt-1 text-xs leading-5 text-stone-400 sm:text-sm">{stat.label}</div>
             </div>
@@ -429,7 +429,7 @@ export default function FreeAiModelsDirectoryPage() {
         </div>
       </section>
 
-      <details className="group mt-5 rounded-card border border-line bg-surface-raised">
+      <details className="group mt-5 rounded-card border border-line bg-surface-raised shadow-card">
         <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-base font-bold text-stone-100 hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-2"><Filter aria-hidden="true" className="h-4 w-4 text-stone-400" />{text.advancedFilters}</span>
           <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-stone-400 transition-transform group-open:rotate-180" />
@@ -505,7 +505,7 @@ export default function FreeAiModelsDirectoryPage() {
         {filteredEntries.length ? (
           <div className="space-y-4">{filteredEntries.map((entry) => <ModelCard key={entry.id} entry={entry} lang={lang} />)}</div>
         ) : (
-          <div className="rounded-card border border-line bg-surface-raised p-6 text-center">
+          <div className="rounded-card border border-line bg-surface-raised shadow-card p-6 text-center">
             <p className="text-sm leading-relaxed text-stone-300">{emptyMessage}</p>
             <button type="button" onClick={resetFilters} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">{text.reset}</button>
           </div>
@@ -519,10 +519,10 @@ export default function FreeAiModelsDirectoryPage() {
           {FREE_AI_MODEL_PROVIDERS.map((provider) => {
             const models = FREE_AI_MODEL_ENTRIES.filter((entry) => entry.providerId === provider.id);
             return (
-              <article key={provider.id} className="rounded-card border border-line bg-surface-raised p-5">
+              <article key={provider.id} className="rounded-card border border-line bg-surface-raised shadow-card p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="font-heading text-lg font-bold text-stone-100">{ar ? provider.nameAr : provider.name}</h3>
-                  <span className="rounded-md border border-line bg-surface px-2.5 py-0.5 text-xs font-medium text-stone-300">{accessLabel(provider.type, lang)}</span>
+                  <span className="rounded-md border border-line bg-surface-card-inner px-2.5 py-0.5 text-xs font-medium text-stone-300">{accessLabel(provider.type, lang)}</span>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-stone-300">{provider.summary[lang]}</p>
                 <p className="mt-3 text-sm text-stone-400">{text.listed}: <strong className="tabular-nums text-stone-100">{models.length}</strong></p>
@@ -534,7 +534,7 @@ export default function FreeAiModelsDirectoryPage() {
         </div>
       </section>
 
-      <aside className="mt-8 rounded-card border border-line bg-surface-raised p-5" aria-labelledby="ai-model-disclaimer">
+      <aside className="mt-8 rounded-card border border-line bg-surface-raised shadow-card p-5" aria-labelledby="ai-model-disclaimer">
         <h2 id="ai-model-disclaimer" className="font-heading text-base font-bold text-amber-200">{text.disclaimerTitle}</h2>
         <p className="mt-2 text-sm leading-relaxed text-stone-300">{text.disclaimer}</p>
       </aside>

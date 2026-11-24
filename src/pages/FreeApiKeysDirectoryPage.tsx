@@ -129,10 +129,10 @@ export default function FreeApiKeysDirectoryPage() {
       <header>
         <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl">{t.title}</h1>
         <p className="mt-3 text-sm leading-relaxed text-stone-400">{t.note}</p>
-        <p className="mt-4 rounded-card border border-line bg-surface-raised p-4 text-sm leading-relaxed text-stone-300">{lang === 'ar' ? 'الحصص تختلف في وحدتها ونطاقها ودورة تجديدها: يوم تقويمي أو نافذة متدحرجة، حساب أو نموذج، رصيد لمرة واحدة أو متجدد. إذا لم يذكر المصدر التفاصيل فتبقى غير معلومة؛ وقد تتطلب الزيادة شراءً مدفوعًا.' : 'Quotas differ in units, scope and reset: calendar day or rolling window, account or model, one-time or recurring credit. Details not stated by the source remain unknown; increased limits may require a purchase.'}</p>
+        <p className="mt-4 rounded-card border border-line bg-surface-raised shadow-card p-4 text-sm leading-relaxed text-stone-300">{lang === 'ar' ? 'الحصص تختلف في وحدتها ونطاقها ودورة تجديدها: يوم تقويمي أو نافذة متدحرجة، حساب أو نموذج، رصيد لمرة واحدة أو متجدد. إذا لم يذكر المصدر التفاصيل فتبقى غير معلومة؛ وقد تتطلب الزيادة شراءً مدفوعًا.' : 'Quotas differ in units, scope and reset: calendar day or rolling window, account or model, one-time or recurring credit. Details not stated by the source remain unknown; increased limits may require a purchase.'}</p>
         <a
           href="/free-ai-models-directory"
-          className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+          className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-line bg-surface-card-inner px-4 text-sm font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
         >
           {lang === 'ar' ? 'استكشف دليل نماذج الذكاء الاصطناعي المجانية' : 'Explore the Free AI Models Directory'}
         </a>
@@ -152,7 +152,7 @@ export default function FreeApiKeysDirectoryPage() {
                   <article key={entry.name} className="border-t border-line-subtle py-5 first:border-t-0 first:pt-0">
                     <div className="flex flex-wrap items-center gap-2.5">
                       <h3 className="font-heading text-lg font-bold text-stone-100">{entry.name}</h3>
-                      <span className="rounded-md border border-line bg-surface-raised px-2.5 py-0.5 text-xs font-medium text-stone-300">
+                      <span className="rounded-md border border-line bg-surface-card-inner px-2.5 py-0.5 text-xs font-medium text-stone-300">
                         {entry.type === 'gateway' ? t.typeGateway : t.typeProvider}
                       </span>
                     </div>

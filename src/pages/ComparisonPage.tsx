@@ -65,7 +65,7 @@ export default function ComparisonPage({
           <Arrow className="h-4 w-4" aria-hidden="true" />
           {lang === 'ar' ? 'العودة إلى العروض' : 'Back to offers'}
         </button>
-        <section className="mt-6 rounded-card border border-line bg-surface-raised p-6">
+        <section className="mt-6 rounded-card border border-line bg-surface-raised shadow-card p-6">
           <h1 className="font-heading text-2xl font-bold text-stone-100 [overflow-wrap:anywhere]">
             {lang === 'ar' ? 'المقارنة تحتاج عرضين محددين' : 'A comparison needs two selected offers'}
           </h1>
@@ -77,7 +77,7 @@ export default function ComparisonPage({
           <button
             type="button"
             onClick={onBackToHome}
-            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface px-5 py-2 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg border border-line bg-surface-card-inner px-5 py-2 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
           >
             {lang === 'ar' ? 'اختيار عرضين' : 'Choose two offers'}
           </button>
@@ -111,7 +111,7 @@ export default function ComparisonPage({
         </button>
       </div>
 
-      <header className="mt-6 rounded-card border border-line bg-surface-raised p-5 sm:p-7">
+      <header className="mt-6 rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-7">
         <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl [overflow-wrap:anywhere]">
           {lang === 'ar' ? 'مقارنة عرضين' : 'Compare two offers'}
         </h1>
@@ -122,10 +122,10 @@ export default function ComparisonPage({
         </p>
       </header>
 
-      <section className="mt-5 overflow-x-auto rounded-card border border-line bg-surface-raised" aria-label={lang === 'ar' ? 'حقول المقارنة' : 'Comparison fields'}>
+      <section className="mt-5 overflow-x-auto rounded-card border border-line bg-surface-raised shadow-card" aria-label={lang === 'ar' ? 'حقول المقارنة' : 'Comparison fields'}>
         <table className="w-full table-fixed border-collapse tabular-nums">
           <thead>
-            <tr className="border-b border-line bg-surface/90">
+            <tr className="border-b border-line bg-surface-overlay">
               <th scope="col" className="w-[28%] p-2 text-start text-[11px] font-medium text-stone-400 sm:p-4 sm:text-xs">
                 {lang === 'ar' ? 'الحقل' : 'Field'}
               </th>

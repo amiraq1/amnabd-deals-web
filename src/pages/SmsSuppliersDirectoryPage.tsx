@@ -52,7 +52,7 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
   const sourceResult = getListedSourceUrl(supplier);
 
   return (
-    <article className="rounded-card border border-line bg-surface-raised p-4 sm:p-5">
+    <article className="rounded-card border border-line bg-surface-raised shadow-card p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="break-words font-heading text-lg font-bold text-stone-100">{supplier.name}</h3>
@@ -60,8 +60,8 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
         </div>
         <span className={`rounded-md border px-2.5 py-0.5 text-xs font-medium ${
           isOfficial
-            ? 'border-line bg-surface text-stone-300'
-            : 'border-amber-500/30 bg-surface text-amber-200'
+            ? 'border-line bg-surface-card-inner text-stone-300'
+            : 'border-amber-500/30 bg-surface-card-inner text-amber-200'
         }`}>
           {statusText}
         </span>
@@ -69,7 +69,7 @@ function SupplierCard({ supplier, lang }: { supplier: SmsSupplier; lang: 'ar' | 
 
       <div className="mt-4 flex flex-wrap gap-2" aria-label={lang === 'ar' ? 'تصنيف الخدمة' : 'Service categories'}>
         {supplier.serviceTypes.map((type) => (
-          <span key={type} className="rounded-md border border-line bg-surface px-2.5 py-0.5 text-xs font-medium text-stone-300">
+          <span key={type} className="rounded-md border border-line bg-surface-card-inner px-2.5 py-0.5 text-xs font-medium text-stone-300">
             {serviceLabels[type][lang]}
           </span>
         ))}
@@ -223,7 +223,7 @@ export default function SmsSuppliersDirectoryPage() {
         <p className="text-xs font-semibold uppercase tracking-wider text-stone-400">{summary.badge[lang]}</p>
         <h1 className="mt-2 font-heading text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl">{copy.title}</h1>
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-stone-300">{copy.intro}</p>
-        <aside className="mt-5 rounded-card border border-amber-500/30 bg-surface-raised p-4 text-sm leading-relaxed text-amber-100" aria-label={ar ? 'تنبيه الخصوصية' : 'Privacy notice'}>
+        <aside className="mt-5 rounded-card border border-amber-500/30 bg-surface-raised shadow-card p-4 text-sm leading-relaxed text-amber-100" aria-label={ar ? 'تنبيه الخصوصية' : 'Privacy notice'}>
           {copy.caution}
         </aside>
       </header>
@@ -234,14 +234,14 @@ export default function SmsSuppliersDirectoryPage() {
           { label: copy.markedOfficial, value: summary.officialCount },
           { label: copy.needsReview, value: summary.reviewCount },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-card border border-line bg-surface-raised px-4 py-3">
+          <div key={stat.label} className="rounded-card border border-line bg-surface-raised shadow-card px-4 py-3">
             <p className="text-sm text-stone-400">{stat.label}</p>
             <p className="mt-1 font-heading text-2xl font-bold tabular-nums text-stone-100" dir="ltr">{stat.value}</p>
           </div>
         ))}
       </section>
 
-      <section className="mt-8 rounded-card border border-line bg-surface-raised p-4 sm:p-5" aria-label={ar ? 'بحث وفلاتر الدليل' : 'Directory search and filters'}>
+      <section className="mt-8 rounded-card border border-line bg-surface-raised shadow-card p-4 sm:p-5" aria-label={ar ? 'بحث وفلاتر الدليل' : 'Directory search and filters'}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label htmlFor="sms-supplier-search" className="mb-1.5 block text-sm font-semibold text-stone-200">{copy.search}</label>
@@ -333,9 +333,9 @@ export default function SmsSuppliersDirectoryPage() {
             {pageRows.map((supplier) => <SupplierCard key={supplier.id} supplier={supplier} lang={lang} />)}
           </div>
         ) : (
-          <section className="mt-6 rounded-card border border-line bg-surface-raised p-6 text-center" aria-live="polite">
+          <section className="mt-6 rounded-card border border-line bg-surface-raised shadow-card p-6 text-center" aria-live="polite">
             <p className="text-stone-300">{copy.empty}</p>
-            <button type="button" onClick={resetFilters} className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-line bg-surface px-4 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+            <button type="button" onClick={resetFilters} className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-line bg-surface-card-inner px-4 text-sm font-medium text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
               {copy.reset}
             </button>
           </section>
@@ -344,7 +344,7 @@ export default function SmsSuppliersDirectoryPage() {
 
       {filtered.length > 0 && (
         <nav className="mt-6 flex flex-wrap items-center justify-center gap-3" aria-label={ar ? 'صفحات النتائج' : 'Result pages'}>
-          <button type="button" disabled={safePage <= 1} onClick={() => handlePageChange(Math.max(1, safePage - 1))} className="min-h-11 rounded-lg border border-line bg-surface px-4 text-sm font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+          <button type="button" disabled={safePage <= 1} onClick={() => handlePageChange(Math.max(1, safePage - 1))} className="min-h-11 rounded-lg border border-line bg-surface-card-inner px-4 text-sm font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
             {copy.previous}
           </button>
           <span className="text-sm tabular-nums text-stone-400" aria-live="polite">

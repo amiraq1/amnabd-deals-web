@@ -109,7 +109,7 @@ export default function ReportDealBox({ dealSlug }: ReportDealBoxProps) {
   };
 
   return (
-    <div className="mt-8 rounded-card border border-line bg-surface-raised p-5 sm:p-6 transition-all">
+    <div className="mt-8 rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-6 transition-all">
       {!isOpen ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-ink-muted">

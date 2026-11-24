@@ -48,7 +48,7 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
         </div>
       </header>
 
-      <section className="animate-fade-up mt-8 rounded-card border border-line bg-surface-raised p-5 sm:p-6">
+      <section className="animate-fade-up mt-8 rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-6">
         <h2 className="font-heading text-base font-bold text-stone-100 sm:text-lg">
           {overview.distinction_title ?? ''}
         </h2>
@@ -66,7 +66,7 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
           return (
             <section
               key={guide.slug}
-              className="rounded-card border border-line bg-surface-raised p-6 sm:p-8"
+              className="rounded-card border border-line bg-surface-raised shadow-card p-6 sm:p-8"
             >
               <div className="flex flex-wrap items-baseline gap-2.5">
                 <h2 className="font-heading text-xl font-bold tracking-tight text-stone-100 sm:text-2xl">
