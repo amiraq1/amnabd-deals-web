@@ -120,9 +120,9 @@ export default function CollectionPage({
       </div>
 
       {/* 2. Collection Hero Banner */}
-      <header className="relative mt-6 overflow-hidden rounded-card border border-line bg-surface-raised p-6 sm:p-8">
+      <header className="relative mt-6 overflow-hidden rounded-card border border-line bg-surface-raised shadow-card p-6 sm:p-8">
         <div className="relative max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-md border border-line bg-surface px-3 py-1 text-xs font-semibold text-stone-300">
+          <div className="inline-flex items-center gap-2 rounded-md border border-line bg-surface-card-inner px-3 py-1 text-xs font-semibold text-stone-300">
             <Icon className="h-3.5 w-3.5 text-stone-400" aria-hidden="true" />
             <span>{lang === 'ar' ? config.badgeLabelAr : config.badgeLabelEn}</span>
           </div>
@@ -170,7 +170,7 @@ export default function CollectionPage({
       {collectionKey === 'for-students' && config.studentVerificationGuide && (
         <section
           aria-labelledby="student-verification-heading"
-          className="mt-6 rounded-card border border-line bg-surface-raised p-5 sm:p-6"
+          className="mt-6 rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-6"
         >
           <div className="max-w-3xl">
             <h2
@@ -237,7 +237,7 @@ export default function CollectionPage({
       {/* 3. Deals Grid */}
       <section className="mt-8">
         {matchingDeals.length === 0 ? (
-          <div className="rounded-card border border-line bg-surface-raised py-16 text-center text-stone-400">
+          <div className="rounded-card border border-line bg-surface-raised shadow-card py-16 text-center text-stone-400">
             <Inbox className="mx-auto mb-3 h-8 w-8 text-stone-500" aria-hidden="true" />
             <p className="text-sm font-medium">
               {lang === 'ar'
@@ -247,7 +247,7 @@ export default function CollectionPage({
             <button
               type="button"
               onClick={onBackToHome}
-              className={`mt-4 inline-flex min-h-11 items-center rounded-lg border border-line bg-surface px-4 py-2 text-xs font-semibold text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 ${focusRing}`}
+              className={`mt-4 inline-flex min-h-11 items-center rounded-lg border border-line bg-surface-card-inner px-4 py-2 text-xs font-semibold text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 ${focusRing}`}
             >
               {lang === 'ar' ? 'العودة للصفحة الرئيسية' : 'Back to Home'}
             </button>

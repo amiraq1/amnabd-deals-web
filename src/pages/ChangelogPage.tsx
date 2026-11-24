@@ -78,10 +78,10 @@ export default function ChangelogPage({
         </button>
       )}
 
-      <header className="mb-8 rounded-card border border-line bg-surface-raised p-6 sm:p-8">
+      <header className="mb-8 rounded-card border border-line bg-surface-raised shadow-card p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-md border border-line bg-surface px-3 py-1 text-xs font-semibold text-stone-300">
+            <div className="inline-flex items-center gap-2 rounded-md border border-line bg-surface-card-inner px-3 py-1 text-xs font-semibold text-stone-300">
               <History className="h-3.5 w-3.5 text-stone-400" aria-hidden="true" />
               <span>{lang === 'ar' ? 'مراجعات ومواعيد مسجّلة' : 'Recorded reviews & deadlines'}</span>
             </div>
@@ -145,14 +145,14 @@ export default function ChangelogPage({
       </header>
 
       {filteredGroups.length === 0 ? (
-        <div className="rounded-card border border-line bg-surface-raised py-16 text-center text-sm text-stone-400">
+        <div className="rounded-card border border-line bg-surface-raised shadow-card py-16 text-center text-sm text-stone-400">
           <Clock className="mx-auto mb-3 h-8 w-8 text-stone-500" aria-hidden="true" />
           <p>{lang === 'ar' ? 'لا توجد سجلات ضمن هذا التصنيف حاليًا.' : 'No records in this category.'}</p>
         </div>
       ) : (
         <div className="space-y-6">
           {filteredGroups.map((group) => (
-            <section key={group.date} className="rounded-card border border-line bg-surface-raised p-5 sm:p-6">
+            <section key={group.date} className="rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-6">
               <div className="mb-4 flex items-center justify-between border-b border-line-subtle pb-3">
                 <h2 className="font-heading flex items-center gap-2 text-sm font-bold text-stone-200 sm:text-base">
                   <span className="h-2 w-2 rounded-full bg-stone-400" aria-hidden="true" />

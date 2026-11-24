@@ -15,8 +15,8 @@ export default function OfflineNotice({
       role="status"
       aria-labelledby="offline-title"
     >
-      <section className="rounded-card border border-line bg-surface-raised p-6 sm:p-9">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-surface text-amber-300">
+      <section className="rounded-card border border-line bg-surface-raised shadow-card p-6 sm:p-9">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-surface-card-inner text-amber-300">
           <WifiOff className="h-6 w-6" aria-hidden="true" />
         </div>
         <h1 id="offline-title" className="font-heading mt-5 text-2xl font-bold tracking-tight text-stone-100">

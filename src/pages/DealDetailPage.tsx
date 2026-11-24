@@ -143,7 +143,7 @@ export default function DealDetailPage({
           {lang === 'ar' ? 'كل العروض' : 'All deals'}
         </button>
 
-        <header className="animate-fade-up mt-6 rounded-card border border-line bg-surface-raised p-5 sm:p-7">
+        <header className="animate-fade-up mt-6 rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-7">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
             <div className="flex w-full min-w-0 flex-1 items-start gap-3.5">
               <DealIcon deal={deal} size="lg" className="shrink-0" />
@@ -252,7 +252,7 @@ export default function DealDetailPage({
 
         <section
           aria-labelledby="quick-summary-heading"
-          className="mt-section rounded-card border border-line bg-surface-raised p-5 sm:p-7"
+          className="mt-section rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-7"
         >
           <h2
             id="quick-summary-heading"
@@ -317,7 +317,7 @@ export default function DealDetailPage({
 
         <section
           aria-labelledby="deal-truth-heading"
-          className="mt-8 rounded-card border border-line bg-surface-raised p-5 sm:p-7"
+          className="mt-8 rounded-card border border-line bg-surface-raised shadow-card p-5 sm:p-7"
         >
           <div className="mb-5">
             <h2
