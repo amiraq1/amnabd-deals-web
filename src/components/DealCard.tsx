@@ -84,7 +84,7 @@ function DealCard({
 
   return (
     <article
-      className={`deal-spotlight group relative flex h-full min-w-0 flex-col rounded-card border border-line bg-surface-raised p-5 transition-colors hover:border-[#383835] focus-within:border-brand [overflow-wrap:anywhere]`}
+      className={`deal-spotlight group relative flex h-full min-w-0 flex-col rounded-card border border-line bg-surface-raised p-5 transition-colors hover:border-line-hover focus-within:border-brand [overflow-wrap:anywhere]`}
     >
       {/* 1. Header: Monogram, Title, Category Badge, and Quick Favorite */}
       <div className="flex items-start justify-between gap-3">
@@ -110,7 +110,7 @@ function DealCard({
           <FavoriteButton
             slug={deal.slug}
             dealName={displayName}
-            className="border border-[#242422] bg-[#141413] hover:border-[#383835]"
+            className="border border-line bg-surface-raised hover:border-line-hover"
           />
         </div>
       </div>
@@ -152,7 +152,7 @@ function DealCard({
         <OfferFacts deal={deal} lang={lang} />
 
         {countryStatus && country && (
-          <p className="mt-2.5 rounded border border-[#1E1E1C] bg-[#0E0E0D]/60 px-2.5 py-1.5 text-xs text-ink-secondary">
+          <p className="mt-2.5 rounded border border-line-subtle bg-surface/60 px-2.5 py-1.5 text-xs text-ink-secondary">
             {isAr ? 'في ' : 'In '}
             <bdi>{country}</bdi>
             {' · '}
@@ -186,7 +186,7 @@ function DealCard({
           <a
             href={href}
             onClick={handleOpen}
-            className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-control border border-[#2E2E2A] bg-[#1E1E1D] px-3 py-2 text-sm font-semibold text-stone-100 transition-[colors,transform] duration-150 active:scale-[0.98] after:absolute after:inset-0 after:rounded-card hover:border-emerald-500/50 hover:bg-[#282824] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-control border border-line bg-surface-overlay px-3 py-2 text-sm font-semibold text-stone-100 transition-[colors,transform] duration-150 active:scale-[0.98] after:absolute after:inset-0 after:rounded-card hover:border-emerald-500/50 hover:bg-surface-overlay hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             <span>{isAr ? 'تفاصيل العرض' : 'View details'}</span>
             <span className="sr-only">: {displayName}</span>
@@ -198,7 +198,7 @@ function DealCard({
               href={officialUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative z-10 inline-flex min-h-11 items-center gap-1.5 rounded-control border border-[#242422] bg-[#141413] px-3 text-xs font-medium text-stone-300 transition-colors hover:border-[#383835] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              className="relative z-10 inline-flex min-h-11 items-center gap-1.5 rounded-control border border-line bg-surface-raised px-3 text-xs font-medium text-stone-300 transition-colors hover:border-line-hover hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               <span>{isAr ? 'المصدر' : 'Source'}</span>
               <ExternalLink aria-hidden="true" className="h-3.5 w-3.5 text-stone-400" />

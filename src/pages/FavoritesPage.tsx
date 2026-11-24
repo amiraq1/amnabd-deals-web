@@ -19,8 +19,11 @@ interface FavoritesPageProps {
 
 type CopyStatus = 'link' | 'text' | 'error' | null;
 
+const focusRing =
+  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand';
+
 const buttonClass =
-  'inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2 text-xs font-medium text-slate-200 transition hover:border-emerald-500/50 hover:text-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 active:scale-[0.98]';
+  `inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-surface-raised px-3.5 py-2 text-xs font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 ${focusRing} active:scale-[0.99]`;
 
 function countLabel(n: number, lang: Lang): string {
   if (lang === 'ar') {
@@ -45,7 +48,7 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
   const { lang, dir } = useLanguage();
   const isAr = lang === 'ar';
   const { favorites, toggleFavorite } = useFavorites();
-  const [transferMessage, setTransferMessage] = useState('');
+  const [transferState, setTransferState] = useState<{ message: string; isError: boolean } | null>(null);
   const [status, setStatus] = useState<CopyStatus>(null);
   const timer = useRef<number | undefined>(undefined);
 
@@ -111,12 +114,15 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       try { link.click(); } finally { link.remove(); }
       const objectUrl = url;
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-      setTransferMessage('');
+      setTransferState(null);
     } catch {
       if (url) URL.revokeObjectURL(url);
-      setTransferMessage(isAr
-        ? 'تعذر التصدير: تحقق من المعرّفات وأزل الزائد عن 500 عنصر أو قلّل حجم القائمة إلى أقل من 100 كيلوبايت. لم تُحذف أي محفوظات.'
-        : 'Export failed: check the identifiers and reduce the list to 500 items and 100 KB or less. No saved items were removed.');
+      setTransferState({
+        message: isAr
+          ? 'تعذر التصدير: تحقق من المعرّفات وأزل الزائد عن 500 عنصر أو قلّل حجم القائمة إلى أقل من 100 كيلوبايت. لم تُحذف أي محفوظات.'
+          : 'Export failed: check the identifiers and reduce the list to 500 items and 100 KB or less. No saved items were removed.',
+        isError: true,
+      });
     }
   };
   const handleImport = async (file: File | undefined) => {
@@ -125,11 +131,17 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       if (file.size > FAVORITES_TRANSFER_MAX_BYTES) throw new Error('file_too_large');
       const result = importFavorites(await file.text(), getFavorites());
       const persisted = saveFavorites(result.slugs);
-      setTransferMessage(isAr
-        ? `أضيف ${result.added}، وتُرك ${result.skipped} بسبب الحد الأقصى.${persisted ? '' : ' تعذر الحفظ الدائم؛ القائمة متاحة لهذه الجلسة فقط.'}`
-        : `Added ${result.added}; ${result.skipped} skipped at the limit.${persisted ? '' : ' Persistent storage failed; this list is available only for this session.'}`);
+      setTransferState({
+        message: isAr
+          ? `أضيف ${result.added}، وتُرك ${result.skipped} بسبب الحد الأقصى.${persisted ? '' : ' تعذر الحفظ الدائم؛ القائمة متاحة لهذه الجلسة فقط.'}`
+          : `Added ${result.added}; ${result.skipped} skipped at the limit.${persisted ? '' : ' Persistent storage failed; this list is available only for this session.'}`,
+        isError: false,
+      });
     } catch {
-      setTransferMessage(isAr ? 'تعذر الاستيراد: اختر ملف مفضلة صالحًا لا يتجاوز 100 كيلوبايت.' : 'Import failed: choose a valid favorites file no larger than 100 KB.');
+      setTransferState({
+        message: isAr ? 'تعذر الاستيراد: اختر ملف مفضلة صالحًا لا يتجاوز 100 كيلوبايت.' : 'Import failed: choose a valid favorites file no larger than 100 KB.',
+        isError: true,
+      });
     }
   };
 
@@ -151,15 +163,15 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
           <button
             type="button"
             onClick={onBackToHome}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-medium text-slate-400 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-medium text-stone-400 transition-colors hover:text-stone-100 ${focusRing}`}
           >
             <BackIcon className="h-4 w-4" aria-hidden="true" />
             <span>{isAr ? 'كل العروض' : 'All deals'}</span>
           </button>
-          <h1 className="font-heading mt-3 text-3xl font-extrabold text-white">
+          <h1 className="font-heading mt-3 text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl">
             {isAr ? 'مفضلتي' : 'My Favorites'}
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-stone-400">
             {isAr
               ? 'العروض المحفوظة محليًا في هذا المتصفح'
               : 'Deals saved locally in this browser'}
@@ -167,8 +179,8 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
         </div>
 
         {favoriteDeals.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-3.5 py-1.5 text-xs font-semibold text-rose-300">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-surface-raised px-3 py-1.5 text-xs font-semibold tabular-nums text-stone-200">
               <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" aria-hidden="true" />
               <span>{countLabel(favoriteDeals.length, lang)}</span>
             </span>
@@ -202,20 +214,30 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
         )}
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className="mt-6 flex flex-wrap items-center gap-2.5">
         <button type="button" onClick={handleExport} className={buttonClass}>{isAr ? 'تصدير المفضلة' : 'Export favorites'}</button>
         <label className={`${buttonClass} cursor-pointer`}>
           {isAr ? 'استيراد ودمج المفضلة' : 'Import and merge favorites'}
           <input type="file" accept="application/json,.json" className="sr-only" onChange={(event) => { void handleImport(event.target.files?.[0]); event.target.value = ''; }} />
         </label>
       </div>
-      <p className="mt-2 text-xs text-slate-400">{isAr ? 'ملف التصدير يحتوي معرفات المحفوظات؛ شاركه فقط مع من تثق به. الاستيراد يضيف للقائمة ولا يستبدلها.' : 'The export contains saved identifiers; share it only with people you trust. Import merges rather than replaces.'}</p>
-      <p role="status" className="mt-2 text-sm text-slate-300">{transferMessage}</p>
+      <p className="mt-2 text-xs text-stone-400">{isAr ? 'ملف التصدير يحتوي معرفات المحفوظات؛ شاركه فقط مع من تثق به. الاستيراد يضيف للقائمة ولا يستبدلها.' : 'The export contains saved identifiers; share it only with people you trust. Import merges rather than replaces.'}</p>
+      
+      {transferState && (
+        <p
+          role={transferState.isError ? 'alert' : 'status'}
+          aria-live={transferState.isError ? undefined : 'polite'}
+          className={`mt-2 text-sm ${transferState.isError ? 'font-medium text-amber-400' : 'text-stone-300'}`}
+        >
+          {transferState.message}
+        </p>
+      )}
+
       {missingSlugs.length > 0 && (
-        <section className="mt-6 rounded-xl border border-amber-500/30 p-4" aria-labelledby="missing-saved-title">
-          <h2 id="missing-saved-title" className="font-semibold text-amber-200">{isAr ? 'محفوظات غير موجودة في الكتالوج المحمّل' : 'Saved items missing from the loaded catalog'}</h2>
-          <p className="mt-1 text-sm text-slate-400">{isAr ? 'قد يكون العرض أزيل أو غير متاح حاليًا؛ هذه الحالة تختلف عن انتهاء العرض.' : 'An item may have been removed or be temporarily unavailable; this is distinct from an expired offer.'}</p>
-          <ul className="mt-3 space-y-2">{missingSlugs.map((slug) => <li key={slug} className="flex flex-wrap items-center gap-3 text-sm"><bdi>{slug}</bdi><button type="button" onClick={() => toggleFavorite(slug)} className={buttonClass}>{isAr ? 'إزالة من المفضلة' : 'Remove from favorites'}</button></li>)}</ul>
+        <section className="mt-6 rounded-card border border-line bg-surface-raised p-4 sm:p-5" aria-labelledby="missing-saved-title">
+          <h2 id="missing-saved-title" className="font-heading text-sm font-semibold text-amber-300">{isAr ? 'محفوظات غير موجودة في الكتالوج المحمّل' : 'Saved items missing from the loaded catalog'}</h2>
+          <p className="mt-1 text-xs text-stone-400">{isAr ? 'قد يكون العرض أزيل أو غير متاح حاليًا؛ هذه الحالة تختلف عن انتهاء العرض.' : 'An item may have been removed or be temporarily unavailable; this is distinct from an expired offer.'}</p>
+          <ul className="mt-3 space-y-2">{missingSlugs.map((slug) => <li key={slug} className="flex flex-wrap items-center gap-3 text-sm"><bdi className="font-mono text-xs text-stone-300">{slug}</bdi><button type="button" onClick={() => toggleFavorite(slug)} className={buttonClass}>{isAr ? 'إزالة من المفضلة' : 'Remove from favorites'}</button></li>)}</ul>
         </section>
       )}
 
@@ -224,7 +246,7 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
         role="status"
         className={
           status === 'error'
-            ? 'mt-3 text-xs font-medium text-amber-300'
+            ? 'mt-3 text-xs font-medium text-amber-400'
             : 'sr-only'
         }
       >
@@ -232,33 +254,33 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       </p>
 
       {soonEndingDeals.length > 0 && (
-        <section className="mt-8 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6" aria-labelledby="saved-ending-soon-title">
+        <section className="mt-8 rounded-card border border-line bg-surface-raised p-5 sm:p-6" aria-labelledby="saved-ending-soon-title">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 id="saved-ending-soon-title" className="font-heading flex items-center gap-2 text-lg font-bold text-amber-200">
-                <Clock3 className="h-5 w-5 shrink-0" aria-hidden="true" />
+              <h2 id="saved-ending-soon-title" className="font-heading flex items-center gap-2 text-base font-bold text-stone-100">
+                <Clock3 className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
                 <span>{isAr ? 'عروض محفوظة تنتهي خلال 14 يومًا' : 'Saved offers ending within 14 days'}</span>
               </h2>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-xs text-stone-400">
                 {isAr
                   ? 'يعرض هذا القسم العروض التي لها تاريخ انتهاء مسجّل وصالح فقط.'
                   : 'Only saved offers with a valid recorded end date appear here.'}
               </p>
             </div>
-            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+            <span className="rounded-md border border-line bg-surface px-2.5 py-1 text-xs font-semibold tabular-nums text-amber-300">
               {countLabel(soonEndingDeals.length, lang)}
             </span>
           </div>
-          <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <ul className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {soonEndingDeals.map((deal) => {
               const name = isAr ? deal.name_ar : deal.name_en;
               const endsAt = deal.ends_at?.trim() ?? '';
               return (
-                <li key={deal.slug} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3">
+                <li key={deal.slug} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-white">{name}</p>
-                    <p className="mt-1 text-xs text-amber-200/80">
-                      <time dateTime={endsAt}>
+                    <p className="truncate text-sm font-semibold text-stone-100">{name}</p>
+                    <p className="mt-1 text-xs text-stone-400">
+                      <time dateTime={endsAt} className="tabular-nums">
                         {isAr ? 'ينتهي في' : 'Ends'} {formatExpiryDate(endsAt, lang)}
                       </time>
                     </p>
@@ -267,7 +289,7 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
                     type="button"
                     onClick={() => onOpenDeal(deal.slug)}
                     aria-label={isAr ? `فتح ${name}` : `Open ${name}`}
-                    className="shrink-0 rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-amber-400/60 hover:text-amber-200"
+                    className={`shrink-0 rounded-md border border-line bg-surface-raised px-3 py-1.5 text-xs font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 ${focusRing}`}
                   >
                     {isAr ? 'التفاصيل' : 'Details'}
                   </button>
@@ -279,14 +301,14 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
       )}
 
       {favoriteDeals.length === 0 ? (
-        <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/40 px-6 py-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400">
-            <Heart className="h-8 w-8 stroke-[1.5]" aria-hidden="true" />
+        <div className="mt-10 flex flex-col items-center justify-center rounded-card border border-line bg-surface-raised px-6 py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-surface text-stone-400">
+            <Heart className="h-6 w-6 stroke-[1.5]" aria-hidden="true" />
           </div>
-          <h2 className="mt-5 text-xl font-bold text-white">
+          <h2 className="mt-4 font-heading text-lg font-bold text-stone-100">
             {isAr ? 'لم تحفظ أي عرض بعد' : 'No saved deals yet'}
           </h2>
-          <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-400">
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-stone-400">
             {isAr
               ? 'اضغط على القلب في أي عرض لحفظه هنا، وارجع إليه قبل أن ينتهي.'
               : 'Tap the heart on any deal to save it here and come back before it ends.'}
@@ -294,9 +316,9 @@ export default function FavoritesPage({ deals, onOpenDeal, onBackToHome }: Favor
           <button
             type="button"
             onClick={onBackToHome}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
+            className={`mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium text-stone-200 transition-colors hover:border-line-hover hover:text-stone-100 ${focusRing}`}
           >
-            <Search className="h-4 w-4" aria-hidden="true" />
+            <Search className="h-4 w-4 text-stone-400" aria-hidden="true" />
             <span>{isAr ? 'تصفّح العروض' : 'Browse deals'}</span>
           </button>
         </div>

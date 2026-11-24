@@ -22,12 +22,13 @@ export default {
         line: {
           DEFAULT: '#242422', // Subtle warm charcoal border
           subtle: '#1a1a18',
+          hover: '#383835', // Interactive hover border
           control: '#64748b', // AA non-text contrast >= 3:1 against bg & raised
         },
         surface: {
           DEFAULT: '#0b0b0a', // Editorial warm charcoal canvas
           raised: '#141413', // Elevated editorial surface
-          overlay: '#1e1e1d', // Top overlays / menus
+          overlay: '#1e1e1d', // Top overlays / menus / buttons
         },
         brand: {
           DEFAULT: '#10b981', // Emerald-500 reserved for verified badges & affirmative actions

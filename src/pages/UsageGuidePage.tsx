@@ -12,6 +12,9 @@ interface UsageGuidePageProps {
   loading: boolean;
 }
 
+const focusRing =
+  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand';
+
 export default function UsageGuidePage({ guides, config, guideNames, loading }: UsageGuidePageProps) {
   const { lang } = useLanguage();
   const overview = config?.overview?.[lang] ?? {};
@@ -24,29 +27,33 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
         aria-busy="true"
         aria-label={lang === 'ar' ? 'جارٍ تحميل الدليل' : 'Loading guide'}
       >
-        <div className="skeleton h-32 w-full" />
-        <div className="skeleton mt-6 h-96 w-full" />
+        <div className="skeleton h-32 w-full rounded-card" />
+        <div className="skeleton mt-6 h-96 w-full rounded-card" />
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 pb-8 pt-10 sm:px-6">
+    <main className="mx-auto max-w-4xl px-4 pb-12 pt-10 sm:px-6">
       <header className="animate-fade-up">
-        <h1 className="font-heading text-3xl font-extrabold text-white">
+        <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl">
           {overview.title ?? (lang === 'ar' ? 'دليل التسجيل وفهم قيود العروض' : 'Offer registration and limitations guide')}
         </h1>
-        <p className="mt-3 text-base leading-relaxed text-slate-300">{overview.intro ?? ''}</p>
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-800/80 px-3 py-1.5 text-xs text-slate-400">
-          <CalendarDays className="h-3.5 w-3.5" />
-          {overview.last_reviewed_label ?? ''}: <bdi>{reviewDateLabel(config?.last_reviewed, lang)}</bdi>
+        <p className="mt-3 text-base leading-relaxed text-stone-300">{overview.intro ?? ''}</p>
+        <div className="mt-4 inline-flex items-center gap-2 rounded-md border border-line bg-surface-raised px-3 py-1.5 text-xs text-stone-400">
+          <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>
+            {overview.last_reviewed_label ?? ''}: <bdi className="tabular-nums">{reviewDateLabel(config?.last_reviewed, lang)}</bdi>
+          </span>
         </div>
       </header>
 
-      <section className="animate-fade-up mt-8 rounded-2xl border border-gold/30 bg-gold/5 p-6">
-        <h2 className="font-heading text-lg font-bold text-gold">{overview.distinction_title ?? ''}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-amber-100">{overview.distinction ?? ''}</p>
-        <p className="mt-4 border-t border-gold/20 pt-4 text-sm leading-relaxed text-amber-100/80">
+      <section className="animate-fade-up mt-8 rounded-card border border-line bg-surface-raised p-5 sm:p-6">
+        <h2 className="font-heading text-base font-bold text-stone-100 sm:text-lg">
+          {overview.distinction_title ?? ''}
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-stone-300">{overview.distinction ?? ''}</p>
+        <p className="mt-4 border-t border-line-subtle pt-4 text-xs leading-relaxed text-stone-400">
           {overview.unknown_note ?? ''}
         </p>
       </section>
@@ -59,12 +66,14 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
           return (
             <section
               key={guide.slug}
-              className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8"
+              className="rounded-card border border-line bg-surface-raised p-6 sm:p-8"
             >
               <div className="flex flex-wrap items-baseline gap-2.5">
-                <h2 className="font-heading text-2xl font-bold text-emerald-400">{officialName}</h2>
+                <h2 className="font-heading text-xl font-bold tracking-tight text-stone-100 sm:text-2xl">
+                  {officialName}
+                </h2>
                 {lang === 'ar' && arabicName && arabicName !== officialName && (
-                  <span className="text-sm font-medium text-slate-400">({arabicName})</span>
+                  <span className="text-sm font-medium text-stone-400">({arabicName})</span>
                 )}
               </div>
 
@@ -89,16 +98,16 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
               ).map(([key, label]) => {
                 const section = guide.sections[key];
                 return (
-                  <div key={key} className="mt-5">
-                    <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-400">
+                  <div key={key} className="mt-5 border-t border-line-subtle pt-4">
+                    <h3 className="font-heading text-xs font-semibold uppercase tracking-wider text-stone-400">
                       {label}
                     </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-300">{section[lang]}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-stone-300">{section[lang]}</p>
                   </div>
                 );
               })}
 
-              <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-800 pt-4">
+              <div className="mt-6 flex flex-wrap gap-2 border-t border-line-subtle pt-4">
                 {Array.from(
                   new Set(
                     Object.values(guide.sections)
@@ -110,10 +119,10 @@ export default function UsageGuidePage({ guides, config, guideNames, loading }: 
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 text-xs text-emerald-300 transition-colors hover:bg-slate-700"
+                    className={`inline-flex max-w-full items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs text-stone-300 transition-colors hover:border-line-hover hover:text-stone-100 ${focusRing}`}
                   >
                     <bdi className="truncate">{url}</bdi>
-                    <ExternalLink className="h-3 w-3 shrink-0" />
+                    <ExternalLink className="h-3 w-3 shrink-0 rtl:-scale-x-100" aria-hidden="true" />
                   </a>
                 ))}
               </div>

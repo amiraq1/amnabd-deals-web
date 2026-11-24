@@ -705,9 +705,9 @@ export default function HomePage({
   const categoryButtonBase =
     'inline-flex items-center gap-1.5 min-h-11 shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors tabular-nums';
   const categoryIdle =
-    'border border-[#242422] bg-[#141413] text-stone-300 hover:border-[#383835] hover:text-white';
+    'border border-line bg-surface-raised text-stone-300 hover:border-line-hover hover:text-white';
   const categoryActive =
-    'border border-[#2E2E2A] bg-[#1E1E1D] text-stone-100 font-semibold';
+    'border border-line bg-surface-overlay text-stone-100 font-semibold';
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-8 pt-6 sm:px-6">
@@ -855,7 +855,7 @@ export default function HomePage({
 
       {/* 1. Hero Section with Interactive Prompts & Stats */}
       <section className="animate-fade-up">
-        <div className="discovery-hero relative grid gap-6 overflow-hidden rounded-card border border-[#242422] bg-surface-raised p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-10">
+        <div className="discovery-hero relative grid gap-6 overflow-hidden rounded-card border border-line bg-surface-raised p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-10">
           <div className="relative min-w-0">
             <h1 className="font-heading text-2xl font-extrabold leading-tight text-white sm:text-3xl">
               {pick({
@@ -884,7 +884,7 @@ export default function HomePage({
                 {activeCountLabel}
               </span>
               {daysSinceLastReview !== null && (
-                <span className="hidden items-center gap-1 rounded-lg border border-[#242422] bg-[#141413] px-2.5 py-1 text-xs tabular-nums text-stone-400 sm:inline-flex">
+                <span className="hidden items-center gap-1 rounded-lg border border-line bg-surface-raised px-2.5 py-1 text-xs tabular-nums text-stone-400 sm:inline-flex">
                   <Clock className="h-3 w-3 text-stone-400" />
                   {lang === 'ar'
                     ? daysSinceLastReview === 0
@@ -907,7 +907,7 @@ export default function HomePage({
                     target.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-[#2E2E2A] bg-[#1E1E1D] px-5 py-2.5 text-sm font-semibold text-stone-100 transition-colors hover:border-[#383835] hover:bg-[#282824] hover:text-white"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-line bg-surface-overlay px-5 py-2.5 text-sm font-semibold text-stone-100 transition-colors hover:border-line-hover hover:bg-surface-overlay hover:text-white"
               >
                 <span className="tabular-nums">{ctaButtonLabel}</span>
                 <ArrowDown className="h-4 w-4 shrink-0 text-stone-400" aria-hidden="true" />
@@ -916,7 +916,7 @@ export default function HomePage({
 
             {/* Interactive Use-Case Prompt */}
             {useCaseOptions.length > 0 && (
-              <div className="mt-5 border-t border-[#242422] pt-4">
+              <div className="mt-5 border-t border-line pt-4">
                 <div className="mb-2.5 flex items-center justify-between">
                   <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-stone-300">
                     <Layers className="h-3.5 w-3.5 text-stone-400" />
@@ -948,7 +948,7 @@ export default function HomePage({
                         className={`min-h-11 rounded-full border px-3 py-1.5 text-xs sm:text-sm font-medium transition-[colors,transform] duration-150 active:scale-[0.95] tabular-nums ${
                           isSelected
                             ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 font-semibold'
-                            : 'border-[#242422] bg-[#141413] text-stone-300 hover:border-[#383835] hover:text-white'
+                            : 'border-line bg-surface-raised text-stone-300 hover:border-line-hover hover:text-white'
                         }`}
                       >
                         <span>{uc.label}</span>
@@ -960,7 +960,7 @@ export default function HomePage({
               </div>
             )}
           </div>
-          <div className="relative min-w-0 rounded-xl border border-[#242422] bg-[#0E0E0D] p-3 sm:p-4">
+          <div className="relative min-w-0 rounded-xl border border-line bg-surface p-3 sm:p-4">
             <h2 className="px-1 text-sm font-semibold text-white">
               {lang === 'ar' ? 'ابدأ بما يناسبك' : 'Find your starting point'}
             </h2>
@@ -994,16 +994,16 @@ export default function HomePage({
                     className={`discovery-path relative flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-start transition-[colors,transform] duration-150 active:scale-[0.98] lg:gap-3 lg:p-3 ${
                       qf.isActive
                         ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 font-medium'
-                        : 'border-[#242422] bg-[#141413] text-stone-200 hover:border-[#383835] hover:bg-[#1A1A18] disabled:cursor-not-allowed disabled:opacity-40'
+                        : 'border-line bg-surface-raised text-stone-200 hover:border-line-hover hover:bg-surface-raised disabled:cursor-not-allowed disabled:opacity-40'
                     }`}
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[#242422] bg-[#1E1E1D] text-stone-300 lg:h-8 lg:w-8">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line bg-surface-overlay text-stone-300 lg:h-8 lg:w-8">
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="min-w-0 flex-1 text-xs sm:text-sm font-semibold">
                       {qf.label}
                     </span>
-                    <span className="rounded border border-[#242422] bg-[#0B0B0A] px-2 py-0.5 text-xs tabular-nums text-stone-300">
+                    <span className="rounded border border-line bg-surface px-2 py-0.5 text-xs tabular-nums text-stone-300">
                       {qf.count}
                     </span>
                     {qf.isActive ? (
@@ -1050,7 +1050,7 @@ export default function HomePage({
       )}
 
       {/* 2. شريط لاصق بصف واحد: البحث والمشاركة والفلاتر */}
-      <section className="relative -mx-4 mt-6 border-b border-[#242422] bg-[#0B0B0A]/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
+      <section className="relative -mx-4 mt-6 border-b border-line bg-surface/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500 start-3.5" />
@@ -1069,7 +1069,7 @@ export default function HomePage({
                   ? 'ابحث بالاسم، الوصف، المنافع أو الفئات...'
                   : 'Search by name, description, benefits or categories...'
               }
-              className="w-full rounded-control border border-[#242422] bg-[#141413] py-2.5 pe-10 ps-10 text-sm text-stone-100 placeholder-stone-500 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+              className="w-full rounded-control border border-line bg-surface-raised py-2.5 pe-10 ps-10 text-sm text-stone-100 placeholder-stone-500 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               aria-label={lang === 'ar' ? 'بحث في العروض' : 'Search deals'}
             />
             {qDraft && (
@@ -1092,7 +1092,7 @@ export default function HomePage({
             type="button"
             onClick={handleCopySearchLink}
             disabled={copyStatus === 'copying'}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-control border border-[#242422] bg-[#141413] px-3 py-2.5 text-sm font-medium text-stone-300 transition-colors hover:border-[#383835] hover:text-white sm:px-4"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-control border border-line bg-surface-raised px-3 py-2.5 text-sm font-medium text-stone-300 transition-colors hover:border-line-hover hover:text-white sm:px-4"
             title={
               lang === 'ar'
                 ? 'نسخ رابط البحث المفلتر'
@@ -1125,7 +1125,7 @@ export default function HomePage({
             className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-control border px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 ${
               hasAnyActiveFilter
                 ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
-                : 'border-[#242422] bg-[#141413] text-stone-300 hover:border-[#383835]'
+                : 'border-line bg-surface-raised text-stone-300 hover:border-line-hover'
             }`}
           >
             <SlidersHorizontal className="h-4 w-4 text-stone-400" />
@@ -1138,7 +1138,7 @@ export default function HomePage({
         {showFilters && (
           <div
             id="home-filter-panel"
-            className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-[#242422] bg-[#141413] p-4"
+            className="animate-fade-up mt-3 flex flex-wrap items-center gap-5 rounded-xl border border-line bg-surface-raised p-4"
           >
             <div className="flex items-center gap-2">
               <label
@@ -1158,7 +1158,7 @@ export default function HomePage({
                     'push',
                   )
                 }
-                className="rounded-lg border border-[#2E2E2A] bg-[#1E1E1D] px-3 py-1.5 text-sm font-medium text-stone-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="rounded-lg border border-line bg-surface-overlay px-3 py-1.5 text-sm font-medium text-stone-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               >
                 <option value="all">{lang === 'ar' ? 'الكل' : 'All'}</option>
                 <option value="student">
@@ -1187,7 +1187,7 @@ export default function HomePage({
                     'push',
                   )
                 }
-                className="rounded-lg border border-[#2E2E2A] bg-[#1E1E1D] px-3 py-1.5 text-sm font-medium text-stone-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="rounded-lg border border-line bg-surface-overlay px-3 py-1.5 text-sm font-medium text-stone-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               >
                 <option value="all">{lang === 'ar' ? 'الكل' : 'All'}</option>
                 <option value="not_required">
@@ -1215,7 +1215,7 @@ export default function HomePage({
                 }
                 placeholder={lang === 'ar' ? 'مثال: العراق' : 'Example: Iraq'}
                 aria-describedby="country-evidence-note"
-                className="min-w-36 flex-1 rounded-lg border border-[#2E2E2A] bg-[#1E1E1D] px-3 py-1.5 text-sm text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
+                className="min-w-36 flex-1 rounded-lg border border-line bg-surface-overlay px-3 py-1.5 text-sm text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30"
               />
               <datalist id="recorded-country-options">
                 {countryOptions.map((country) => (
@@ -1238,7 +1238,7 @@ export default function HomePage({
                 aria-label={
                   lang === 'ar' ? 'حالة توفر البلد' : 'Country evidence status'
                 }
-                className="rounded-lg border border-[#2E2E2A] bg-[#1E1E1D] px-3 py-1.5 text-sm font-medium text-stone-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-line bg-surface-overlay px-3 py-1.5 text-sm font-medium text-stone-200 outline-none transition-colors focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="all">
                   {lang === 'ar' ? 'كل الحالات' : 'All states'}
@@ -1550,7 +1550,7 @@ export default function HomePage({
         </div>
 
         {sorted.length === 0 ? (
-          <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-[#242422] bg-[#141413] py-14 px-4 text-center">
+          <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-line bg-surface-raised py-14 px-4 text-center">
             <Inbox className="h-10 w-10 text-stone-600" />
             {savedOnly && validSavedCount === 0 ? (
               <>
@@ -1603,7 +1603,7 @@ export default function HomePage({
                     <button
                       type="button"
                       onClick={handleResetAll}
-                      className="rounded-control border border-[#2E2E2A] bg-[#1E1E1D] px-4 py-2 text-xs sm:text-sm font-medium text-stone-300 transition-colors hover:border-[#383835] hover:text-white"
+                      className="rounded-control border border-line bg-surface-overlay px-4 py-2 text-xs sm:text-sm font-medium text-stone-300 transition-colors hover:border-line-hover hover:text-white"
                     >
                       {lang === 'ar'
                         ? 'إزالة جميع الفلاتر'
